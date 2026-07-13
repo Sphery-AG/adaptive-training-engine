@@ -33,9 +33,17 @@ equipment beyond ExerCube, real-time in-session adaptation, deployment/hosting.
 5. One-command run on fresh machine + README
 6. Written model/feature/limitations summary
 
-## Data
-Schema from spherych_devapp dump (45 tables). Key tables: Users, HealthData,
-Sessions, Workouts (scores, HR stats, timeInTier1-5, per-exercise counts),
-HrValues (HR time-series per workout), HrStats (round + pause HR → HRR),
-TimelineMarkers (per-event physical/cognitive precision), RaceConfigs
-(difficulty, hrTarget, duration). DB dumps NEVER get committed (.gitignore).
+## Data (verified July 2026 production export, loaded in local MySQL via docker-compose)
+- 1,019 users; 291 with 10+ workouts; ~21,000 workouts; 1M+ HrValues rows
+- Schema: Users, HealthData, Sessions, Workouts (scores, hrAverage/hrMax,
+  timeInTier1-5, per-exercise counts), HrValues (HR time-series per workout),
+  HrStats (round + pause HR → HR recovery), TimelineMarkers (per-event
+  physical/cognitive precision), RaceConfigs (difficulty, hrTarget, duration),
+  CircleTrainingExerciseLogs (new activity type — v2, do not build against)
+- HealthData: dob/weight/height ~99% filled. The `age` column is unused — always
+  compute age from dob. gender ~28% filled — optional input only.
+- hrRestingPulse and hrMax are ALWAYS NULL — never read them. The engine
+  estimates resting HR from lowest sustained HrValues per user, and hrMax from
+  observed workout maxima with Tanaka (208 − 0.7 × age) as cold-start prior.
+- DB connection (local dev): mysql://root:devpassword@localhost:3306/spherych_devapp
+- DB dumps NEVER get committed (.gitignore covers *.sql, *.db)

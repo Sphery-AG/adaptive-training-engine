@@ -8,3 +8,9 @@ venv/
 .DS_Store
 *.sql
 *.db
+.gstack/
+
+# Local-only, confidential reference material — NEVER commit
+/_local/
+.venv/
+CLAUDE.md

@@ -1,0 +1,6 @@
+# Engine dependencies. Keep this list small and boring.
+pymysql==1.1.1        # pure-Python MySQL driver, reads the static Sphery export
+cryptography==43.0.1  # required for MySQL 8 caching_sha2_password auth
+pydantic==2.9.2       # typed models; our source of truth for the kiosk contract
+fastapi==0.115.2      # /estimate, /generate-plan, /update-plan
+uvicorn==0.31.1       # ASGI server for local dev

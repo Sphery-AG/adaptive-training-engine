@@ -8,10 +8,12 @@ venv/
 .DS_Store
 *.sql
 *.db
-.gstack/
+.gstack
 
 # Local-only, confidential reference material — NEVER commit.
-# Conductor workspaces get _local/ via symlink (scripts/conductor-setup.sh),
-# so it stays a single uncommitted copy in the root clone.
-/_local/
+# Conductor workspaces get _local via symlink (scripts/conductor-setup.sh),
+# so it stays a single uncommitted copy in the root clone. No trailing
+# slash on _local/.gstack: that would match directories only, leaving the
+# symlinked versions untracked and committable in every workspace.
+/_local
 .venv/

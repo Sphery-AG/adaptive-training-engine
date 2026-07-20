@@ -13,7 +13,7 @@ ENGINE_PORT=$((8000 + OFFSET))
 
 echo "run: engine on :$ENGINE_PORT, web on :$WEB_PORT"
 
-"$WORKSPACE/.venv/bin/uvicorn" app.main:app \
+"$WORKSPACE/engine/.venv/bin/uvicorn" app.main:app \
   --app-dir "$WORKSPACE/engine" --port "$ENGINE_PORT" --reload &
 ENGINE_PID=$!
 trap 'kill $ENGINE_PID 2>/dev/null || true' EXIT

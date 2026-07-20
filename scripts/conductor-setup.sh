@@ -24,9 +24,9 @@ echo "setup: installing web dependencies"
 (cd "$WORKSPACE/web" && npm ci)
 
 echo "setup: creating engine virtualenv"
-python3 -m venv "$WORKSPACE/.venv"
-"$WORKSPACE/.venv/bin/pip" install --quiet --upgrade pip
-"$WORKSPACE/.venv/bin/pip" install --quiet -r "$WORKSPACE/engine/requirements.txt"
+python3 -m venv "$WORKSPACE/engine/.venv"
+"$WORKSPACE/engine/.venv/bin/pip" install --quiet --upgrade pip
+"$WORKSPACE/engine/.venv/bin/pip" install --quiet -r "$WORKSPACE/engine/requirements.txt"
 
 # The MySQL container binds host port 3306, so exactly one instance can run
 # across all workspaces. It holds a read-only static export, so sharing it is

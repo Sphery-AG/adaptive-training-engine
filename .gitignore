@@ -10,7 +10,8 @@ venv/
 *.db
 .gstack/
 
-# Local-only, confidential reference material — NEVER commit
+# Local-only, confidential reference material — NEVER commit.
+# Conductor workspaces get _local/ via symlink (scripts/conductor-setup.sh),
+# so it stays a single uncommitted copy in the root clone.
 /_local/
 .venv/
-CLAUDE.md

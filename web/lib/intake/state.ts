@@ -30,6 +30,12 @@ export interface IntakeState {
   screen: ScreenId;
   /** Visited-screen stack, so Back replays the real path (branches included). */
   history: ScreenId[];
+  /**
+   * Set when the user jumped to a screen via an "Edit" link on Review; once the
+   * edited section is complete, advancing returns to Review instead of walking
+   * the rest of the flow again.
+   */
+  returnToReview: boolean;
 
   // Ebene 1 — Goal & Focus
   goal: TrainingGoal | null;
@@ -62,6 +68,7 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
   return {
     screen: 'goal',
     history: [],
+    returnToReview: false,
     goal: null,
     focus: [],
     age: seed.age ?? 35,
@@ -116,7 +123,15 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
     case 'advance': {
       const next = nextScreen(state.screen, state);
       if (!next) return state;
-      return { ...state, screen: next, history: [...state.history, state.screen] };
+      const history = [...state.history, state.screen];
+      // When editing from Review, return there as soon as the edited section is
+      // finished (rather than continuing through the remaining screens).
+      if (state.returnToReview) {
+        const finishedSection =
+          next === 'review' || sectionIndexForScreen(next) !== sectionIndexForScreen(state.screen);
+        if (finishedSection) return { ...state, screen: 'review', history, returnToReview: false };
+      }
+      return { ...state, screen: next, history };
     }
     case 'back': {
       if (state.history.length === 0) return state;
@@ -126,7 +141,13 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
     }
     case 'goto': {
       if (action.screen === state.screen) return state;
-      return { ...state, screen: action.screen, history: [...state.history, state.screen] };
+      return {
+        ...state,
+        screen: action.screen,
+        history: [...state.history, state.screen],
+        // Jumping from Review means "edit this, then bring me back".
+        returnToReview: state.screen === 'review' ? true : state.returnToReview,
+      };
     }
     case 'setGoal':
       // Changing the goal invalidates any focus picked under the old goal.

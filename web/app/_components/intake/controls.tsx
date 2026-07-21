@@ -42,7 +42,7 @@ export function CheckRow({
         className="peer sr-only"
       />
       <div className={`${CARD_BASE} flex items-center justify-between gap-3 px-4 py-3.5`}>
-        <span className="text-[15px] font-medium">{children}</span>
+        <span className="text-base font-medium">{children}</span>
         <span
           className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
             checked ? 'border-accent bg-accent text-[var(--accent-contrast)]' : 'border-[var(--border-strong)]'
@@ -106,7 +106,7 @@ export function Segmented<T extends string>({
             onChange={() => onChange(o.id)}
             className="peer sr-only"
           />
-          <span className="block rounded-xl py-3 text-[15px] font-medium text-dim transition-colors peer-checked:bg-[var(--accent-soft2)] peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
+          <span className="block rounded-xl py-3 text-base font-medium text-dim transition-colors peer-checked:bg-[var(--accent-soft2)] peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
             {o.label}
           </span>
         </label>

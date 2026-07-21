@@ -108,7 +108,7 @@ export function IntakeShell({
           >
             {title}
           </h1>
-          {subtitle && <p className="mt-2 max-w-md text-[15px] leading-relaxed text-dim">{subtitle}</p>}
+          {subtitle && <p className="mt-2 max-w-md text-base leading-relaxed text-dim">{subtitle}</p>}
         </header>
 
         <div className="mt-7 flex-1">{children}</div>

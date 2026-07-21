@@ -32,7 +32,6 @@ export default function DashboardStep({
 }: {
   member: DemoMember;
   view: PlanView;
-  completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
   onComplete: () => void;
   onRestart: () => void;

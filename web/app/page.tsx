@@ -59,7 +59,6 @@ export default function Home() {
       <DashboardStep
         member={member}
         view={view}
-        completedCount={completedCount}
         lastUpdate={lastUpdate}
         onComplete={complete}
         onRestart={restart}

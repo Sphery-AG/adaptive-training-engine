@@ -34,7 +34,7 @@ export interface ScreenDef {
 // --- Ebene 1: Goal ----------------------------------------------------------
 
 const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => (
-  <div role="radiogroup" aria-label="Training goal" className="grid gap-3 sm:grid-cols-2">
+  <div role="radiogroup" aria-label="Training goal" className="grid grid-cols-2 gap-2.5">
     {GOALS.map((g) => {
       const selected = state.goal === g.slug;
       return (
@@ -63,7 +63,7 @@ const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => (
             >
               <Icon name={g.icon} size={22} />
             </span>
-            <span className="text-[15px] font-semibold leading-tight">{g.title}</span>
+            <span className="text-base font-semibold leading-tight">{g.title}</span>
           </div>
         </label>
       );
@@ -277,7 +277,7 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] py-4 text-[15px] font-medium text-dim transition-colors hover:border-accent hover:text-white"
+          className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] py-4 text-base font-medium text-dim transition-colors hover:border-accent hover:text-white"
         >
           <Icon name="plus" size={18} /> Add sport or activity
         </button>
@@ -303,7 +303,7 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
             onChange={() => dispatch({ type: 'setHasInjury', value: o.value })}
             className="peer sr-only"
           />
-          <span className="grid h-16 place-items-center rounded-2xl border border-border bg-card text-[15px] font-semibold transition-colors peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
+          <span className="grid h-16 place-items-center rounded-2xl border border-border bg-card text-base font-semibold transition-colors peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
             {o.label}
           </span>
         </label>
@@ -327,7 +327,7 @@ const InjuryScreen: FC<ScreenProps> = ({ state, dispatch }) => (
         value={state.injury.bodyPart ?? ''}
         onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
         placeholder="e.g. Knee"
-        className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-[15px] outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
+        className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
       />
     </div>
     <div>
@@ -352,7 +352,7 @@ const InjuryScreen: FC<ScreenProps> = ({ state, dispatch }) => (
 // --- Review -----------------------------------------------------------------
 
 const ReviewRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-start justify-between gap-4 py-2 text-[15px]">
+  <div className="flex items-start justify-between gap-4 py-2 text-base">
     <span className="text-dim">{label}</span>
     <span className="text-right font-medium">{value}</span>
   </div>

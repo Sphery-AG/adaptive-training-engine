@@ -1,31 +1,91 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens — ported from Stephan's training-plan UX concept
+ * (_local/ux-concept/training-plan-ux-concept_11.html :root), so the built
+ * product matches the concept's exact system rather than approximating it.
+ * Cyan accent (#00D1FF), near-black canvas, layered card greys.
+ */
 :root {
-  --background: #0a0a0b;
-  --foreground: #ededed;
-  --accent: #a3e635; /* lime-400 — energetic, "go" */
+  --background: #101010;
+  --bg-soft: #171717;
+  --card: #1c1c1e;
+  --card-hover: #242427;
+  --foreground: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.7);
+  --text-faint: #8a8a8f;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --accent: #00d1ff;
+  --accent-dark: #0099bf;
+  --accent-soft: rgba(0, 209, 255, 0.12);
+  --accent-soft2: rgba(0, 209, 255, 0.22);
+  --accent-contrast: #00181f; /* readable text on a cyan fill */
+  --gradient-accent: linear-gradient(135deg, #00d1ff 0%, #0099bf 100%);
+
+  --required: #ff2d9b;
+  --required-soft: rgba(255, 45, 155, 0.14);
+
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --shadow-glow: 0 18px 50px -12px rgba(0, 209, 255, 0.5);
 }
 
+/* Map tokens into Tailwind v4 so `bg-accent`, `text-accent`, `bg-card`, etc.
+ * resolve to the concept palette. */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-border: var(--border);
+  --color-required: var(--required);
+  --color-dim: var(--text-dim);
+  --color-faint: var(--text-faint);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background:
-    radial-gradient(1200px 600px at 50% -10%, rgba(163, 230, 53, 0.08), transparent 60%),
+    radial-gradient(900px 500px at 50% -12%, rgba(0, 209, 255, 0.08), transparent 62%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Smooth the number/metric transitions so the adaptive update "moves". */
+/* Numbers/metrics "move" on adaptive updates. */
 @keyframes pop {
   0% { transform: scale(0.96); opacity: 0.5; }
   60% { transform: scale(1.04); }
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop { animation: pop 0.35s ease-out; }
+
+/* Screen transition for the paged intake — a short, directional slide-in.
+ * Collapses to a plain fade under reduced-motion. */
+@keyframes screen-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-screen-in { animation: screen-in 0.34s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop,
+  .animate-screen-in {
+    animation: none;
+  }
+}
+
+/* Focus ring: visible for keyboard users only, in the accent color. */
+:where(button, [role="radio"], [role="checkbox"], input, a):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

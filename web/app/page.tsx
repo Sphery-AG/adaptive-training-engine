@@ -53,7 +53,7 @@ export default function Home() {
 
   if (step === 'welcome') return <WelcomeStep onStart={start} />;
   if (step === 'questionnaire' && member && gym)
-    return <QuestionnaireStep member={member} gym={gym} onSubmit={submit} onBack={() => setStep('welcome')} />;
+    return <QuestionnaireStep member={member} onSubmit={submit} onBack={() => setStep('welcome')} />;
   if (step === 'dashboard' && view && member)
     return (
       <DashboardStep

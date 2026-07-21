@@ -26,7 +26,6 @@ function deltaIsGood(m: MetricSnapshot): boolean {
 export default function DashboardStep({
   member,
   view,
-  completedCount,
   lastUpdate,
   onComplete,
   onRestart,
@@ -40,14 +39,16 @@ export default function DashboardStep({
 }) {
   const { plan, gym, resolved, engagement: e } = view;
   const [showJson, setShowJson] = useState(false);
-  const [toast, setToast] = useState<AdaptiveUpdate | null>(null);
+  // Toast is derived from the latest update (not mirrored into state), then
+  // dismissed after a delay — avoids a synchronous setState in an effect.
+  const [dismissed, setDismissed] = useState<AdaptiveUpdate | null>(null);
+  const toast = lastUpdate && lastUpdate !== dismissed ? lastUpdate : null;
 
   useEffect(() => {
-    if (!lastUpdate) return;
-    setToast(lastUpdate);
-    const t = setTimeout(() => setToast(null), 5000);
+    if (!toast) return;
+    const t = setTimeout(() => setDismissed(toast), 5000);
     return () => clearTimeout(t);
-  }, [lastUpdate]);
+  }, [toast]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-8 pb-24">

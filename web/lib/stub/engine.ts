@@ -37,6 +37,7 @@ import type {
 } from '../types/engagement';
 import type { GymConcept, GymStation } from '../types/gym';
 import { STIMULUS_LABELS } from '../labels';
+import { focusStimuliFor, goalBySlug } from '../intake/model';
 import { type DemoMember, rewardCatalogFor } from './data';
 
 const now = () => new Date().toISOString();
@@ -172,7 +173,14 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
 } {
   const perWeek = answers.sessionsPerWeek ?? 3;
   const length = answers.sessionLengthMinutes ?? 30;
-  const rotation = GOAL_STIMULI[answers.goal];
+  // Focus biases the goal's default rotation: the stimuli implied by the chosen
+  // focus lead the week, then the goal's remaining stimuli fill it out. Same
+  // goal + different focus => a visibly different plan.
+  const base = GOAL_STIMULI[answers.goal];
+  const focusStimuli = focusStimuliFor(answers.focus ?? []);
+  const rotation = focusStimuli.length
+    ? [...focusStimuli, ...base.filter((s) => !focusStimuli.includes(s))]
+    : base;
   const startDiff = baseDifficulty(est.fitnessScore);
   const WEEKS = 4;
 
@@ -292,13 +300,19 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
   const { weeks, resolved } = buildWeeks(gym, answers, est);
   const perWeek = answers.sessionsPerWeek ?? 3;
 
+  const goal = goalBySlug(answers.goal);
+  const focusLabels = goal.focuses
+    .filter((f) => (answers.focus ?? []).includes(f.id))
+    .map((f) => f.label);
+  const focusPhrase = focusLabels.length ? `, focused on ${focusLabels.join(' & ')}` : '';
+
   const plan: Plan = {
     id: `plan-${member.id}-${Date.now()}`,
     userId: member.id,
     goal: answers.goal,
     createdAt: now(),
     fitnessEstimate: est,
-    rationale: `${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for "${answers.goal.replace(/_/g, ' ')}". Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start — questionnaire only'}).`,
+    rationale: `${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start — questionnaire only'}).`,
     weeks,
   };
 

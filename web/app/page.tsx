@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import WelcomeStep from './_components/WelcomeStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
+import PlanReadyStep from './_components/PlanReadyStep';
 import DashboardStep from './_components/DashboardStep';
 import { generatePlan, completeSession, type PlanView } from '@/lib/stub/engine';
 import type { DemoMember } from '@/lib/stub/data';
@@ -10,13 +11,14 @@ import type { GymConcept } from '@/lib/types/gym';
 import type { QuestionnaireAnswers } from '@/lib/types/plan';
 import type { AdaptiveUpdate } from '@/lib/types/engagement';
 
-type Step = 'welcome' | 'questionnaire' | 'dashboard';
+type Step = 'welcome' | 'questionnaire' | 'planReady' | 'dashboard';
 
 export default function Home() {
   const [step, setStep] = useState<Step>('welcome');
   const [member, setMember] = useState<DemoMember | null>(null);
   const [gym, setGym] = useState<GymConcept | null>(null);
   const [view, setView] = useState<PlanView | null>(null);
+  const [answers, setAnswers] = useState<QuestionnaireAnswers | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<AdaptiveUpdate | null>(null);
 
@@ -26,12 +28,13 @@ export default function Home() {
     setStep('questionnaire');
   }
 
-  function submit(answers: QuestionnaireAnswers) {
+  function submit(a: QuestionnaireAnswers) {
     if (!member || !gym) return;
-    setView(generatePlan(member, gym, answers));
+    setAnswers(a);
+    setView(generatePlan(member, gym, a));
     setCompletedCount(0);
     setLastUpdate(null);
-    setStep('dashboard');
+    setStep('planReady');
   }
 
   function complete() {
@@ -47,6 +50,7 @@ export default function Home() {
     setMember(null);
     setGym(null);
     setView(null);
+    setAnswers(null);
     setCompletedCount(0);
     setLastUpdate(null);
   }
@@ -54,6 +58,15 @@ export default function Home() {
   if (step === 'welcome') return <WelcomeStep onStart={start} />;
   if (step === 'questionnaire' && member && gym)
     return <QuestionnaireStep member={member} onSubmit={submit} onBack={() => setStep('welcome')} />;
+  if (step === 'planReady' && view && answers)
+    return (
+      <PlanReadyStep
+        view={view}
+        answers={answers}
+        onStart={() => setStep('dashboard')}
+        onEdit={() => setStep('questionnaire')}
+      />
+    );
   if (step === 'dashboard' && view && member)
     return (
       <DashboardStep

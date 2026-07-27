@@ -85,7 +85,7 @@ export default function DashboardStep({
               <span className="text-3xl font-bold">{m.value}</span>
               <span className="text-xs text-zinc-500">{m.unit}</span>
               {m.delta !== undefined && m.delta !== 0 && (
-                <span className={`ml-1 text-xs font-semibold ${deltaIsGood(m) ? 'text-accent' : 'text-rose-400'}`}>
+                <span className={`ml-1 text-xs font-semibold ${deltaIsGood(m) ? 'text-mint' : 'text-rose-400'}`}>
                   {m.delta > 0 ? '↑' : '↓'}{Math.abs(m.delta)}
                 </span>
               )}
@@ -104,7 +104,7 @@ export default function DashboardStep({
             This week: {e.streak.weekProgress.completed}/{e.streak.weekProgress.target} sessions
           </div>
           <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${(e.streak.weekProgress.completed / e.streak.weekProgress.target) * 100}%` }} />
+            <div className="h-full rounded-full bg-fuchsia transition-all" style={{ width: `${(e.streak.weekProgress.completed / e.streak.weekProgress.target) * 100}%` }} />
           </div>
         </div>
 
@@ -113,7 +113,7 @@ export default function DashboardStep({
           <div className="mt-1 text-2xl font-bold capitalize">{e.league.tier}</div>
           <div className="mt-2 text-xs text-zinc-400">
             {e.league.rank}{ordinal(e.league.rank)} of {e.league.cohortSize}
-            {e.league.inPromotionZone && <span className="text-accent"> · promoting! ↑</span>}
+            {e.league.inPromotionZone && <span className="text-mint"> · promoting! ↑</span>}
             {e.league.inRelegationZone && <span className="text-rose-400"> · in relegation ↓</span>}
           </div>
           {e.league.pointsToPromotion !== undefined && e.league.pointsToPromotion > 0 && (
@@ -139,7 +139,7 @@ export default function DashboardStep({
           <ul className="mt-3 space-y-2.5">
             {e.quests.map((q) => (
               <li key={q.id} className={`flex items-center gap-3 ${q.completed ? 'opacity-60' : ''}`}>
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${q.completed ? 'bg-accent text-black' : 'bg-white/10'}`}>
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${q.completed ? 'bg-fuchsia text-black' : 'bg-white/10'}`}>
                   {q.completed ? '✓' : ''}
                 </span>
                 <span className="flex-1">
@@ -155,7 +155,7 @@ export default function DashboardStep({
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
           <div className="flex items-center justify-between">
             <span className="text-xs text-zinc-500 uppercase tracking-wide">Rewards</span>
-            <span className="text-sm font-semibold text-accent">{e.wallet.pointsBalance} pts</span>
+            <span className="text-sm font-semibold text-fuchsia">{e.wallet.pointsBalance} pts</span>
           </div>
           <ul className="mt-3 space-y-2">
             {e.wallet.catalog.map((r) => {
@@ -163,7 +163,7 @@ export default function DashboardStep({
               return (
                 <li key={r.id} className="flex items-center justify-between gap-3">
                   <span className={`text-sm ${unlocked ? '' : 'text-zinc-500'}`}>{unlocked ? '🎁' : '🔒'} {r.label}</span>
-                  <span className={`text-xs ${unlocked ? 'text-accent' : 'text-zinc-600'}`}>{unlocked ? 'Unlocked' : `${r.pointsCost} pts`}</span>
+                  <span className={`text-xs ${unlocked ? 'text-mint' : 'text-zinc-600'}`}>{unlocked ? 'Unlocked' : `${r.pointsCost} pts`}</span>
                 </li>
               );
             })}
@@ -207,8 +207,8 @@ export default function DashboardStep({
 
       {/* Toast */}
       {toast && (
-        <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[92%] max-w-md animate-pop rounded-2xl border border-accent/40 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
-          <div className="text-sm font-semibold text-accent">{toast.summary}</div>
+        <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[92%] max-w-md animate-pop rounded-2xl border border-violet/40 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
+          <div className="text-sm font-semibold text-violet">{toast.summary}</div>
           {toast.planChanges.map((c, i) => (
             <div key={i} className="mt-1 text-xs text-zinc-300">↻ {c}</div>
           ))}

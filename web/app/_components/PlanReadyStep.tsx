@@ -121,7 +121,7 @@ export default function PlanReadyStep({
         onClick={onStart}
         className="mt-6 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 text-left transition-colors hover:border-[var(--border-strong)]"
       >
-        <span className="text-accent">
+        <span className="text-fuchsia">
           <Icon name="trend" size={20} />
         </span>
         <div className="flex-1">

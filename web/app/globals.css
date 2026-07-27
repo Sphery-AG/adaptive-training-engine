@@ -1,41 +1,74 @@
 @import "tailwindcss";
 
 /*
- * Design tokens — ported from Stephan's training-plan UX concept
- * (_local/ux-concept/training-plan-ux-concept_11.html :root), so the built
- * product matches the concept's exact system rather than approximating it.
- * Cyan accent (#00D1FF), near-black canvas, layered card greys.
+ * Sphere Loop — "Orbital Hybrid v2" design system.
+ * Ported from Anthony's Lovable concept (kinetic-loop-coach). All colors in
+ * oklch. Semantic accent pairings:
+ *   cyan    -> physical / cardio
+ *   violet  -> cognitive / adaptation
+ *   fuchsia -> habit loop (streak, quests, league)
+ *   mint    -> positive change
+ *   amber   -> caution / low confidence
+ *
+ * Existing components reference stable semantic tokens (--accent, --card,
+ * --required, --text-dim, ...), so remapping those here reskins the whole app.
  */
 :root {
-  --background: #101010;
-  --bg-soft: #171717;
-  --card: #1c1c1e;
-  --card-hover: #242427;
-  --foreground: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.7);
-  --text-faint: #8a8a8f;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.22);
-
-  --accent: #00d1ff;
-  --accent-dark: #0099bf;
-  --accent-soft: rgba(0, 209, 255, 0.12);
-  --accent-soft2: rgba(0, 209, 255, 0.22);
-  --accent-contrast: #00181f; /* readable text on a cyan fill */
-  --gradient-accent: linear-gradient(135deg, #00d1ff 0%, #0099bf 100%);
-
-  --required: #ff2d9b;
-  --required-soft: rgba(255, 45, 155, 0.14);
-
   --radius-lg: 28px;
   --radius-md: 18px;
   --radius-sm: 12px;
-  --shadow-glow: 0 18px 50px -12px rgba(0, 209, 255, 0.5);
+
+  /* Surfaces */
+  --void: oklch(0.1 0.02 260);
+  --canvas: oklch(0.12 0.03 265);
+  --surface: oklch(0.2 0.03 260 / 45%);
+  --surface-2: oklch(0.15 0.03 265 / 90%);
+  --hair: oklch(1 0 0 / 10%);
+  --hair-strong: oklch(1 0 0 / 22%);
+
+  /* Orbit accents */
+  --orbit-cyan: oklch(0.82 0.14 210);
+  --orbit-violet: oklch(0.62 0.22 295);
+  --orbit-fuchsia: oklch(0.68 0.28 330);
+  --orbit-mint: oklch(0.79 0.17 165);
+  --orbit-amber: oklch(0.83 0.16 85);
+
+  /* Text ramp */
+  --text-hi: oklch(0.97 0.01 250);
+  --text-mid: oklch(0.86 0.02 255);
+  --text-lo: oklch(0.72 0.03 255);
+  --text-faint: oklch(0.55 0.03 258);
+
+  /* Semantic aliases (kept stable so existing classNames reskin for free) */
+  --background: var(--void);
+  --bg-soft: var(--canvas);
+  --foreground: var(--text-hi);
+  --card: var(--surface);
+  --card-hover: oklch(0.24 0.03 260 / 55%);
+  --border: var(--hair);
+  --border-strong: var(--hair-strong);
+  --text-dim: var(--text-mid);
+
+  --accent: var(--orbit-cyan);
+  --accent-dark: oklch(0.7 0.14 220);
+  --accent-soft: oklch(0.82 0.14 210 / 14%);
+  --accent-soft2: oklch(0.82 0.14 210 / 30%);
+  --accent-contrast: var(--void); /* readable dark text on a bright fill */
+  --gradient-accent: linear-gradient(135deg, var(--orbit-cyan) 0%, var(--orbit-fuchsia) 118%);
+
+  --required: var(--orbit-fuchsia);
+  --required-soft: oklch(0.68 0.28 330 / 16%);
+
+  --shadow-glow: 0 18px 55px -14px oklch(0.68 0.28 330 / 0.55);
 }
 
-/* Map tokens into Tailwind v4 so `bg-accent`, `text-accent`, `bg-card`, etc.
- * resolve to the concept palette. */
+/* Map tokens into Tailwind v4 so `bg-accent`, `text-card`, `text-cyan`, etc.
+ * resolve to the Sphere Loop palette. */
 @theme inline {
+  --font-display: var(--font-display), "Bebas Neue", system-ui, sans-serif;
+  --font-sans: var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), monospace;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
@@ -47,17 +80,46 @@
   --color-required: var(--required);
   --color-dim: var(--text-dim);
   --color-faint: var(--text-faint);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --color-cyan: var(--orbit-cyan);
+  --color-violet: var(--orbit-violet);
+  --color-fuchsia: var(--orbit-fuchsia);
+  --color-mint: var(--orbit-mint);
+  --color-amber: var(--orbit-amber);
 }
 
 body {
   background:
-    radial-gradient(900px 500px at 50% -12%, rgba(0, 209, 255, 0.08), transparent 62%),
+    radial-gradient(1000px 560px at 50% -14%, oklch(0.32 0.09 215 / 0.22), transparent 60%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Display face on headings + anything opting in via .font-display. Bebas Neue
+ * is a condensed all-caps grotesque; it carries the Sphere Loop character. */
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  font-synthesis-weight: none; /* no faux-bold — Bebas ships one weight */
+}
+
+/* Small, wide, uppercase label — matches the concept's eyebrow style. */
+.eyebrow {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Numbers/metrics "move" on adaptive updates. */
@@ -68,8 +130,7 @@ body {
 }
 .animate-pop { animation: pop 0.35s ease-out; }
 
-/* Screen transition for the paged intake — a short, directional slide-in.
- * Collapses to a plain fade under reduced-motion. */
+/* Screen transition for the paged intake — a short, directional slide-in. */
 @keyframes screen-in {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

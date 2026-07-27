@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { PlanView, ResolvedSession } from '@/lib/stub/engine';
 import { toCreateTrainingRequest } from '@/lib/stub/engine';
 import type { AdaptiveUpdate, MetricSnapshot } from '@/lib/types/engagement';
@@ -26,7 +26,6 @@ function deltaIsGood(m: MetricSnapshot): boolean {
 export default function DashboardStep({
   member,
   view,
-  completedCount,
   lastUpdate,
   onComplete,
   onRestart,
@@ -40,14 +39,7 @@ export default function DashboardStep({
 }) {
   const { plan, gym, resolved, engagement: e } = view;
   const [showJson, setShowJson] = useState(false);
-  const [toast, setToast] = useState<AdaptiveUpdate | null>(null);
-
-  useEffect(() => {
-    if (!lastUpdate) return;
-    setToast(lastUpdate);
-    const t = setTimeout(() => setToast(null), 5000);
-    return () => clearTimeout(t);
-  }, [lastUpdate]);
+  const toast = lastUpdate;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-5 py-8 pb-24">

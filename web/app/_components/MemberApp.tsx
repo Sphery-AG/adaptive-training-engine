@@ -95,7 +95,7 @@ export default function MemberApp({
   const head = HEAD[tab];
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pt-8 pb-28">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-5 pt-8 pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {/* Header */}
       <header className="flex items-start justify-between gap-3">
         <div>
@@ -569,7 +569,7 @@ function Toast({ toast }: { toast: AdaptiveUpdate }) {
 function BottomNav({ tab, setTab }: { tab: Tab; setTab: (t: Tab) => void }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-[var(--background)]/95 backdrop-blur">
-      <div className="mx-auto flex max-w-md items-center justify-around px-4 py-3">
+      <div className="mx-auto flex max-w-md items-center justify-around px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         {TABS.map((t) => {
           const active = t.id === tab;
           return (

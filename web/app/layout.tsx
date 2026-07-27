@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Bebas_Neue, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
@@ -28,6 +28,16 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "Sphere Loop — Adaptive Training",
   description: "Personalized, adaptive training plans for any gym, any equipment.",
+};
+
+// Phone-first: cover the full screen (into the notch/home-indicator area) so
+// `env(safe-area-inset-*)` resolves correctly, and set the dark theme color so
+// the browser chrome matches the app on mobile.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#04060d",
 };
 
 export default function RootLayout({

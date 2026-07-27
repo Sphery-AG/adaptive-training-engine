@@ -88,19 +88,24 @@ the real, data-driven app.
 
 ---
 
-## 5. Honest baseline (Jul 27)
+## 5. Honest baseline (updated Jul 27, PM)
 
 | Area | Status | Note |
 |---|---|---|
-| **Web UI** | ✅ Built end-to-end | Full intake → plan → payoff, but on a **TypeScript stub** (simulated data). |
-| **Design direction** | ✅ Chosen | Sphere Loop, to be ported into `web/`. |
+| **Design system (Sphere Loop)** | ✅ Ported | Bebas Neue + Space Grotesk, oklch orbit palette, in the real Next.js app. |
+| **Intake (Stephan's content, new skin)** | ✅ Done | 8 goals / focus / setup / health, segmented progress, required logic. |
+| **4-tab member app** | ✅ Built | Today / Plan / Progress (fitness ring + metrics) / Circle (league ring, quests, rewards), bottom nav. |
+| **Emoji → professional icons** | ✅ Done | Zero emoji; line-icon set + initials avatars + ring/sparkline primitives. |
+| **Mobile / responsive** | ✅ Verified | No horizontal overflow at 360/375/390px; safe-area insets. |
+| **Shipped** | ✅ | Branch `week3-sphere-loop` pushed to origin. |
 | **Python engine** | 🟡 "Step 1" only | `GET /generate-plan/{id}` emits a valid `CreateTrainingRequest` from the static DB. `/estimate`, `/update-plan` → 501. |
-| **Real fitness estimation** | ❌ Not started | No feature pipeline / model / Body-Brain Age from real data yet. |
-| **UI ↔ engine wiring** | ❌ Not connected | UI talks to the stub, not the FastAPI engine. |
+| **Real fitness estimation** | ❌ Not started | No feature pipeline / model / real Body-Brain Age yet — the Week 4 focus. |
+| **UI ↔ engine wiring** | ❌ Not connected | UI still runs on the TypeScript stub, not the FastAPI engine. |
 | **Schema for Michel** | ✅ Handed off | Five-table additive proposal (kept as a *future* option, not a build dependency). |
 
-**Plain reading:** the product *experience* is real and clickable; the *intelligence* behind
-it is still simulated. The next weeks make it beautiful (Sphere Loop) and make it real (engine).
+**Plain reading:** the product *experience* is now real, beautiful, phone-ready, and shipped —
+the design Stephan approved, running on the actual app. What's still simulated is the
+*intelligence* (real fitness estimation + engine-driven generation). That's the Week 4 build.
 
 ---
 
@@ -124,24 +129,26 @@ Principle: if the project stopped after any week, that week's deliverable still 
 ## 7. Week 3 backlog (Jul 27–31) — UI-first
 
 ### Design system port
-- [ ] **D1** — Add `Bebas Neue` + `Space Grotesk` (self-hosted) to `web/`.
-- [ ] **D2** — Port Sphere Loop tokens (oklch orbit palette, radii, `.eyebrow`) into the Tailwind/`globals.css` layer.
-- [ ] **D3** — Base components: card, eyebrow label, pill/badge, segmented progress, ring metric, primary CTA.
+- [x] **D1** — `Bebas Neue` + `Space Grotesk` added to `web/`.
+- [x] **D2** — Sphere Loop tokens (oklch orbit palette, radii, `.eyebrow`) ported into `globals.css`.
+- [x] **D3** — Base components: card, eyebrow, pill/badge, segmented progress, ring gauge, sparkline, primary CTA.
 
 ### Intake rebuild (highest-value "wow")
-- [ ] **U1** — Rebuild intake in the new skin using **Stephan's content**: GOALS (8) / SETUP / HEALTH, focus choices, health branching, section progress.
-- [ ] **U2** — Keep required-field logic (focus required for safety/outcome goals) and skippable optionals.
+- [x] **U1** — Intake in the new skin with **Stephan's content**: GOALS (8) / SETUP / HEALTH, focus, health branching, section progress.
+- [x] **U2** — Required-field logic and skippable optionals preserved.
 
-### Journey reskin
-- [ ] **U3** — Today, Plan, Progress (Body/Brain Age), Circle (league/quests/rewards) reskinned to match the Lovable reference.
+### Journey reskin → full 4-tab app
+- [x] **U3** — Today / Plan / Progress (fitness ring + metrics) / Circle (league ring, quests, rewards), bottom nav, matching the reference.
+- [x] **U4** — All emoji replaced with professional line icons; mobile-verified (360/375/390px, safe-area).
 
-### Thin real backend slice (so "backend is handled" is true)
-- [ ] **B1** — Engine emits a real `CreateTrainingRequest` for a demo member (already have step-1; verify + surface in UI).
+### Thin real backend slice (so "backend is handled" is true) — remaining
+- [ ] **B1** — Surface the engine's real `CreateTrainingRequest` (step-1 exists) in the UI.
 - [ ] **B2** — One real member's fitness snapshot from real history (resting/max HR, zone shares) to prove the data path.
 
 ### Housekeeping
-- [ ] **H1** — PR `week2-intake-flow` → `main` before building on it.
-- [ ] **H2** — This doc shared for the meeting.
+- [ ] **H1** — PR `week2-intake-flow` → `main` (or fold into the `week3-sphere-loop` PR).
+- [x] **H2** — This doc shared for the sync.
+- [x] **H3** — `week3-sphere-loop` pushed to origin.
 
 ---
 

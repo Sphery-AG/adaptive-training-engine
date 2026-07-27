@@ -4,7 +4,7 @@ import { useState } from 'react';
 import WelcomeStep from './_components/WelcomeStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
-import DashboardStep from './_components/DashboardStep';
+import MemberApp from './_components/MemberApp';
 import { generatePlan, completeSession, type PlanView } from '@/lib/stub/engine';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
@@ -69,7 +69,7 @@ export default function Home() {
     );
   if (step === 'dashboard' && view && member)
     return (
-      <DashboardStep
+      <MemberApp
         member={member}
         view={view}
         lastUpdate={lastUpdate}

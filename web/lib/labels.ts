@@ -5,6 +5,7 @@
  */
 
 import type { StimulusType, TrainingGoal } from './types/plan';
+import type { IconName } from '../app/_components/icons';
 
 export const GOAL_LABELS: Record<TrainingGoal, string> = {
   lose_weight_burn_fat: 'Lose Weight & Burn Fat',
@@ -29,16 +30,16 @@ export const GOAL_BLURBS: Record<TrainingGoal, string> = {
   train_body_mind: 'Dual-task sessions that train focus as well as fitness.',
 };
 
-/** Emoji marker per goal — cheap, friendly iconography for the prototype. */
-export const GOAL_EMOJI: Record<TrainingGoal, string> = {
-  lose_weight_burn_fat: '🔥',
-  build_strength_muscle: '💪',
-  improve_fitness_endurance: '🫁',
-  move_pain_free: '🧘',
-  boost_health_longevity: '🌱',
-  improve_sports_performance: '⚡',
-  prepare_for_event: '🏁',
-  train_body_mind: '🧠',
+/** Line-icon marker per goal (matches the intake goal cards). No emoji. */
+export const GOAL_ICON: Record<TrainingGoal, IconName> = {
+  lose_weight_burn_fat: 'flame',
+  build_strength_muscle: 'dumbbell',
+  improve_fitness_endurance: 'pulse',
+  move_pain_free: 'mobility',
+  boost_health_longevity: 'heart',
+  improve_sports_performance: 'zap',
+  prepare_for_event: 'flag',
+  train_body_mind: 'brain',
 };
 
 export const STIMULUS_LABELS: Record<StimulusType, string> = {

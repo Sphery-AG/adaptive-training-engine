@@ -16,7 +16,6 @@ import type { Reward } from '../types/engagement';
 export interface DemoMember {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   /** Fake baseline the stub engine seeds the fitness estimate from. */
   baseline: {
@@ -35,7 +34,6 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'user-1',
     name: 'Lena',
-    emoji: '🦿',
     tagline: '2 years of ExerCube history · strong engine',
     baseline: {
       workoutsAnalyzed: 143,
@@ -50,7 +48,6 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'user-2',
     name: 'Marco',
-    emoji: '🎯',
     tagline: 'Returning after a break · moderate base',
     baseline: {
       workoutsAnalyzed: 21,
@@ -65,7 +62,6 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'guest',
     name: 'Guest',
-    emoji: '✨',
     tagline: 'No account yet · plan built from the questionnaire',
     baseline: null,
   },

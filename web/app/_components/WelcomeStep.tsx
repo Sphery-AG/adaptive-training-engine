@@ -4,6 +4,17 @@ import { useState } from 'react';
 import { DEMO_MEMBERS, GYMS, type DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
 
+/** First-letter monogram for a member — a clean, designed avatar (no emoji). */
+function initials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+}
+
 export default function WelcomeStep({
   onStart,
 }: {
@@ -40,8 +51,13 @@ export default function WelcomeStep({
                   : 'border-white/10 bg-white/[0.02] hover:border-white/25'
               }`}
             >
-              <div className="text-3xl">{m.emoji}</div>
-              <div className="mt-2 font-semibold">{m.name}</div>
+              <div
+                aria-hidden
+                className="font-display grid h-12 w-12 place-items-center rounded-2xl border border-[var(--accent-soft2)] bg-[var(--accent-soft)] text-xl leading-none text-accent"
+              >
+                {initials(m.name)}
+              </div>
+              <div className="mt-3 font-semibold">{m.name}</div>
               <div className="mt-1 text-xs text-zinc-400">{m.tagline}</div>
             </button>
           ))}

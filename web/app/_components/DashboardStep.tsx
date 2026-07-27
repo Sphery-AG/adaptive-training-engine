@@ -5,8 +5,14 @@ import type { PlanView, ResolvedSession } from '@/lib/stub/engine';
 import { toCreateTrainingRequest } from '@/lib/stub/engine';
 import type { AdaptiveUpdate, MetricSnapshot } from '@/lib/types/engagement';
 import type { StimulusType } from '@/lib/types/plan';
-import { STIMULUS_LABELS, GOAL_LABELS, GOAL_EMOJI } from '@/lib/labels';
+import { STIMULUS_LABELS, GOAL_LABELS, GOAL_ICON } from '@/lib/labels';
+import { Icon } from './icons';
 import type { DemoMember } from '@/lib/stub/data';
+
+/** First-letter monogram for a member — a clean avatar (no emoji). */
+function memberInitials(name: string): string {
+  return name.trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+}
 
 const STIMULUS_DOT: Record<StimulusType, string> = {
   cardio_endurance: 'bg-sky-400',
@@ -54,15 +60,21 @@ export default function DashboardStep({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">{member.emoji}</span>
+          <span
+            aria-hidden
+            className="font-display grid h-11 w-11 place-items-center rounded-2xl border border-[var(--accent-soft2)] bg-[var(--accent-soft)] text-lg leading-none text-accent"
+          >
+            {memberInitials(member.name)}
+          </span>
           <div>
             <div className="text-lg font-bold">{member.name}</div>
             <div className="text-xs text-zinc-500">{gym.name} · {gym.location}</div>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-white/5 px-3 py-1.5 text-sm">
-            {GOAL_EMOJI[plan.goal]} {GOAL_LABELS[plan.goal]}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-sm">
+            <Icon name={GOAL_ICON[plan.goal]} size={15} className="text-accent" />
+            {GOAL_LABELS[plan.goal]}
           </span>
           <button onClick={onRestart} className="rounded-full border border-white/10 px-3 py-1.5 text-sm text-zinc-400 hover:text-white">
             Start over
@@ -85,8 +97,9 @@ export default function DashboardStep({
               <span className="text-3xl font-bold">{m.value}</span>
               <span className="text-xs text-zinc-500">{m.unit}</span>
               {m.delta !== undefined && m.delta !== 0 && (
-                <span className={`ml-1 text-xs font-semibold ${deltaIsGood(m) ? 'text-mint' : 'text-rose-400'}`}>
-                  {m.delta > 0 ? '↑' : '↓'}{Math.abs(m.delta)}
+                <span className={`ml-1 inline-flex items-center gap-0.5 text-xs font-semibold ${deltaIsGood(m) ? 'text-mint' : 'text-rose-400'}`}>
+                  <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
+                  {Math.abs(m.delta)}
                 </span>
               )}
             </div>
@@ -99,7 +112,11 @@ export default function DashboardStep({
       <section className="mt-4 grid gap-3 md:grid-cols-3">
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
           <div className="text-xs text-zinc-500 uppercase tracking-wide">Streak</div>
-          <div className="mt-1 text-3xl font-bold">🔥 {e.streak.currentWeeks}<span className="text-base font-normal text-zinc-500"> wks</span></div>
+          <div className="mt-1 flex items-center gap-2 text-3xl font-bold">
+            <Icon name="flame" size={24} className="text-fuchsia" />
+            {e.streak.currentWeeks}
+            <span className="text-base font-normal text-zinc-500">wks</span>
+          </div>
           <div className="mt-2 text-xs text-zinc-400">
             This week: {e.streak.weekProgress.completed}/{e.streak.weekProgress.target} sessions
           </div>
@@ -113,8 +130,12 @@ export default function DashboardStep({
           <div className="mt-1 text-2xl font-bold capitalize">{e.league.tier}</div>
           <div className="mt-2 text-xs text-zinc-400">
             {e.league.rank}{ordinal(e.league.rank)} of {e.league.cohortSize}
-            {e.league.inPromotionZone && <span className="text-mint"> · promoting! ↑</span>}
-            {e.league.inRelegationZone && <span className="text-rose-400"> · in relegation ↓</span>}
+            {e.league.inPromotionZone && (
+              <span className="ml-1 inline-flex items-center gap-0.5 align-middle text-mint">· promoting <Icon name="arrow-up" size={11} /></span>
+            )}
+            {e.league.inRelegationZone && (
+              <span className="ml-1 inline-flex items-center gap-0.5 align-middle text-rose-400">· relegation <Icon name="arrow-down" size={11} /></span>
+            )}
           </div>
           {e.league.pointsToPromotion !== undefined && e.league.pointsToPromotion > 0 && (
             <div className="mt-1 text-xs text-zinc-500">{e.league.pointsToPromotion} pts to promotion</div>
@@ -126,8 +147,8 @@ export default function DashboardStep({
             <div className="text-xs text-zinc-400 uppercase tracking-wide">Next up</div>
             <div className="mt-1 text-sm font-medium">Log your next session to see the plan adapt.</div>
           </div>
-          <button onClick={onComplete} className="mt-3 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:brightness-110">
-            ✓ Complete next session
+          <button onClick={onComplete} className="mt-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-sm font-semibold text-black transition hover:brightness-110">
+            <Icon name="check" size={16} /> Complete next session
           </button>
         </div>
       </section>
@@ -139,8 +160,8 @@ export default function DashboardStep({
           <ul className="mt-3 space-y-2.5">
             {e.quests.map((q) => (
               <li key={q.id} className={`flex items-center gap-3 ${q.completed ? 'opacity-60' : ''}`}>
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs ${q.completed ? 'bg-fuchsia text-black' : 'bg-white/10'}`}>
-                  {q.completed ? '✓' : ''}
+                <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${q.completed ? 'border-fuchsia/40 bg-fuchsia/15 text-fuchsia' : 'border-white/10 text-faint'}`}>
+                  <Icon name={q.completed ? 'check' : 'target'} size={16} />
                 </span>
                 <span className="flex-1">
                   <span className="block text-sm font-medium">{q.title}</span>
@@ -161,9 +182,12 @@ export default function DashboardStep({
             {e.wallet.catalog.map((r) => {
               const unlocked = r.status !== 'locked';
               return (
-                <li key={r.id} className="flex items-center justify-between gap-3">
-                  <span className={`text-sm ${unlocked ? '' : 'text-zinc-500'}`}>{unlocked ? '🎁' : '🔒'} {r.label}</span>
-                  <span className={`text-xs ${unlocked ? 'text-mint' : 'text-zinc-600'}`}>{unlocked ? 'Unlocked' : `${r.pointsCost} pts`}</span>
+                <li key={r.id} className="flex items-center gap-3">
+                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border ${unlocked ? 'border-mint/40 bg-mint/10 text-mint' : 'border-white/10 text-faint'}`}>
+                    <Icon name={unlocked ? 'gift' : 'lock'} size={17} />
+                  </span>
+                  <span className={`flex-1 text-sm ${unlocked ? '' : 'text-zinc-500'}`}>{r.label}</span>
+                  <span className={`text-xs font-medium ${unlocked ? 'text-mint' : 'text-zinc-500'}`}>{unlocked ? 'Unlocked' : `${r.pointsCost} pts`}</span>
                 </li>
               );
             })}
@@ -210,15 +234,19 @@ export default function DashboardStep({
         <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-[92%] max-w-md animate-pop rounded-2xl border border-violet/40 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
           <div className="text-sm font-semibold text-violet">{toast.summary}</div>
           {toast.planChanges.map((c, i) => (
-            <div key={i} className="mt-1 text-xs text-zinc-300">↻ {c}</div>
+            <div key={i} className="mt-1 flex items-center gap-1.5 text-xs text-zinc-300">
+              <Icon name="refresh" size={13} className="shrink-0 text-violet" /> {c}
+            </div>
           ))}
           {toast.newlyUnlocked.map((r) => (
-            <div key={r.id} className="mt-1 text-xs text-zinc-300">🎁 Unlocked: {r.label}</div>
+            <div key={r.id} className="mt-1 flex items-center gap-1.5 text-xs text-zinc-300">
+              <Icon name="gift" size={13} className="shrink-0 text-mint" /> Unlocked: {r.label}
+            </div>
           ))}
           <div className="mt-1.5 flex flex-wrap gap-2">
             {toast.metricChanges.filter((m) => m.delta).map((m) => (
-              <span key={m.key} className="text-[11px] text-zinc-400">
-                {m.label} {m.delta! > 0 ? '↑' : '↓'}{Math.abs(m.delta!)}
+              <span key={m.key} className="inline-flex items-center gap-0.5 text-[11px] text-zinc-400">
+                {m.label} <Icon name={m.delta! > 0 ? 'arrow-up' : 'arrow-down'} size={10} />{Math.abs(m.delta!)}
               </span>
             ))}
           </div>

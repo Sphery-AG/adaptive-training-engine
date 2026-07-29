@@ -31,10 +31,13 @@ Thursday RSG demo link. Status: [ ] todo, [x] done, [~] queued for next week.
   nested under it (appears once minutes > 0); standalone sport page removed.
 - [x] F3 **"Other" sport**: the optional breakdown has an "Other" chip that opens
   a free-text field with its own minutes + intensity.
-- [~] F2 **Info (i) symbols on goals + focus points** with short explanations for
-  people who don't know the terms. (Max) Goals can reuse existing blurbs; focus
-  points need short copy. Partial now, finish next.
+- [x] F2 **Info (i) symbols on goals + focus points**: every goal card and focus
+  row has an "i" that opens a bottom sheet explaining the term in one plain
+  sentence. Wrote explanations for all ~65 focus points.
+- [x] F4 **Flip cards on Progress stats** (Body Age, Brain Age, This Week,
+  Fitness): an "i" flips the card to reveal what it means and how it's derived.
 
-## P1 cheap mitigations (if time)
-- [ ] Plan tab: one line noting weeks 2-4 adapt as you train (answers the horizon
-  concern cheaply without a redesign).
+## Plan horizon (Max's question, addressed)
+- [x] Plan tab: added an "adapts as you train" note and a "Projected" tag on
+  weeks 2-4, so the plan reads as adaptive rather than fixed. Whether to hide
+  future weeks entirely is left for Stephan/Max to decide.

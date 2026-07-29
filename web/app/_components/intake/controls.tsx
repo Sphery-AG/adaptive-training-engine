@@ -23,12 +23,15 @@ export function CheckRow({
   checked,
   disabled,
   onChange,
+  onInfo,
   children,
 }: {
   name: string;
   checked: boolean;
   disabled?: boolean;
   onChange: () => void;
+  /** When set, renders an info "i" button that opens an explanation. */
+  onInfo?: () => void;
   children: ReactNode;
 }) {
   return (
@@ -43,12 +46,28 @@ export function CheckRow({
       />
       <div className={`${CARD_BASE} flex items-center justify-between gap-3 px-4 py-3.5`}>
         <span className="text-base font-medium">{children}</span>
-        <span
-          className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
-            checked ? 'border-accent bg-accent text-[var(--accent-contrast)]' : 'border-[var(--border-strong)]'
-          }`}
-        >
-          {checked && <Icon name="check" size={13} />}
+        <span className="flex items-center gap-2">
+          {onInfo && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onInfo();
+              }}
+              aria-label="What does this mean?"
+              className="grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <Icon name="info" size={15} />
+            </button>
+          )}
+          <span
+            className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+              checked ? 'border-accent bg-accent text-[var(--accent-contrast)]' : 'border-[var(--border-strong)]'
+            }`}
+          >
+            {checked && <Icon name="check" size={13} />}
+          </span>
         </span>
       </div>
     </label>

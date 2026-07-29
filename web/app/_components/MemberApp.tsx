@@ -314,12 +314,23 @@ function PlanTab({ view }: { view: PlanView }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-dim">{plan.rationale}</p>
+      <div className="flex items-start gap-2 rounded-xl border border-[var(--border)] bg-[var(--accent-soft)] px-3.5 py-2.5">
+        <Icon name="refresh" size={14} className="mt-0.5 shrink-0 text-accent" />
+        <p className="text-[13px] leading-snug text-dim">
+          Week 1 is set. The weeks ahead are a projection and re-tune from how you actually perform.
+        </p>
+      </div>
 
       {resolved.map((wk) => (
         <Card key={wk.weekNumber}>
           <div className="flex items-center justify-between">
             <p className="eyebrow text-accent">Week {wk.weekNumber}{wk.focus ? ` · ${wk.focus}` : ''}</p>
-            <span className="text-[11px] text-faint">{wk.sessions.length} sessions</span>
+            <span className="flex items-center gap-2 text-[11px] text-faint">
+              {wk.weekNumber > 1 && (
+                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 font-semibold text-violet">Projected</span>
+              )}
+              {wk.sessions.length} sessions
+            </span>
           </div>
           <ul className="mt-3 space-y-3">
             {wk.sessions.map((rs) => (
@@ -415,27 +426,71 @@ function ProgressTab({ view }: { view: PlanView }) {
   );
 }
 
+// What each Progress metric means + how it's derived, shown on the flip side.
+const METRIC_INFO: Record<string, string> = {
+  body_age: 'How old your body performs, not your real age. Estimated from your resting heart rate, recovery speed, and training intensity in real sessions. Below your age means it is working.',
+  brain_age: 'How sharp your reactions are under load. From your dual-task precision and reaction speed, benchmarked to age norms. Lower means you react younger.',
+  weekly_load: 'Training minutes logged this week. Resets weekly and feeds your push-versus-recover balance.',
+  fitness_score: 'Overall fitness, 0 to 100. Blends recent scores, heart-rate response, and consistency into one number that moves as you train.',
+};
+
 function MetricCard({ m, accent, tone }: { m?: MetricSnapshot; accent: string; tone: string }) {
+  const [flipped, setFlipped] = useState(false);
   if (!m) return <Card><p className="text-xs text-faint">—</p></Card>;
   const good = deltaIsGood(m);
+  const info = METRIC_INFO[m.key];
+  const face = 'absolute inset-0 rounded-2xl border border-border bg-card p-4 [backface-visibility:hidden]';
+
   return (
-    <Card>
-      <p className="eyebrow text-dim">{m.label}</p>
-      <div className="mt-1 flex items-baseline gap-1">
-        <span className={`text-3xl ${tone}`}>{m.value}</span>
-        <span className="text-xs text-faint">{m.unit}</span>
-      </div>
-      {m.delta !== undefined && m.delta !== 0 && (
-        <div className={`mt-0.5 inline-flex items-center gap-0.5 text-xs font-semibold ${good ? 'text-mint' : 'text-rose-400'}`}>
-          <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
-          {Math.abs(m.delta)} {m.unit}
+    <div className="[perspective:1200px]">
+      <div
+        className="relative h-[176px] transition-transform duration-500"
+        style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none' }}
+      >
+        {/* Front */}
+        <div className={face}>
+          {info && (
+            <button
+              type="button"
+              onClick={() => setFlipped(true)}
+              aria-label={`What is ${m.label}?`}
+              className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <Icon name="info" size={15} />
+            </button>
+          )}
+          <p className="eyebrow text-dim">{m.label}</p>
+          <div className="mt-1 flex items-baseline gap-1">
+            <span className={`text-3xl ${tone}`}>{m.value}</span>
+            <span className="text-xs text-faint">{m.unit}</span>
+          </div>
+          {m.delta !== undefined && m.delta !== 0 && (
+            <div className={`mt-0.5 inline-flex items-center gap-0.5 text-xs font-semibold ${good ? 'text-mint' : 'text-rose-400'}`}>
+              <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
+              {Math.abs(m.delta)} {m.unit}
+            </div>
+          )}
+          <div className="mt-2">
+            <Sparkline direction={trendOf(m)} color={accent} width={110} height={26} />
+          </div>
+          {m.caption && <p className="mt-2 text-[11px] leading-tight text-faint">{m.caption}</p>}
         </div>
-      )}
-      <div className="mt-2">
-        <Sparkline direction={trendOf(m)} color={accent} width={110} height={26} />
+
+        {/* Back */}
+        <div className={`${face} flex flex-col`} style={{ transform: 'rotateY(180deg)' }}>
+          <button
+            type="button"
+            onClick={() => setFlipped(false)}
+            aria-label="Close"
+            className="absolute right-3 top-3 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <Icon name="close" size={15} />
+          </button>
+          <p className={`eyebrow ${tone}`}>{m.label}</p>
+          <p className="mt-1.5 overflow-y-auto text-[11px] leading-snug text-dim">{info}</p>
+        </div>
       </div>
-      {m.caption && <p className="mt-2 text-[11px] leading-tight text-faint">{m.caption}</p>}
-    </Card>
+    </div>
   );
 }
 

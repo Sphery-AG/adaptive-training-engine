@@ -31,58 +31,177 @@ export interface ScreenDef {
   Body: FC<ScreenProps>;
 }
 
-// --- Ebene 1: Goal ----------------------------------------------------------
+// Plain-language explanation for every focus point, so a member who doesn't
+// know the term can tap the "i" and get it in one sentence. Keyed by label.
+const FOCUS_INFO: Record<string, string> = {
+  Acceleration: 'How quickly you get up to top speed from a standstill.',
+  Agility: 'Changing direction fast while staying balanced and in control.',
+  Balance: 'Staying steady and controlled on one or both feet.',
+  'Better Posture': 'Strengthening the muscles that hold you upright, so you stand and sit taller.',
+  'Better Sleep': 'Training that lowers stress and helps you fall and stay asleep.',
+  'Bone Health': 'Loading your bones so they stay dense and strong as you age.',
+  'Brain Health': 'Keeping your mind sharp through movement that challenges focus and memory.',
+  'Cardiovascular Fitness': 'How well your heart and lungs deliver oxygen during sustained effort.',
+  'Change of Direction': 'Cutting and pivoting quickly without losing speed or balance.',
+  'Cognitive Endurance': "Holding focus and good decisions even when you're tired.",
+  Coordination: 'Getting your limbs and senses to work together smoothly.',
+  'Core Strength': 'Strength through your midsection that stabilizes every movement.',
+  Cycling: 'Conditioning geared toward riding, on the road or indoors.',
+  'Decision Making': 'Choosing the right response quickly under pressure.',
+  'Dual Task Performance': 'Doing a physical and a thinking task at once, the core of ExerCube training.',
+  'Energy & Vitality': 'Training that leaves you with more everyday energy, not less.',
+  'Executive Function': 'The brain skills of planning, focus, and self-control.',
+  'Explosive Strength': 'Producing force fast, like in jumps, throws, and sprints.',
+  Focus: 'Sustained attention on the task in front of you.',
+  'Football Season': 'Getting match-ready for football: sprints, cuts, and repeat efforts.',
+  'Full Body Strength': 'Building strength evenly across your whole body.',
+  'Functional Fitness': 'Strength and mobility for real-life movement, not just the gym.',
+  'Functional Strength': 'Strength you can actually use in everyday and sport movements.',
+  'General Conditioning': 'All-round fitness that keeps you capable across the board.',
+  'Half Marathon': 'Building the endurance to race 21 km.',
+  'Healthy Aging': 'Staying strong, mobile, and sharp as the years add up.',
+  'Heart Health': 'Training that keeps your heart strong and lowers cardiac risk.',
+  Hiking: 'Endurance and leg strength for long days on the trail.',
+  'Hip Mobility': 'Freer, stronger movement through your hips.',
+  HYROX: 'Prep for HYROX: mixed running and functional strength stations.',
+  'Improve Body Composition': 'Shifting your ratio of muscle to fat, not just the number on the scale.',
+  'Improve Metabolism': 'Training that helps your body burn energy more efficiently.',
+  'Increase Daily Activity': 'Simply moving more across your day.',
+  'Injury Prevention': 'Strengthening weak links so you get hurt less often.',
+  'Interval Fitness': 'Fitness built from short bursts of hard effort with recovery.',
+  'Joint Mobility': 'Moving your joints freely through their full range.',
+  'Jump Performance': 'How high and how powerfully you can jump.',
+  'Knee Stability': 'Control and strength around the knee to protect it.',
+  'Lower Back': 'Strength and care for a resilient lower back.',
+  'Lower Body': 'Strength and power through your legs and hips.',
+  Marathon: 'Building the endurance to race 42 km.',
+  'Maximum Fat Loss': 'The highest-burn approach to dropping body fat.',
+  'Maximum Strength': 'The most force your muscles can produce in a single effort.',
+  'Metabolic Health': 'Keeping blood sugar, blood pressure, and energy systems in good shape.',
+  Mobility: 'Moving freely and comfortably through a full range of motion.',
+  'Muscle Growth (Hypertrophy)': 'Training that increases the size of your muscles.',
+  'Muscular Endurance': 'How long your muscles can keep working before they fatigue.',
+  'Neck & Shoulders': 'Relieving tension and building support around the neck and shoulders.',
+  'OCR / Spartan Race': 'Prep for obstacle course racing: running, climbing, carrying.',
+  Power: 'Strength times speed: force produced quickly.',
+  'Processing Speed': 'How fast your brain takes in and reacts to information.',
+  'Reaction Speed': 'How fast you respond to a cue.',
+  'Reaction Time': 'The gap between a cue and your response. Lower is better.',
+  'Return to Sport': 'Rebuilding safely toward full training after a layoff or injury.',
+  'Ski Season': 'Leg strength and endurance to ski strong and avoid injury.',
+  Speed: 'How fast you can move at top pace.',
+  'Sport-Specific Conditioning': 'Fitness tailored to the demands of your sport.',
+  Stamina: 'Sustaining effort over a long duration.',
+  'Stress Reduction': 'Using movement to lower stress and calm your system.',
+  'Sustainable Weight Loss': 'Losing weight at a pace you can actually keep off.',
+  'Tennis Season': 'Court-ready fitness: quick feet, rotation, and repeat sprints.',
+  'Tone & Shape Body': 'Building lean muscle definition and shape.',
+  Triathlon: 'Endurance across swim, bike, and run.',
+  'Upper Body': 'Strength through your chest, back, shoulders, and arms.',
+  'VO₂max': "Your body's top rate of using oxygen, the ceiling on your aerobic fitness.",
+  'Working Memory': 'Holding and using information in your mind for a few seconds.',
+};
 
-const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => (
-  <div role="radiogroup" aria-label="Training goal" className="grid grid-cols-2 gap-2.5">
-    {GOALS.map((g) => {
-      const selected = state.goal === g.slug;
-      return (
-        <label key={g.slug} className="block cursor-pointer">
-          <input
-            type="radio"
-            name="goal"
-            value={g.slug}
-            checked={selected}
-            onChange={() => dispatch({ type: 'setGoal', goal: g.slug })}
-            className="peer sr-only"
-          />
-          <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-[var(--border-strong)] peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
-            <span
-              className={`grid h-11 w-11 place-items-center rounded-xl transition-colors ${
-                selected ? 'bg-accent text-[var(--accent-contrast)]' : 'bg-white/[0.06] text-dim'
-              }`}
-            >
-              <Icon name={g.icon} size={22} />
-            </span>
-            <span className="text-base font-semibold leading-tight">{g.title}</span>
-          </div>
-        </label>
-      );
-    })}
+/** Bottom-sheet explaining a goal or focus point, opened from an "i" button. */
+const InfoSheet: FC<{ title: string; body: string; onClose: () => void }> = ({ title, body, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
+    <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div className="relative z-10 w-full max-w-md rounded-t-3xl border border-border bg-card p-6 pb-9">
+      <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+      <div className="flex items-start justify-between gap-4">
+        <h3 className="text-xl font-semibold leading-tight">{title}</h3>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <Icon name="close" size={18} />
+        </button>
+      </div>
+      <p className="mt-2.5 text-[15px] leading-relaxed text-dim">{body}</p>
+    </div>
   </div>
 );
+
+// --- Ebene 1: Goal ----------------------------------------------------------
+
+const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => {
+  const [info, setInfo] = useState<{ title: string; body: string } | null>(null);
+  return (
+    <>
+      <div role="radiogroup" aria-label="Training goal" className="grid grid-cols-2 gap-2.5">
+        {GOALS.map((g) => {
+          const selected = state.goal === g.slug;
+          return (
+            <label key={g.slug} className="block cursor-pointer">
+              <input
+                type="radio"
+                name="goal"
+                value={g.slug}
+                checked={selected}
+                onChange={() => dispatch({ type: 'setGoal', goal: g.slug })}
+                className="peer sr-only"
+              />
+              <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-[var(--border-strong)] peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setInfo({ title: g.title, body: g.blurb });
+                  }}
+                  aria-label={`What is ${g.title}?`}
+                  className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <Icon name="info" size={15} />
+                </button>
+                <span
+                  className={`grid h-11 w-11 place-items-center rounded-xl transition-colors ${
+                    selected ? 'bg-accent text-[var(--accent-contrast)]' : 'bg-white/[0.06] text-dim'
+                  }`}
+                >
+                  <Icon name={g.icon} size={22} />
+                </span>
+                <span className="text-base font-semibold leading-tight">{g.title}</span>
+              </div>
+            </label>
+          );
+        })}
+      </div>
+      {info && <InfoSheet title={info.title} body={info.body} onClose={() => setInfo(null)} />}
+    </>
+  );
+};
 
 // --- Ebene 1: Focus ---------------------------------------------------------
 
 const FocusScreen: FC<ScreenProps> = ({ state, dispatch }) => {
+  const [info, setInfo] = useState<{ title: string; body: string } | null>(null);
   if (!state.goal) return null;
   const goal = goalBySlug(state.goal);
   const atCap = state.focus.length >= MAX_FOCUS;
   return (
-    <div className="grid gap-2.5">
-      {goal.focuses.map((f) => (
-        <CheckRow
-          key={f.id}
-          name="focus"
-          checked={state.focus.includes(f.id)}
-          disabled={atCap}
-          onChange={() => dispatch({ type: 'toggleFocus', id: f.id })}
-        >
-          {f.label}
-        </CheckRow>
-      ))}
-    </div>
+    <>
+      <div className="grid gap-2.5">
+        {goal.focuses.map((f) => {
+          const body = FOCUS_INFO[f.label];
+          return (
+            <CheckRow
+              key={f.id}
+              name="focus"
+              checked={state.focus.includes(f.id)}
+              disabled={atCap}
+              onChange={() => dispatch({ type: 'toggleFocus', id: f.id })}
+              onInfo={body ? () => setInfo({ title: f.label, body }) : undefined}
+            >
+              {f.label}
+            </CheckRow>
+          );
+        })}
+      </div>
+      {info && <InfoSheet title={info.title} body={info.body} onClose={() => setInfo(null)} />}
+    </>
   );
 };
 

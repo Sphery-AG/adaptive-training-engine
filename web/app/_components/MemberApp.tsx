@@ -294,7 +294,7 @@ function TodayTab({
           </div>
           <p className="mt-2 text-xs text-faint">
             {conf.source === 'questionnaire_only'
-              ? 'Cold start — built from your questionnaire. Sharpens with every session.'
+              ? 'Cold start, built from your questionnaire. Sharpens with every session.'
               : `Based on ${conf.workoutsAnalyzed} analyzed workouts.`}
           </p>
         </Card>
@@ -409,7 +409,7 @@ function ProgressTab({ view }: { view: PlanView }) {
       </div>
 
       <p className="px-2 text-center text-[11px] leading-relaxed text-faint">
-        Body Age &amp; Brain Age are motivational, directionally-true metrics from your real data — not medical claims.
+        Body Age &amp; Brain Age are motivational, directionally-true metrics from your real data, not medical claims.
       </p>
     </div>
   );
@@ -502,7 +502,7 @@ function CircleTab({ view }: { view: PlanView }) {
       </Card>
 
       <p className="px-4 text-center text-[11px] leading-relaxed text-faint">
-        No live leaderboards or history — that lives in the Sphery app.
+        No live leaderboards or history yet. That lives in the Sphery app.
       </p>
     </div>
   );

@@ -22,7 +22,7 @@ export const GOAL_LABELS: Record<TrainingGoal, string> = {
 export const GOAL_BLURBS: Record<TrainingGoal, string> = {
   lose_weight_burn_fat: 'Higher-burn sessions that keep you moving.',
   build_strength_muscle: 'Resistance-led work to build muscle and power.',
-  improve_fitness_endurance: 'Grow your engine — go longer, recover faster.',
+  improve_fitness_endurance: 'Grow your engine, go longer and recover faster.',
   move_pain_free: 'Gentle, mobility-first training that protects your joints.',
   boost_health_longevity: 'Balanced training for long-term health.',
   improve_sports_performance: 'Sharpen speed, agility, and reactions.',

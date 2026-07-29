@@ -72,7 +72,7 @@ export const GYMS: GymConcept[] = [
     id: 'sphere-darmstadt',
     name: 'The Sphere Darmstadt',
     location: 'Darmstadt, DE',
-    tagline: 'Full Sphere circle — the flagship concept',
+    tagline: 'Full Sphere circle, the flagship concept',
     stations: [
       { id: 'exercube', name: 'ExerCube', isSpheryEquipment: true, stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'cognitive_motor', 'recovery'] },
       { id: 'xr-fighter', name: 'XR Fighter', isSpheryEquipment: true, stimulusTypes: ['cardio_intensity', 'cognitive_motor', 'power_speed'] },
@@ -89,7 +89,7 @@ export const GYMS: GymConcept[] = [
     id: 'hotel-gym',
     name: 'Grand Hotel Fitness',
     location: 'Zürich, CH',
-    tagline: 'Bare hotel gym — no Sphery equipment at all',
+    tagline: 'Bare hotel gym, no Sphery equipment at all',
     stations: [
       { id: 'treadmill', name: 'Treadmill', stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'power_speed'] },
       { id: 'bike', name: 'Stationary Bike', stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'recovery'] },

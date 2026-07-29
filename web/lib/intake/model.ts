@@ -91,7 +91,7 @@ export const GOALS: Goal[] = [
     slug: 'improve_fitness_endurance',
     conceptId: 'endurance',
     title: 'Improve Fitness & Endurance',
-    blurb: 'Grow your engine — go longer, recover faster.',
+    blurb: 'Grow your engine, go longer and recover faster.',
     icon: 'pulse',
     requiresFocus: false,
     focuses: focuses(
@@ -320,7 +320,7 @@ export const WEEKDAYS: { id: WeekdayId; label: string; full: string }[] = [
 ];
 
 export const RECOVERY_STAGES: { id: RecoveryStage; title: string; desc: string }[] = [
-  { id: 'acute', title: 'Acute', desc: 'Very recent — still painful / swollen.' },
+  { id: 'acute', title: 'Acute', desc: 'Very recent, still painful or swollen.' },
   { id: 'early', title: 'Early Rehabilitation', desc: 'Pain settling, movement returning gradually.' },
   { id: 'strength', title: 'Strength Building', desc: 'Rebuilding strength & load tolerance.' },
   { id: 'return', title: 'Return to Sport', desc: 'Back to normal training, easing into full load.' },

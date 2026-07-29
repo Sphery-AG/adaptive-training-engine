@@ -103,7 +103,7 @@ export default function PlanReadyStep({
               </span>
               <div className="min-w-0 flex-1">
                 <div className="font-semibold">
-                  {dayLabel} — {STIMULUS_LABELS[s.stimulusType]}
+                  {dayLabel} · {STIMULUS_LABELS[s.stimulusType]}
                 </div>
                 <div className="mt-0.5 text-[13px] text-dim">
                   {s.durationMinutes} min · zone {s.hrTarget.zone}/5 · {rs.stationName}

@@ -296,8 +296,7 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
       ))}
     </div>
     <InfoNote>
-      This helps us tailor your plan safely. It does not replace professional medical advice — copy pending
-      medical/legal review.
+      This helps us tailor your plan safely. It does not replace professional medical advice.
     </InfoNote>
   </div>
 );
@@ -413,7 +412,7 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
               ? '—'
               : state.hasInjury
                 ? state.injury.bodyPart || 'Flagged'
-                : "None — you're good"
+                : "None, you're good"
           }
         />
       </ReviewGroup>
@@ -427,7 +426,7 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
   goal: {
     eyebrow: 'Goal',
     title: 'What do you want to achieve?',
-    subtitle: () => 'Choose your main goal — this shapes your entire plan.',
+    subtitle: () => 'Choose your main goal. This shapes your entire plan.',
     required: () => true,
     Body: GoalScreen,
   },
@@ -436,7 +435,7 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
     title: "What's your focus?",
     subtitle: (s) => {
       const goal = s.goal ? goalBySlug(s.goal) : null;
-      return `Within ${goal?.title ?? 'your goal'} — pick up to ${MAX_FOCUS}, this determines your exact plan. (${s.focus.length}/${MAX_FOCUS} selected)`;
+      return `Within ${goal?.title ?? 'your goal'}, pick up to ${MAX_FOCUS}. This determines your exact plan. (${s.focus.length}/${MAX_FOCUS} selected)`;
     },
     required: (s) => (s.goal ? goalBySlug(s.goal).requiresFocus : false),
     Body: FocusScreen,
@@ -444,14 +443,14 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
   status: {
     eyebrow: 'Training Setup',
     title: 'About you & availability',
-    subtitle: () => "Optional — the basics we build your plan around.",
+    subtitle: () => "Optional. The basics we build your plan around.",
     Body: StatusScreen,
   },
   activities: {
     eyebrow: 'Training Setup',
     title: 'What training do you do now?',
     subtitle: () =>
-      'Optional — add each sport or activity with how long and how hard. This is how we gauge your current load and balance your recovery.',
+      'Optional. Add each sport or activity with how long and how hard. This is how we gauge your current load and balance your recovery.',
     Body: ActivitiesScreen,
   },
   health: {
@@ -463,7 +462,7 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
   injury: {
     eyebrow: 'Health',
     title: 'Tell us about the injury',
-    subtitle: () => 'Optional detail — the more we know, the safer your plan.',
+    subtitle: () => 'Optional detail. The more we know, the safer your plan.',
     Body: InjuryScreen,
   },
   review: {

@@ -7,7 +7,6 @@
  * the content stay decoupled.
  */
 import { useState, type Dispatch, type FC } from 'react';
-import { createPortal } from 'react-dom';
 import { Icon } from '../icons';
 import {
   GOALS,
@@ -103,113 +102,99 @@ const FOCUS_INFO: Record<string, string> = {
   'Working Memory': 'Holding and using information in your mind for a few seconds.',
 };
 
-/** Bottom-sheet explaining a goal or focus point, opened from an "i" button.
- * Rendered through a portal to <body> so it overlays the whole viewport: the
- * intake shell animates with a transform, which would otherwise trap a
- * `position: fixed` overlay inside that transformed box. */
-const InfoSheet: FC<{ title: string; body: string; onClose: () => void }> = ({ title, body, onClose }) => {
-  if (typeof document === 'undefined') return null;
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
-      <div className="relative z-10 w-full max-w-md rounded-t-3xl border border-border bg-card p-6 pb-[max(2.25rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
-        <div className="flex items-start justify-between gap-4">
-          <h3 className="text-xl font-semibold leading-tight">{title}</h3>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
-          >
-            <Icon name="close" size={18} />
-          </button>
-        </div>
-        <p className="mt-2.5 text-[15px] leading-relaxed text-dim">{body}</p>
-      </div>
-    </div>,
-    document.body,
-  );
-};
-
 // --- Ebene 1: Goal ----------------------------------------------------------
 
 const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => {
-  const [info, setInfo] = useState<{ title: string; body: string } | null>(null);
+  const [flipped, setFlipped] = useState<string | null>(null);
   return (
-    <>
-      <div role="radiogroup" aria-label="Training goal" className="grid grid-cols-2 gap-2.5">
-        {GOALS.map((g) => {
-          const selected = state.goal === g.slug;
-          return (
-            <label key={g.slug} className="block cursor-pointer">
-              <input
-                type="radio"
-                name="goal"
-                value={g.slug}
-                checked={selected}
-                onChange={() => dispatch({ type: 'setGoal', goal: g.slug })}
-                className="peer sr-only"
-              />
-              <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-[var(--border-strong)] peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
+    <div role="radiogroup" aria-label="Training goal" className="grid grid-cols-2 gap-2.5">
+      {GOALS.map((g) => {
+        const selected = state.goal === g.slug;
+        const isFlipped = flipped === g.slug;
+        return (
+          <div key={g.slug} className="[perspective:1000px]">
+            <div
+              className="relative h-[132px] transition-transform duration-500"
+              style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'none' }}
+            >
+              {/* Front: the selectable goal card */}
+              <label className="absolute inset-0 block cursor-pointer [backface-visibility:hidden]">
+                <input
+                  type="radio"
+                  name="goal"
+                  value={g.slug}
+                  checked={selected}
+                  onChange={() => dispatch({ type: 'setGoal', goal: g.slug })}
+                  className="peer sr-only"
+                />
+                <div className="relative flex h-full flex-col gap-3 rounded-2xl border border-border bg-card p-4 transition-colors hover:border-[var(--border-strong)] peer-checked:border-accent peer-checked:bg-[var(--accent-soft)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--accent)]">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setFlipped(g.slug);
+                    }}
+                    aria-label={`What is ${g.title}?`}
+                    className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    <Icon name="info" size={15} />
+                  </button>
+                  <span
+                    className={`grid h-11 w-11 place-items-center rounded-xl transition-colors ${
+                      selected ? 'bg-accent text-[var(--accent-contrast)]' : 'bg-white/[0.06] text-dim'
+                    }`}
+                  >
+                    <Icon name={g.icon} size={22} />
+                  </span>
+                  <span className="text-base font-semibold leading-tight">{g.title}</span>
+                </div>
+              </label>
+              {/* Back: the explanation */}
+              <div
+                className="absolute inset-0 flex h-full flex-col rounded-2xl border border-border bg-card p-4 [backface-visibility:hidden]"
+                style={{ transform: 'rotateY(180deg)' }}
+              >
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setInfo({ title: g.title, body: g.blurb });
-                  }}
-                  aria-label={`What is ${g.title}?`}
+                  onClick={() => setFlipped(null)}
+                  aria-label="Close"
                   className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
                 >
-                  <Icon name="info" size={15} />
+                  <Icon name="close" size={15} />
                 </button>
-                <span
-                  className={`grid h-11 w-11 place-items-center rounded-xl transition-colors ${
-                    selected ? 'bg-accent text-[var(--accent-contrast)]' : 'bg-white/[0.06] text-dim'
-                  }`}
-                >
-                  <Icon name={g.icon} size={22} />
-                </span>
-                <span className="text-base font-semibold leading-tight">{g.title}</span>
+                <span className="eyebrow pr-7 text-accent">{g.title}</span>
+                <p className="mt-1.5 overflow-y-auto text-[12.5px] leading-snug text-dim">{g.blurb}</p>
               </div>
-            </label>
-          );
-        })}
-      </div>
-      {info && <InfoSheet title={info.title} body={info.body} onClose={() => setInfo(null)} />}
-    </>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
 // --- Ebene 1: Focus ---------------------------------------------------------
 
 const FocusScreen: FC<ScreenProps> = ({ state, dispatch }) => {
-  const [info, setInfo] = useState<{ title: string; body: string } | null>(null);
   if (!state.goal) return null;
   const goal = goalBySlug(state.goal);
   const atCap = state.focus.length >= MAX_FOCUS;
   return (
-    <>
-      <div className="grid gap-2.5">
-        {goal.focuses.map((f) => {
-          const body = FOCUS_INFO[f.label];
-          return (
-            <CheckRow
-              key={f.id}
-              name="focus"
-              checked={state.focus.includes(f.id)}
-              disabled={atCap}
-              onChange={() => dispatch({ type: 'toggleFocus', id: f.id })}
-              onInfo={body ? () => setInfo({ title: f.label, body }) : undefined}
-            >
-              {f.label}
-            </CheckRow>
-          );
-        })}
-      </div>
-      {info && <InfoSheet title={info.title} body={info.body} onClose={() => setInfo(null)} />}
-    </>
+    <div className="grid gap-2.5">
+      {goal.focuses.map((f) => (
+        <CheckRow
+          key={f.id}
+          name="focus"
+          checked={state.focus.includes(f.id)}
+          disabled={atCap}
+          onChange={() => dispatch({ type: 'toggleFocus', id: f.id })}
+          info={FOCUS_INFO[f.label]}
+        >
+          {f.label}
+        </CheckRow>
+      ))}
+    </div>
   );
 };
 

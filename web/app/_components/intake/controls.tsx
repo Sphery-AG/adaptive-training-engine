@@ -8,7 +8,7 @@
  * for free (arrow keys within a radio group, space to toggle, proper roles)
  * without hand-rolling roving tabindex — the styled surface is the sibling.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Icon } from '../icons';
 
 const CARD_BASE =
@@ -23,19 +23,21 @@ export function CheckRow({
   checked,
   disabled,
   onChange,
-  onInfo,
+  info,
   children,
 }: {
   name: string;
   checked: boolean;
   disabled?: boolean;
   onChange: () => void;
-  /** When set, renders an info "i" button that opens an explanation. */
-  onInfo?: () => void;
+  /** When set, an "i" button flips the row to reveal this explanation. */
+  info?: string;
   children: ReactNode;
 }) {
-  return (
-    <label className="block cursor-pointer">
+  const [flipped, setFlipped] = useState(false);
+
+  const front = (
+    <label className={`block cursor-pointer ${info ? 'absolute inset-0 [backface-visibility:hidden]' : ''}`}>
       <input
         type="checkbox"
         name={name}
@@ -44,16 +46,16 @@ export function CheckRow({
         onChange={onChange}
         className="peer sr-only"
       />
-      <div className={`${CARD_BASE} flex items-center justify-between gap-3 px-4 py-3.5`}>
+      <div className={`${CARD_BASE} flex items-center justify-between gap-3 px-4 ${info ? 'h-full' : 'py-3.5'}`}>
         <span className="text-base font-medium">{children}</span>
         <span className="flex items-center gap-2">
-          {onInfo && (
+          {info && (
             <button
               type="button"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                onInfo();
+                setFlipped(true);
               }}
               aria-label="What does this mean?"
               className="grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
@@ -71,6 +73,33 @@ export function CheckRow({
         </span>
       </div>
     </label>
+  );
+
+  if (!info) return front;
+
+  return (
+    <div className="[perspective:1000px]">
+      <div
+        className="relative h-[60px] transition-transform duration-500"
+        style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none' }}
+      >
+        {front}
+        <div
+          className="absolute inset-0 flex h-full items-center gap-3 rounded-2xl border border-border bg-card px-4 [backface-visibility:hidden]"
+          style={{ transform: 'rotateY(180deg)' }}
+        >
+          <p className="flex-1 text-[12.5px] leading-snug text-dim">{info}</p>
+          <button
+            type="button"
+            onClick={() => setFlipped(false)}
+            aria-label="Close"
+            className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

@@ -26,7 +26,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Sphere Loop · Adaptive Training",
+  title: "Adaptive Training",
   description: "Personalized, adaptive training plans for any gym, any equipment.",
 };
 

@@ -190,7 +190,7 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
   for (let w = 1; w <= WEEKS; w++) {
     const isDeload = w === WEEKS;
     const weekDiff = isDeload ? Math.max(1, startDiff - 1) : Math.min(10, startDiff + (w - 1));
-    const focus = isDeload ? 'Consolidation week — lighter, lock in gains' : w === 1 ? 'Base' : `Progression +${w - 1}`;
+    const focus = isDeload ? 'Consolidation week, lighter to lock in gains' : w === 1 ? 'Base' : `Progression +${w - 1}`;
 
     const sessions: PlannedSession[] = [];
     const rSessions: ResolvedSession[] = [];
@@ -211,7 +211,7 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
         durationMinutes: length,
         difficulty: weekDiff,
         rationale: substituted
-          ? `${gym.name} has no dedicated ${STIMULUS_LABELS[stimulus]} station — substituted ${station.name} to keep the stimulus close.`
+          ? `${gym.name} has no dedicated ${STIMULUS_LABELS[stimulus]} station, so we substituted ${station.name} to keep the stimulus close.`
           : `${STIMULUS_LABELS[stimulus]} on the ${station.name}, zone ${zone}. ${isDeload ? 'Eased off this week to consolidate.' : `Difficulty ${weekDiff} matches your fitness estimate.`}`,
       };
       sessions.push(session);
@@ -240,19 +240,36 @@ function tierFor(fitnessScore: number): LeagueTier {
   return 'bronze';
 }
 
-function metricsFor(est: Estimate): MetricSnapshot[] {
+function metricsFor(est: Estimate, weeklyLoadMinutes = 0): MetricSnapshot[] {
   return [
     { key: 'fitness_score', label: 'Fitness', value: est.fitnessScore, unit: 'pts', polarity: 'higher_is_better', caption: est.source === 'session_history' ? `From ${est.workoutsAnalyzed} workouts` : 'Estimated from your questionnaire', measuredAt: now() },
     { key: 'body_age', label: 'Body Age', value: est.bodyAge, unit: 'yrs', polarity: 'lower_is_better', caption: `You're ${est.actualAge}. ${est.bodyAge < est.actualAge ? `Training ${est.actualAge - est.bodyAge} yrs younger.` : est.bodyAge > est.actualAge ? `${est.bodyAge - est.actualAge} yrs to catch up.` : 'Right on your age.'}`, measuredAt: now() },
-    { key: 'brain_age', label: 'Brain Age', value: est.brainAge, unit: 'yrs', polarity: 'lower_is_better', caption: est.source === 'session_history' ? 'From your Brain Speed benchmark' : 'Baseline — take a Brain Speed test to refine', measuredAt: now() },
-    { key: 'weekly_load', label: 'This Week', value: 0, unit: 'min', polarity: 'higher_is_better', caption: 'Minutes trained so far', measuredAt: now() },
+    { key: 'brain_age', label: 'Brain Age', value: est.brainAge, unit: 'yrs', polarity: 'lower_is_better', caption: est.source === 'session_history' ? 'From your Brain Speed benchmark' : 'Baseline, take a Brain Speed test to refine', measuredAt: now() },
+    { key: 'weekly_load', label: 'This Week', value: weeklyLoadMinutes, unit: 'min', polarity: 'higher_is_better', caption: 'Minutes trained so far', measuredAt: now() },
   ];
 }
 
+// Points a completed session awards. Kept in one place so the seeded demo
+// state and the live completeSession award stay in lockstep.
+const POINTS_PER_SESSION = 120;
+
 function engagementFor(member: DemoMember, gym: GymConcept, answers: QuestionnaireAnswers, est: Estimate): MemberEngagement {
   const perWeek = answers.sessionsPerWeek ?? 3;
+  const sessionMinutes = answers.sessionLengthMinutes ?? 30;
   const history = member.baseline;
-  const pointsBalance = history ? (history.workoutsAnalyzed > 100 ? 420 : 180) : 0;
+
+  // Seed a "mid-plan" starting state for a returning member so the app looks
+  // alive the moment it opens: a member on a 12-week streak has clearly trained
+  // this week too. A brand-new / guest member still starts empty (seed 0). The
+  // live session-log then continues from here and completes the week.
+  const seedSessions = history ? Math.min(2, perWeek) : 0;
+  const seedLoadMinutes = seedSessions * sessionMinutes;
+  const seedPoints = seedSessions * POINTS_PER_SESSION;
+
+  // Wallet balance is what the member can spend now. We size it to just clear
+  // the cheapest reward, so the first reward reads as genuinely earned and the
+  // rest show how far away they are (an earned ladder, not everything free).
+  const pointsBalance = seedPoints;
   const currentWeeks = history ? (history.workoutsAnalyzed > 100 ? 12 : 3) : 0;
 
   const catalog = rewardCatalogFor(gym.id).map((r) => ({
@@ -262,17 +279,17 @@ function engagementFor(member: DemoMember, gym: GymConcept, answers: Questionnai
 
   return {
     userId: member.id,
-    metrics: metricsFor(est),
+    metrics: metricsFor(est, seedLoadMinutes),
     streak: {
       currentWeeks,
       longestWeeks: Math.max(currentWeeks, history ? 14 : 0),
-      weekProgress: { completed: 0, target: perWeek },
+      weekProgress: { completed: seedSessions, target: perWeek },
       freezesAvailable: 1,
       lastSessionAt: history ? now() : undefined,
     },
     league: {
       tier: tierFor(est.fitnessScore),
-      pointsThisWeek: history ? 240 : 0,
+      pointsThisWeek: seedPoints,
       rank: history ? (history.workoutsAnalyzed > 100 ? 4 : 11) : 30,
       cohortSize: 30,
       pointsToPromotion: history ? 90 : 360,
@@ -281,7 +298,7 @@ function engagementFor(member: DemoMember, gym: GymConcept, answers: Questionnai
       weekEndsAt: now(),
     },
     quests: [
-      { id: 'q-week', title: 'Show up this week', description: `Complete ${perWeek} sessions`, progress: { current: 0, target: perWeek }, rewardPoints: 100, completed: false },
+      { id: 'q-week', title: 'Show up this week', description: `Complete ${perWeek} sessions`, progress: { current: seedSessions, target: perWeek }, rewardPoints: 100, completed: false },
       { id: 'q-pr', title: 'Beat your last score', description: 'Top your previous best in any session', progress: { current: 0, target: 1 }, rewardPoints: 60, completed: false },
       { id: 'q-explore', title: 'Try something new', description: 'Complete a stimulus you haven\'t done yet', progress: { current: 0, target: 1 }, rewardPoints: 50, completed: false },
     ],
@@ -312,7 +329,7 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
     goal: answers.goal,
     createdAt: now(),
     fitnessEstimate: est,
-    rationale: `${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start — questionnaire only'}).`,
+    rationale: `${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start, questionnaire only'}).`,
     weeks,
   };
 
@@ -348,7 +365,7 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
   if (completedWeek) e.streak.currentWeeks += 1;
 
   // Points → league + wallet
-  const earned = 120;
+  const earned = POINTS_PER_SESSION;
   e.league.pointsThisWeek += earned;
   e.wallet.pointsBalance += earned;
   if (e.league.pointsToPromotion !== undefined) {
@@ -446,7 +463,7 @@ export function toCreateTrainingRequest(view: PlanView, weekNumber = 1): CreateT
     kioskId: view.gym.id,
     setupByUserId: null,
     hyrox: false,
-    name: `${view.plan.goal.replace(/_/g, ' ')} — week ${week.weekNumber}`,
+    name: `${view.plan.goal.replace(/_/g, ' ')}, week ${week.weekNumber}`,
     mode: 'single',
     style: 'duration',
     exercises: week.sessions.map((rs, i) => ({

@@ -31,8 +31,12 @@ export default function Home() {
   function submit(a: QuestionnaireAnswers) {
     if (!member || !gym) return;
     setAnswers(a);
-    setView(generatePlan(member, gym, a));
-    setCompletedCount(0);
+    const generated = generatePlan(member, gym, a);
+    setView(generated);
+    // Returning members open the app already a couple of sessions into week 1,
+    // matching the seeded engagement state, so the dashboard looks alive. A new
+    // member (no baseline) starts fresh at zero.
+    setCompletedCount(generated.engagement.streak.weekProgress.completed);
     setLastUpdate(null);
     setStep('planReady');
   }

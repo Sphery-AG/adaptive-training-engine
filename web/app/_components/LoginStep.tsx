@@ -155,7 +155,7 @@ export default function LoginStep({
           <div className="text-center">
             <p className="eyebrow text-cyan">Sphere account</p>
             <h2 className="mt-2 text-4xl">Choose your account</h2>
-            <p className="mt-3 text-sm text-dim">Pick up right where your Sphere history left off.</p>
+            <p className="mt-3 text-sm text-dim">Pick up right where you left off.</p>
           </div>
 
           <div className="mt-8 space-y-3">

@@ -337,7 +337,7 @@ export const FITNESS_TO_ACTIVITY: Record<FitnessLevel, ActivityLevel> = {
 /** Macro sections that drive the 3-segment progress bar. */
 export const SECTIONS = [
   { key: 'goals', label: 'Goals', screens: ['goal', 'focus'] },
-  { key: 'setup', label: 'Setup', screens: ['status', 'activities'] },
+  { key: 'setup', label: 'Setup', screens: ['status'] },
   { key: 'health', label: 'Health', screens: ['health', 'injury'] },
 ] as const;
 

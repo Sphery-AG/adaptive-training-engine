@@ -47,10 +47,12 @@ export interface IntakeState {
   heightCm: number;
 
   // Ebene 2 — Training Setup
-  // Current training minutes + intensity are no longer asked as a standalone
-  // question; they're derived from `otherActivities` (see toQuestionnaireAnswers)
-  // so we never ask "how much / how hard" twice.
+  // Total current weekly training time + typical intensity are the primary
+  // signal (asked with a slider on the Setup screen). Breaking that total down
+  // into specific sports is optional (`otherActivities`), nested under it.
   fitnessLevel: FitnessLevel | null;
+  trainingMinutesPerWeek: number;
+  trainingIntensity: 1 | 2 | 3 | 4 | 5;
   availableDays: WeekdayId[];
   sessionLengthMinutes: 20 | 30 | 45 | 60;
   otherActivities: OtherActivity[];
@@ -76,6 +78,8 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
     weightKg: 75,
     heightCm: 175,
     fitnessLevel: null,
+    trainingMinutesPerWeek: 0,
+    trainingIntensity: 3,
     availableDays: [],
     sessionLengthMinutes: 45,
     otherActivities: [],
@@ -88,7 +92,7 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
 // --- Navigation -------------------------------------------------------------
 
 /** Linear order; `injury` is conditional on a flagged injury. */
-const LINEAR: ScreenId[] = ['goal', 'focus', 'status', 'activities', 'health', 'injury', 'review'];
+const LINEAR: ScreenId[] = ['goal', 'focus', 'status', 'health', 'injury', 'review'];
 
 function nextScreen(screen: ScreenId, state: IntakeState): ScreenId | null {
   const i = LINEAR.indexOf(screen);
@@ -107,6 +111,7 @@ export type IntakeAction =
   | { type: 'toggleFocus'; id: string }
   | { type: 'setProfile'; patch: Partial<Pick<IntakeState, 'age' | 'weightKg' | 'heightCm'>> }
   | { type: 'setFitness'; level: FitnessLevel }
+  | { type: 'setTraining'; patch: Partial<Pick<IntakeState, 'trainingMinutesPerWeek' | 'trainingIntensity'>> }
   | { type: 'toggleDay'; day: WeekdayId }
   | { type: 'setSessionLength'; minutes: 20 | 30 | 45 | 60 }
   | { type: 'addActivity'; activity: OtherActivity }
@@ -167,6 +172,8 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
       return { ...state, ...action.patch };
     case 'setFitness':
       return { ...state, fitnessLevel: action.level };
+    case 'setTraining':
+      return { ...state, ...action.patch };
     case 'toggleDay': {
       const has = state.availableDays.includes(action.day);
       return {
@@ -225,7 +232,7 @@ export function isSkippable(state: IntakeState): boolean {
   if (state.screen === 'focus') {
     return state.goal ? !goalBySlug(state.goal).requiresFocus : false;
   }
-  return state.screen === 'status' || state.screen === 'activities' || state.screen === 'injury';
+  return state.screen === 'status' || state.screen === 'injury';
 }
 
 /** Fill fraction (0–1) for each of the three macro sections, for the progress bar. */
@@ -249,15 +256,18 @@ export const derivedSessionsPerWeek = (state: IntakeState): number =>
 export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers {
   const fitnessLevel = state.fitnessLevel ?? 'medium';
   const flaggedInjury = state.hasInjury === true;
-  // Current weekly volume + typical intensity are derived from the activities
-  // the member listed, so we never ask "how much / how hard" as a separate
-  // question. No activities listed → left undefined (nothing to infer).
+  // Total weekly volume + typical intensity come from the Setup slider (the
+  // primary signal). If the member skipped the slider but listed specific
+  // sports, fall back to summing those. Nothing given → left undefined.
   const activityMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
-  const avgIntensity = state.otherActivities.length
-    ? (Math.round(
-        state.otherActivities.reduce((sum, a) => sum + a.intensity, 0) / state.otherActivities.length,
-      ) as 1 | 2 | 3 | 4 | 5)
-    : undefined;
+  const weeklyMinutes = state.trainingMinutesPerWeek || activityMinutes;
+  const avgIntensity: 1 | 2 | 3 | 4 | 5 | undefined = state.trainingMinutesPerWeek
+    ? state.trainingIntensity
+    : state.otherActivities.length
+      ? (Math.round(
+          state.otherActivities.reduce((sum, a) => sum + a.intensity, 0) / state.otherActivities.length,
+        ) as 1 | 2 | 3 | 4 | 5)
+      : undefined;
   return {
     age: state.age,
     weightKg: state.weightKg,
@@ -268,7 +278,7 @@ export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers
     fitnessLevel: state.fitnessLevel ?? undefined,
     sessionsPerWeek: derivedSessionsPerWeek(state),
     sessionLengthMinutes: state.sessionLengthMinutes,
-    currentTrainingMinutesPerWeek: activityMinutes || undefined,
+    currentTrainingMinutesPerWeek: weeklyMinutes || undefined,
     currentIntensity: avgIntensity,
     availableDays: state.availableDays.length ? state.availableDays : undefined,
     otherActivities: state.otherActivities.length ? state.otherActivities : undefined,

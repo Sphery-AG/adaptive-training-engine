@@ -19,7 +19,7 @@ import {
 import type { ScreenId } from '../../../lib/intake/model';
 import type { IntakeAction, IntakeState } from '../../../lib/intake/state';
 import { derivedSessionsPerWeek } from '../../../lib/intake/state';
-import { CheckRow, FieldLabel, InfoNote, RadioRow, Segmented } from './controls';
+import { CheckRow, FieldLabel, InfoNote, MinutesSlider, RadioRow, Scale5, Segmented } from './controls';
 
 type ScreenProps = { state: IntakeState; dispatch: Dispatch<IntakeAction> };
 
@@ -135,8 +135,37 @@ const StatusScreen: FC<ScreenProps> = ({ state, dispatch }) => (
     </div>
 
     <div>
-      <FieldLabel>Available training days</FieldLabel>
-      <div role="group" aria-label="Available training days" className="grid grid-cols-7 gap-2">
+      <FieldLabel>Weekly training time</FieldLabel>
+      <MinutesSlider
+        value={state.trainingMinutesPerWeek}
+        onChange={(minutesPerWeek) => dispatch({ type: 'setTraining', patch: { trainingMinutesPerWeek: minutesPerWeek } })}
+      />
+    </div>
+
+    {state.trainingMinutesPerWeek > 0 && (
+      <>
+        <div>
+          <FieldLabel>Typical intensity</FieldLabel>
+          <Scale5
+            name="trainingIntensity"
+            value={state.trainingIntensity}
+            onChange={(trainingIntensity) => dispatch({ type: 'setTraining', patch: { trainingIntensity } })}
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Break it into sports (optional)</FieldLabel>
+          <p className="mb-3 text-[13px] text-dim">
+            Tell us what those {state.trainingMinutesPerWeek} minutes are spent on. This is optional and helps us balance your recovery.
+          </p>
+          <ActivitiesScreen state={state} dispatch={dispatch} />
+        </div>
+      </>
+    )}
+
+    <div>
+      <FieldLabel>Intended training days</FieldLabel>
+      <div role="group" aria-label="Intended training days" className="grid grid-cols-7 gap-2">
         {WEEKDAYS.map((d) => (
           <label key={d.id} className="cursor-pointer">
             <input
@@ -163,19 +192,22 @@ const StatusScreen: FC<ScreenProps> = ({ state, dispatch }) => (
 
 // --- Ebene 2: Other activities ---------------------------------------------
 
-const QUICK_SPORTS = ['Gym', 'Running', 'Cycling', 'Swimming', 'Football', 'Tennis', 'Yoga', 'Walking'];
+const QUICK_SPORTS = ['Gym', 'Running', 'Cycling', 'Swimming', 'Football', 'Tennis', 'Yoga', 'Walking', 'Other'];
 
 const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState(QUICK_SPORTS[0]);
+  const [customName, setCustomName] = useState('');
   const [minutes, setMinutes] = useState(60);
   const [intensity, setIntensity] = useState<1 | 2 | 3 | 4 | 5>(3);
 
   function confirm() {
-    if (!name.trim()) return;
-    dispatch({ type: 'addActivity', activity: { name: name.trim(), minutesPerWeek: minutes, intensity } });
+    const finalName = name === 'Other' ? customName.trim() : name;
+    if (!finalName) return;
+    dispatch({ type: 'addActivity', activity: { name: finalName, minutesPerWeek: minutes, intensity } });
     setAdding(false);
     setName(QUICK_SPORTS[0]);
+    setCustomName('');
     setMinutes(60);
     setIntensity(3);
   }
@@ -222,6 +254,16 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
               </button>
             ))}
           </div>
+          {name === 'Other' && (
+            <input
+              type="text"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              placeholder="Which sport or activity?"
+              aria-label="Custom sport or activity name"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
+            />
+          )}
           <div className="grid grid-cols-2 gap-3">
             <label className="rounded-xl border border-border bg-background px-3 py-2">
               <span className="text-xs text-faint">Minutes / week</span>
@@ -376,7 +418,9 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
   const days = state.availableDays.length
     ? WEEKDAYS.filter((d) => state.availableDays.includes(d.id)).map((d) => d.label).join(', ')
     : '—';
-  const trainingMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
+  const activityMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
+  const trainingMinutes = state.trainingMinutesPerWeek || activityMinutes;
+  const INTENSITY_LABEL = ['', 'very light', 'light', 'moderate', 'hard', 'maximal'];
   const goTo = (screen: ScreenId) => dispatch({ type: 'goto', screen });
 
   return (
@@ -391,13 +435,16 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
         <ReviewRow label="Sessions / week" value={`${derivedSessionsPerWeek(state)}×`} />
       </ReviewGroup>
 
-      <ReviewGroup icon="run" title="Current training" onEdit={() => goTo('activities')}>
-        {state.otherActivities.length ? (
+      <ReviewGroup icon="run" title="Current training" onEdit={() => goTo('status')}>
+        {trainingMinutes > 0 ? (
           <>
+            <ReviewRow label="Weekly total" value={`${trainingMinutes} min/week`} />
+            {state.trainingMinutesPerWeek > 0 && (
+              <ReviewRow label="Typical intensity" value={INTENSITY_LABEL[state.trainingIntensity]} />
+            )}
             {state.otherActivities.map((a, i) => (
               <ReviewRow key={`${a.name}-${i}`} label={a.name} value={`${a.minutesPerWeek} min/week`} />
             ))}
-            <ReviewRow label="Total" value={`${trainingMinutes} min/week`} />
           </>
         ) : (
           <ReviewRow label="Nothing added yet" value="—" />
@@ -426,7 +473,7 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
   goal: {
     eyebrow: 'Goal',
     title: 'What do you want to achieve?',
-    subtitle: () => 'Choose your main goal. This shapes your entire plan.',
+    subtitle: () => 'Choose your main goal. Your plan will be shaped around it.',
     required: () => true,
     Body: GoalScreen,
   },
@@ -435,7 +482,7 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
     title: "What's your focus?",
     subtitle: (s) => {
       const goal = s.goal ? goalBySlug(s.goal) : null;
-      return `Within ${goal?.title ?? 'your goal'}, pick up to ${MAX_FOCUS}. This determines your exact plan. (${s.focus.length}/${MAX_FOCUS} selected)`;
+      return `Pick up to ${MAX_FOCUS} focus points within ${goal?.title ?? 'your goal'}. This determines your exact plan. (${s.focus.length}/${MAX_FOCUS} selected)`;
     },
     required: (s) => (s.goal ? goalBySlug(s.goal).requiresFocus : false),
     Body: FocusScreen,
@@ -443,26 +490,19 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
   status: {
     eyebrow: 'Training Setup',
     title: 'About you & availability',
-    subtitle: () => "Optional. The basics we build your plan around.",
+    subtitle: () => "The basics we build your plan around.",
     Body: StatusScreen,
-  },
-  activities: {
-    eyebrow: 'Training Setup',
-    title: 'What training do you do now?',
-    subtitle: () =>
-      'Optional. Add each sport or activity with how long and how hard. This is how we gauge your current load and balance your recovery.',
-    Body: ActivitiesScreen,
   },
   health: {
     eyebrow: 'Health',
     title: 'Any injuries or medical conditions?',
-    subtitle: () => 'Optional, but helps us keep your plan safe.',
+    subtitle: () => 'Help us keep your plan safe.',
     Body: HealthScreen,
   },
   injury: {
     eyebrow: 'Health',
     title: 'Tell us about the injury',
-    subtitle: () => 'Optional detail. The more we know, the safer your plan.',
+    subtitle: () => 'The more we know, the safer your plan.',
     Body: InjuryScreen,
   },
   review: {

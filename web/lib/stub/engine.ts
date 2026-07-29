@@ -328,11 +328,24 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
   const planChanges: string[] = [];
   const newlyUnlocked: Reward[] = [];
 
-  // Streak + week progress
-  e.streak.weekProgress.completed = Math.min(e.streak.weekProgress.target, e.streak.weekProgress.completed + 1);
+  // Streak + week progress. Tie both to the plan's week structure: a session
+  // advances within-week progress, and the streak ticks only when a plan week
+  // is actually completed (not on every click, which ballooned the streak).
   e.streak.lastSessionAt = now();
-  const hitTarget = e.streak.weekProgress.completed >= e.streak.weekProgress.target;
-  if (hitTarget) e.streak.currentWeeks += 1;
+  const total = completedSoFar + 1;
+  let acc = 0;
+  let completedWeek = false;
+  for (const wk of view.resolved) {
+    const start = acc;
+    acc += wk.sessions.length;
+    if (total <= acc) {
+      e.streak.weekProgress.completed = total - start;
+      e.streak.weekProgress.target = wk.sessions.length;
+      completedWeek = total === acc;
+      break;
+    }
+  }
+  if (completedWeek) e.streak.currentWeeks += 1;
 
   // Points → league + wallet
   const earned = 120;
@@ -405,8 +418,8 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
 
   next.engagement = e;
 
-  const summary = hitTarget
-    ? `Weekly target hit — streak now ${e.streak.currentWeeks} weeks! +${earned} pts.`
+  const summary = completedWeek
+    ? `Week complete. Streak now ${e.streak.currentWeeks} weeks. +${earned} pts.`
     : `Session logged. +${earned} pts · fitness ${e.metrics.find((m) => m.key === 'fitness_score')?.value}.`;
 
   return { view: next, update: { userId: view.engagement.userId, triggeredBy: now(), planChanges, metricChanges, newlyUnlocked, summary } };

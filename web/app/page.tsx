@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import WelcomeStep from './_components/WelcomeStep';
+import LoginStep from './_components/LoginStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
 import MemberApp from './_components/MemberApp';
@@ -55,7 +55,7 @@ export default function Home() {
     setLastUpdate(null);
   }
 
-  if (step === 'welcome') return <WelcomeStep onStart={start} />;
+  if (step === 'welcome') return <LoginStep onStart={start} />;
   if (step === 'questionnaire' && member && gym)
     return <QuestionnaireStep member={member} onSubmit={submit} onBack={() => setStep('welcome')} />;
   if (step === 'planReady' && view && answers)
@@ -72,6 +72,7 @@ export default function Home() {
       <MemberApp
         member={member}
         view={view}
+        completedCount={completedCount}
         lastUpdate={lastUpdate}
         onComplete={complete}
         onRestart={restart}

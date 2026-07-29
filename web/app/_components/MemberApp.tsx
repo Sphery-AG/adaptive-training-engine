@@ -72,12 +72,14 @@ function nextTier(tier: LeagueTier): string {
 export default function MemberApp({
   member,
   view,
+  completedCount,
   lastUpdate,
   onComplete,
   onRestart,
 }: {
   member: DemoMember;
   view: PlanView;
+  completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
   onComplete: () => void;
   onRestart: () => void;
@@ -118,7 +120,9 @@ export default function MemberApp({
       </header>
 
       <div key={tab} className="animate-screen-in mt-6 flex-1">
-        {tab === 'today' && <TodayTab view={view} lastUpdate={lastUpdate} onComplete={onComplete} />}
+        {tab === 'today' && (
+          <TodayTab view={view} completedCount={completedCount} lastUpdate={lastUpdate} onComplete={onComplete} />
+        )}
         {tab === 'plan' && <PlanTab view={view} />}
         {tab === 'progress' && <ProgressTab view={view} />}
         {tab === 'circle' && <CircleTab view={view} />}
@@ -143,16 +147,31 @@ const HEAD: Record<Tab, { eyebrow: string; title: (m: DemoMember) => string }> =
 
 function TodayTab({
   view,
+  completedCount,
   lastUpdate,
   onComplete,
 }: {
   view: PlanView;
+  completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
   onComplete: () => void;
 }) {
   const { plan, resolved, engagement: e } = view;
-  const week1 = resolved[0];
-  const next = week1?.sessions[0];
+  // Walk the plan as sessions are logged: flatten every week's sessions in
+  // order, then point at the next one to do. This is what makes logging a
+  // session visibly advance the current protocol instead of freezing on #1.
+  const flat = resolved.flatMap((wk) =>
+    wk.sessions.map((rs, i) => ({ rs, weekNumber: wk.weekNumber, sessionInWeek: i + 1 })),
+  );
+  const allDone = completedCount >= flat.length;
+  const current = flat[Math.min(completedCount, flat.length - 1)];
+  const next = current?.rs;
+  // "This Week" tracks progress inside the current plan week and resets as you
+  // roll into the next one, so logging a session always moves it (it used to
+  // cap at the target and freeze).
+  const curWeekNum = current?.weekNumber;
+  const weekTarget = flat.filter((f) => f.weekNumber === curWeekNum).length || 1;
+  const doneThisWeek = flat.filter((f, i) => f.weekNumber === curWeekNum && i < completedCount).length;
   const bodyAge = metric(e.metrics, 'body_age');
   const conf = plan.fitnessEstimate;
   const quest = e.quests.find((q) => !q.completed) ?? e.quests[0];
@@ -165,9 +184,11 @@ function TodayTab({
           style={{ background: 'radial-gradient(120% 130% at 15% 0%, var(--accent-soft), transparent 62%)' }}>
           <div className="flex items-start justify-between">
             <div>
-              <p className="eyebrow text-accent">Current protocol</p>
+              <p className="eyebrow text-accent">{allDone ? 'Plan complete' : 'Current protocol'}</p>
               <p className="mt-1 text-xs tracking-wide text-faint">
-                WEEK {week1.weekNumber} · SESSION 01
+                {allDone
+                  ? 'Every session logged · retest to recalibrate'
+                  : `WEEK ${current.weekNumber} · SESSION ${String(current.sessionInWeek).padStart(2, '0')}`}
               </p>
             </div>
             <span className="rounded-full border border-border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-dim">
@@ -226,13 +247,13 @@ function TodayTab({
         <div className="flex items-center justify-between">
           <p className="eyebrow text-dim">This Week</p>
           <p className="text-sm font-semibold text-accent tabular">
-            {e.streak.weekProgress.completed}/{e.streak.weekProgress.target}
+            {doneThisWeek}/{weekTarget}
           </p>
         </div>
-        <Bar fraction={e.streak.weekProgress.completed / Math.max(1, e.streak.weekProgress.target)} />
+        <Bar fraction={doneThisWeek / weekTarget} />
         <div className="mt-2 flex justify-between text-[11px] text-faint">
           <span>Sessions completed</span>
-          <span>Target {e.streak.weekProgress.target}</span>
+          <span>Target {weekTarget}</span>
         </div>
       </Card>
 

@@ -47,9 +47,10 @@ export interface IntakeState {
   heightCm: number;
 
   // Ebene 2 — Training Setup
+  // Current training minutes + intensity are no longer asked as a standalone
+  // question; they're derived from `otherActivities` (see toQuestionnaireAnswers)
+  // so we never ask "how much / how hard" twice.
   fitnessLevel: FitnessLevel | null;
-  currentTrainingMinutesPerWeek: number;
-  currentIntensity: 1 | 2 | 3 | 4 | 5;
   availableDays: WeekdayId[];
   sessionLengthMinutes: 20 | 30 | 45 | 60;
   otherActivities: OtherActivity[];
@@ -75,8 +76,6 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
     weightKg: 75,
     heightCm: 175,
     fitnessLevel: null,
-    currentTrainingMinutesPerWeek: 180,
-    currentIntensity: 3,
     availableDays: [],
     sessionLengthMinutes: 45,
     otherActivities: [],
@@ -108,8 +107,6 @@ export type IntakeAction =
   | { type: 'toggleFocus'; id: string }
   | { type: 'setProfile'; patch: Partial<Pick<IntakeState, 'age' | 'weightKg' | 'heightCm'>> }
   | { type: 'setFitness'; level: FitnessLevel }
-  | { type: 'setMinutes'; minutes: number }
-  | { type: 'setIntensity'; intensity: 1 | 2 | 3 | 4 | 5 }
   | { type: 'toggleDay'; day: WeekdayId }
   | { type: 'setSessionLength'; minutes: 20 | 30 | 45 | 60 }
   | { type: 'addActivity'; activity: OtherActivity }
@@ -124,12 +121,18 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
       const next = nextScreen(state.screen, state);
       if (!next) return state;
       const history = [...state.history, state.screen];
-      // When editing from Review, return there as soon as the edited section is
-      // finished (rather than continuing through the remaining screens).
+      // When editing from Review, go straight back as soon as this one screen's
+      // change is captured, so changing a single answer never replays the rest
+      // of the flow. Two selections need a follow-up screen first: a goal that
+      // requires a focus (none picked yet), and a newly flagged injury (detail).
       if (state.returnToReview) {
-        const finishedSection =
-          next === 'review' || sectionIndexForScreen(next) !== sectionIndexForScreen(state.screen);
-        if (finishedSection) return { ...state, screen: 'review', history, returnToReview: false };
+        const needsFollowUp =
+          (state.screen === 'goal' &&
+            state.goal !== null &&
+            goalBySlug(state.goal).requiresFocus &&
+            state.focus.length === 0) ||
+          (state.screen === 'health' && state.hasInjury === true && next === 'injury');
+        if (!needsFollowUp) return { ...state, screen: 'review', history, returnToReview: false };
       }
       return { ...state, screen: next, history };
     }
@@ -164,10 +167,6 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
       return { ...state, ...action.patch };
     case 'setFitness':
       return { ...state, fitnessLevel: action.level };
-    case 'setMinutes':
-      return { ...state, currentTrainingMinutesPerWeek: action.minutes };
-    case 'setIntensity':
-      return { ...state, currentIntensity: action.intensity };
     case 'toggleDay': {
       const has = state.availableDays.includes(action.day);
       return {
@@ -250,6 +249,15 @@ export const derivedSessionsPerWeek = (state: IntakeState): number =>
 export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers {
   const fitnessLevel = state.fitnessLevel ?? 'medium';
   const flaggedInjury = state.hasInjury === true;
+  // Current weekly volume + typical intensity are derived from the activities
+  // the member listed, so we never ask "how much / how hard" as a separate
+  // question. No activities listed → left undefined (nothing to infer).
+  const activityMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
+  const avgIntensity = state.otherActivities.length
+    ? (Math.round(
+        state.otherActivities.reduce((sum, a) => sum + a.intensity, 0) / state.otherActivities.length,
+      ) as 1 | 2 | 3 | 4 | 5)
+    : undefined;
   return {
     age: state.age,
     weightKg: state.weightKg,
@@ -260,8 +268,8 @@ export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers
     fitnessLevel: state.fitnessLevel ?? undefined,
     sessionsPerWeek: derivedSessionsPerWeek(state),
     sessionLengthMinutes: state.sessionLengthMinutes,
-    currentTrainingMinutesPerWeek: state.currentTrainingMinutesPerWeek,
-    currentIntensity: state.currentIntensity,
+    currentTrainingMinutesPerWeek: activityMinutes || undefined,
+    currentIntensity: avgIntensity,
     availableDays: state.availableDays.length ? state.availableDays : undefined,
     otherActivities: state.otherActivities.length ? state.otherActivities : undefined,
     healthConditions: state.healthConditions.length ? state.healthConditions : undefined,

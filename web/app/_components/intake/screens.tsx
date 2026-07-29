@@ -7,6 +7,7 @@
  * the content stay decoupled.
  */
 import { useState, type Dispatch, type FC } from 'react';
+import { createPortal } from 'react-dom';
 import { Icon } from '../icons';
 import {
   GOALS,
@@ -102,27 +103,34 @@ const FOCUS_INFO: Record<string, string> = {
   'Working Memory': 'Holding and using information in your mind for a few seconds.',
 };
 
-/** Bottom-sheet explaining a goal or focus point, opened from an "i" button. */
-const InfoSheet: FC<{ title: string; body: string; onClose: () => void }> = ({ title, body, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-    <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-    <div className="relative z-10 w-full max-w-md rounded-t-3xl border border-border bg-card p-6 pb-9">
-      <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="text-xl font-semibold leading-tight">{title}</h3>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
-        >
-          <Icon name="close" size={18} />
-        </button>
+/** Bottom-sheet explaining a goal or focus point, opened from an "i" button.
+ * Rendered through a portal to <body> so it overlays the whole viewport: the
+ * intake shell animates with a transform, which would otherwise trap a
+ * `position: fixed` overlay inside that transformed box. */
+const InfoSheet: FC<{ title: string; body: string; onClose: () => void }> = ({ title, body, onClose }) => {
+  if (typeof document === 'undefined') return null;
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+      <div className="relative z-10 w-full max-w-md rounded-t-3xl border border-border bg-card p-6 pb-[max(2.25rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="text-xl font-semibold leading-tight">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+        <p className="mt-2.5 text-[15px] leading-relaxed text-dim">{body}</p>
       </div>
-      <p className="mt-2.5 text-[15px] leading-relaxed text-dim">{body}</p>
-    </div>
-  </div>
-);
+    </div>,
+    document.body,
+  );
+};
 
 // --- Ebene 1: Goal ----------------------------------------------------------
 

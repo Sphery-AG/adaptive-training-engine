@@ -362,6 +362,14 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
         );
       })}
 
+      {state.otherActivities.length > 0 && (
+        <p className="px-1 text-xs text-faint">
+          These sports account for{' '}
+          {state.otherActivities.reduce((sum, a) => sum + a.minutesPerSession * Math.max(1, a.days.length), 0)} of your{' '}
+          {state.trainingMinutesPerWeek} min/week.
+        </p>
+      )}
+
       {adding ? (
         <div className="grid gap-3 rounded-2xl border border-[var(--border-strong)] bg-card p-4">
           <div className="flex flex-wrap gap-2">

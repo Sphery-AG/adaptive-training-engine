@@ -170,8 +170,19 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
       return { ...state, ...action.patch };
     case 'setFitness':
       return { ...state, fitnessLevel: action.level };
-    case 'setTraining':
-      return { ...state, ...action.patch };
+    case 'setTraining': {
+      const patch = { ...action.patch };
+      // The weekly total can never drop below what the listed sports already
+      // account for, so the breakdown can't exceed the total you set.
+      if (patch.trainingMinutesPerWeek !== undefined) {
+        const sportsTotal = state.otherActivities.reduce(
+          (sum, a) => sum + a.minutesPerSession * Math.max(1, a.days.length),
+          0,
+        );
+        patch.trainingMinutesPerWeek = Math.max(patch.trainingMinutesPerWeek, sportsTotal);
+      }
+      return { ...state, ...patch };
+    }
     case 'toggleDay': {
       const has = state.availableDays.includes(action.day);
       return {
@@ -183,8 +194,20 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
     }
     case 'setSessionLength':
       return { ...state, sessionLengthMinutes: action.minutes };
-    case 'addActivity':
-      return { ...state, otherActivities: [...state.otherActivities, action.activity] };
+    case 'addActivity': {
+      const otherActivities = [...state.otherActivities, action.activity];
+      // Adding a sport can push the total up (you clearly train at least this
+      // much), so the weekly total never reads less than the sports total.
+      const sportsTotal = otherActivities.reduce(
+        (sum, a) => sum + a.minutesPerSession * Math.max(1, a.days.length),
+        0,
+      );
+      return {
+        ...state,
+        otherActivities,
+        trainingMinutesPerWeek: Math.max(state.trainingMinutesPerWeek, sportsTotal),
+      };
+    }
     case 'removeActivity':
       return {
         ...state,

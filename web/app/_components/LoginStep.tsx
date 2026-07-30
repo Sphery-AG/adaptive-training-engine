@@ -76,7 +76,7 @@ function SphereMark({
   );
 }
 
-type Phase = 'idle' | 'connecting' | 'chooser';
+type Phase = 'idle' | 'signup' | 'connecting' | 'chooser' | 'gym';
 
 export default function LoginStep({
   onStart,
@@ -84,6 +84,10 @@ export default function LoginStep({
   onStart: (member: DemoMember, gym: GymConcept) => void;
 }) {
   const [phase, setPhase] = useState<Phase>('idle');
+  const [member, setMember] = useState<DemoMember | null>(null);
+  const [signupName, setSignupName] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
 
   const homeGym = GYMS.find((g) => g.id === HOME_GYM_ID)!;
   const accounts = DEMO_MEMBERS.filter((m) => m.baseline !== null);
@@ -96,8 +100,11 @@ export default function LoginStep({
     return () => clearTimeout(t);
   }, [phase]);
 
-  function signIn(member: DemoMember) {
-    onStart(member, homeGym);
+  // After picking (or creating) an account, choose the home gym, which decides
+  // the available equipment, then hand off into the plan flow.
+  function signIn(m: DemoMember) {
+    setMember(m);
+    setPhase('gym');
   }
 
   return (
@@ -123,7 +130,7 @@ export default function LoginStep({
             </button>
 
             <button
-              onClick={() => signIn(guest)}
+              onClick={() => setPhase('signup')}
               className="w-full rounded-full border border-border-strong px-6 py-4 text-base font-semibold text-foreground transition hover:border-white/40"
             >
               New to NEXUS? Get started
@@ -133,6 +140,58 @@ export default function LoginStep({
           <p className="mt-8 text-center text-xs leading-relaxed text-faint">
             Your data stays yours. Signing in with NEXUS brings your training history with you.
           </p>
+        </div>
+      )}
+
+      {phase === 'signup' && (
+        <div className="animate-screen-in">
+          <div className="flex flex-col items-center text-center">
+            <SphereMark />
+            <p className="eyebrow mt-6 text-fuchsia">NEXUS</p>
+            <h2 className="mt-2 text-4xl leading-[0.95]">Create your account</h2>
+            <p className="mt-3 text-sm text-dim">Set up your profile and we build your first plan around it.</p>
+          </div>
+
+          <div className="mt-8 space-y-3">
+            <input
+              type="text"
+              value={signupName}
+              onChange={(e) => setSignupName(e.target.value)}
+              placeholder="Full name"
+              aria-label="Full name"
+              className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-white/30"
+            />
+            <input
+              type="email"
+              value={signupEmail}
+              onChange={(e) => setSignupEmail(e.target.value)}
+              placeholder="Email"
+              aria-label="Email"
+              className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-white/30"
+            />
+            <input
+              type="password"
+              value={signupPassword}
+              onChange={(e) => setSignupPassword(e.target.value)}
+              placeholder="Password"
+              aria-label="Password"
+              className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-white/30"
+            />
+          </div>
+
+          <button
+            onClick={() => signIn(guest)}
+            disabled={!signupName.trim() || !signupEmail.trim()}
+            className="mt-5 w-full rounded-full bg-[image:var(--gradient-accent)] px-6 py-4 text-base font-semibold text-[color:var(--accent-contrast)] transition hover:brightness-110 disabled:opacity-40"
+          >
+            Create account
+          </button>
+          <button
+            onClick={() => setPhase('idle')}
+            className="mt-4 w-full text-center text-sm font-semibold text-dim transition hover:text-foreground"
+          >
+            Already have an account? Sign in
+          </button>
         </div>
       )}
 
@@ -192,6 +251,49 @@ export default function LoginStep({
           </button>
 
           <p className="mt-8 text-center text-xs text-faint">Demo accounts for this preview.</p>
+        </div>
+      )}
+
+      {phase === 'gym' && (
+        <div className="animate-screen-in">
+          <div className="text-center">
+            <p className="eyebrow text-cyan">Home gym</p>
+            <h2 className="mt-2 text-4xl">Where do you train?</h2>
+            <p className="mt-3 text-sm text-dim">
+              Pick your home gym so we build plans around the equipment there.
+            </p>
+          </div>
+
+          <div className="mt-8 space-y-3">
+            {GYMS.map((g) => {
+              const spheryCount = g.stations.filter((s) => s.isSpheryEquipment).length;
+              return (
+                <button
+                  key={g.id}
+                  onClick={() => member && onStart(member, g)}
+                  className="flex w-full items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:border-white/30 hover:bg-card-hover"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{g.name}</span>
+                      {g.id === HOME_GYM_ID && (
+                        <span className="rounded bg-[var(--accent-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-accent">Your gym</span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 truncate text-xs text-faint">
+                      {g.location} · {g.stations.length} stations
+                      {spheryCount ? ` · ${spheryCount} Sphery` : ''}
+                    </div>
+                  </div>
+                  <span aria-hidden className="text-faint">→</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="mt-8 text-center text-xs text-faint">
+            Your gym's equipment shapes every plan we build.
+          </p>
         </div>
       )}
     </div>

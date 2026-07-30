@@ -259,7 +259,10 @@ export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers
   // Total weekly volume + typical intensity come from the Setup slider (the
   // primary signal). If the member skipped the slider but listed specific
   // sports, fall back to summing those. Nothing given → left undefined.
-  const activityMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
+  const activityMinutes = state.otherActivities.reduce(
+    (sum, a) => sum + a.minutesPerSession * Math.max(1, a.days.length),
+    0,
+  );
   const weeklyMinutes = state.trainingMinutesPerWeek || activityMinutes;
   const avgIntensity: 1 | 2 | 3 | 4 | 5 | undefined = state.trainingMinutesPerWeek
     ? state.trainingIntensity

@@ -242,11 +242,14 @@ export type WeekdayId = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 /** Injury recovery stage (concept Ebene 3, branched injury detail). */
 export type RecoveryStage = 'acute' | 'early' | 'strength' | 'return' | 'recovered';
 
-/** Another sport the member does, so the engine can balance total load. */
+/** Another sport the member does, so the engine can balance total load.
+ * Captured per session (`minutesPerSession`) plus which weekdays it happens on,
+ * so weekly volume = minutesPerSession × days, and the plan can show those days. */
 export interface OtherActivity {
   name: string;
-  minutesPerWeek: number;
+  minutesPerSession: number;
   intensity: 1 | 2 | 3 | 4 | 5;
+  days: WeekdayId[];
 }
 
 /** Optional branched detail when the member flags an injury. */

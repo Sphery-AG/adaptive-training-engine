@@ -52,6 +52,12 @@ export default function PlanReadyStep({
   const trainingDays: WeekdayId[] = chosen.length ? chosen : DEFAULT_DAYS[perWeek] ?? DEFAULT_DAYS[3];
   const pointsAvailable = engagement.wallet.pointsBalance + PLAN_BONUS;
 
+  // Days the member does their other sports (passively marked on the strip, so
+  // the whole active week is visible without competing with the plan's days).
+  const otherDays = new Set<WeekdayId>();
+  (answers.otherActivities ?? []).forEach((a) => a.days.forEach((d) => otherDays.add(d)));
+  const hasOtherDays = otherDays.size > 0;
+
   return (
     <div className="mx-auto flex min-h-[100dvh] w-full max-w-xl flex-col px-5 pt-6 pb-5 sm:pt-10">
       {/* Hero */}
@@ -71,24 +77,47 @@ export default function PlanReadyStep({
         </p>
       </div>
 
-      {/* Weekday selector */}
+      {/* Weekday selector: plan training days in the foreground, other-sport
+          days passively marked with a dot so the full active week is visible. */}
       <div className="mt-6 flex justify-between gap-1.5" role="list" aria-label="Your training week">
         {WEEKDAYS.map((d) => {
-          const on = trainingDays.includes(d.id);
+          const isTraining = trainingDays.includes(d.id);
+          const isOther = otherDays.has(d.id);
+          const label = `${d.full}${isTraining ? ', training day' : ''}${isOther ? ', other sport' : ''}`;
           return (
             <div
               key={d.id}
               role="listitem"
-              aria-label={`${d.full}${on ? ', training day' : ''}`}
-              className={`grid h-11 flex-1 place-items-center rounded-xl border text-sm font-semibold transition-colors ${
-                on ? 'border-accent bg-[var(--accent-soft)] text-accent' : 'border-border text-faint'
+              aria-label={label}
+              className={`relative grid h-11 flex-1 place-items-center rounded-xl border text-sm font-semibold transition-colors ${
+                isTraining
+                  ? 'border-accent bg-[var(--accent-soft)] text-accent'
+                  : isOther
+                    ? 'border-[var(--border-strong)] text-dim'
+                    : 'border-border text-faint'
               }`}
             >
               {d.label}
+              {isOther && (
+                <span
+                  className="absolute bottom-1 h-1 w-1 rounded-full"
+                  style={{ background: 'var(--orbit-violet)' }}
+                />
+              )}
             </div>
           );
         })}
       </div>
+      {hasOtherDays && (
+        <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-faint">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-sm bg-accent" /> Training day
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: 'var(--orbit-violet)' }} /> Other sport
+          </span>
+        </div>
+      )}
 
       {/* This week's sessions */}
       <div className="mt-6 grid flex-1 gap-3">

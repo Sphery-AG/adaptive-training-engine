@@ -17,6 +17,7 @@ import {
   WEEKDAYS,
 } from '../../../lib/intake/model';
 import type { ScreenId } from '../../../lib/intake/model';
+import type { WeekdayId } from '../../../lib/types/plan';
 import type { IntakeAction, IntakeState } from '../../../lib/intake/state';
 import { derivedSessionsPerWeek } from '../../../lib/intake/state';
 import { CheckRow, FieldLabel, InfoNote, MinutesSlider, RadioRow, Scale5, Segmented } from './controls';
@@ -306,49 +307,60 @@ const StatusScreen: FC<ScreenProps> = ({ state, dispatch }) => (
 
 const QUICK_SPORTS = ['Gym', 'Running', 'Cycling', 'Swimming', 'Football', 'Tennis', 'Yoga', 'Walking', 'Other'];
 
+const INTENSITY_WORD = ['', 'very light', 'light', 'moderate', 'hard', 'maximal'];
+
 const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState(QUICK_SPORTS[0]);
   const [customName, setCustomName] = useState('');
   const [minutes, setMinutes] = useState(60);
   const [intensity, setIntensity] = useState<1 | 2 | 3 | 4 | 5>(3);
+  const [days, setDays] = useState<WeekdayId[]>([]);
+
+  const finalName = name === 'Other' ? customName.trim() : name;
+  const canAdd = finalName.length > 0 && days.length > 0;
+
+  function toggleDay(id: WeekdayId) {
+    setDays((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]));
+  }
 
   function confirm() {
-    const finalName = name === 'Other' ? customName.trim() : name;
-    if (!finalName) return;
-    dispatch({ type: 'addActivity', activity: { name: finalName, minutesPerWeek: minutes, intensity } });
+    if (!canAdd) return;
+    dispatch({ type: 'addActivity', activity: { name: finalName, minutesPerSession: minutes, intensity, days } });
     setAdding(false);
     setName(QUICK_SPORTS[0]);
     setCustomName('');
     setMinutes(60);
     setIntensity(3);
+    setDays([]);
   }
-
-  const INTENSITY_WORD = ['', 'very light', 'light', 'moderate', 'hard', 'maximal'];
 
   return (
     <div className="grid gap-3">
-      {state.otherActivities.map((a, i) => (
-        <div key={`${a.name}-${i}`} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[0.06] text-dim">
-            <Icon name="run" size={20} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <div className="font-semibold">{a.name}</div>
-            <div className="text-[13px] text-dim">
-              {a.minutesPerWeek} min · {INTENSITY_WORD[a.intensity]} intensity / week
+      {state.otherActivities.map((a, i) => {
+        const dayLabels = WEEKDAYS.filter((d) => a.days.includes(d.id)).map((d) => d.label).join(', ');
+        return (
+          <div key={`${a.name}-${i}`} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white/[0.06] text-dim">
+              <Icon name="run" size={20} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold">{a.name}</div>
+              <div className="text-[13px] text-dim">
+                {a.minutesPerSession} min{dayLabels ? ` · ${dayLabels}` : ''} · {INTENSITY_WORD[a.intensity]}
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => dispatch({ type: 'removeActivity', index: i })}
+              aria-label={`Remove ${a.name}`}
+              className="grid h-9 w-9 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+            >
+              <Icon name="close" size={18} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => dispatch({ type: 'removeActivity', index: i })}
-            aria-label={`Remove ${a.name}`}
-            className="grid h-9 w-9 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
-          >
-            <Icon name="close" size={18} />
-          </button>
-        </div>
-      ))}
+        );
+      })}
 
       {adding ? (
         <div className="grid gap-3 rounded-2xl border border-[var(--border-strong)] bg-card p-4">
@@ -376,9 +388,31 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
             />
           )}
+          <div>
+            <span className="text-xs text-faint">Which days?</span>
+            <div className="mt-1.5 grid grid-cols-7 gap-1.5">
+              {WEEKDAYS.map((d) => {
+                const on = days.includes(d.id);
+                return (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => toggleDay(d.id)}
+                    aria-label={d.full}
+                    aria-pressed={on}
+                    className={`grid h-10 place-items-center rounded-lg border text-xs font-semibold transition-colors ${
+                      on ? 'border-accent bg-[var(--accent-soft)] text-accent' : 'border-border text-dim hover:border-[var(--border-strong)]'
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="rounded-xl border border-border bg-background px-3 py-2">
-              <span className="text-xs text-faint">Minutes / week</span>
+              <span className="text-xs text-faint">Minutes / session</span>
               <input
                 type="number"
                 value={minutes}
@@ -404,7 +438,8 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
             <button
               type="button"
               onClick={confirm}
-              className="flex-1 rounded-full bg-accent py-2.5 text-sm font-semibold text-[var(--accent-contrast)]"
+              disabled={!canAdd}
+              className="flex-1 rounded-full bg-accent py-2.5 text-sm font-semibold text-[var(--accent-contrast)] disabled:opacity-40"
             >
               Add
             </button>
@@ -530,7 +565,10 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
   const days = state.availableDays.length
     ? WEEKDAYS.filter((d) => state.availableDays.includes(d.id)).map((d) => d.label).join(', ')
     : '—';
-  const activityMinutes = state.otherActivities.reduce((sum, a) => sum + a.minutesPerWeek, 0);
+  const activityMinutes = state.otherActivities.reduce(
+    (sum, a) => sum + a.minutesPerSession * Math.max(1, a.days.length),
+    0,
+  );
   const trainingMinutes = state.trainingMinutesPerWeek || activityMinutes;
   const INTENSITY_LABEL = ['', 'very light', 'light', 'moderate', 'hard', 'maximal'];
   const goTo = (screen: ScreenId) => dispatch({ type: 'goto', screen });
@@ -554,9 +592,16 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
             {state.trainingMinutesPerWeek > 0 && (
               <ReviewRow label="Typical intensity" value={INTENSITY_LABEL[state.trainingIntensity]} />
             )}
-            {state.otherActivities.map((a, i) => (
-              <ReviewRow key={`${a.name}-${i}`} label={a.name} value={`${a.minutesPerWeek} min/week`} />
-            ))}
+            {state.otherActivities.map((a, i) => {
+              const dayLabels = WEEKDAYS.filter((d) => a.days.includes(d.id)).map((d) => d.label).join(', ');
+              return (
+                <ReviewRow
+                  key={`${a.name}-${i}`}
+                  label={a.name}
+                  value={`${a.minutesPerSession} min${dayLabels ? ` · ${dayLabels}` : ''}`}
+                />
+              );
+            })}
           </>
         ) : (
           <ReviewRow label="Nothing added yet" value="—" />

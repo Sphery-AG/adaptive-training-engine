@@ -92,12 +92,11 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
 // --- Navigation -------------------------------------------------------------
 
 /** Linear order; `injury` is conditional on a flagged injury. */
-const LINEAR: ScreenId[] = ['goal', 'focus', 'status', 'health', 'injury', 'review'];
+const LINEAR: ScreenId[] = ['goal', 'focus', 'status', 'health', 'review'];
 
 function nextScreen(screen: ScreenId, state: IntakeState): ScreenId | null {
   const i = LINEAR.indexOf(screen);
-  let next = LINEAR[i + 1] as ScreenId | undefined;
-  if (next === 'injury' && !state.hasInjury) next = 'review';
+  const next = LINEAR[i + 1] as ScreenId | undefined;
   return next ?? null;
 }
 
@@ -132,11 +131,10 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
       // requires a focus (none picked yet), and a newly flagged injury (detail).
       if (state.returnToReview) {
         const needsFollowUp =
-          (state.screen === 'goal' &&
-            state.goal !== null &&
-            goalBySlug(state.goal).requiresFocus &&
-            state.focus.length === 0) ||
-          (state.screen === 'health' && state.hasInjury === true && next === 'injury');
+          state.screen === 'goal' &&
+          state.goal !== null &&
+          goalBySlug(state.goal).requiresFocus &&
+          state.focus.length === 0;
         if (!needsFollowUp) return { ...state, screen: 'review', history, returnToReview: false };
       }
       return { ...state, screen: next, history };
@@ -232,7 +230,7 @@ export function isSkippable(state: IntakeState): boolean {
   if (state.screen === 'focus') {
     return state.goal ? !goalBySlug(state.goal).requiresFocus : false;
   }
-  return state.screen === 'status' || state.screen === 'injury';
+  return state.screen === 'status';
 }
 
 /** Fill fraction (0–1) for each of the three macro sections, for the progress bar. */

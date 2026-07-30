@@ -464,7 +464,7 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
 // --- Ebene 3: Health --------------------------------------------------------
 
 const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
-  <div className="grid gap-4">
+  <div className="grid gap-5">
     <div role="radiogroup" aria-label="Any injuries or medical conditions" className="grid grid-cols-2 gap-3">
       {[
         { value: false, label: "No, I'm good" },
@@ -484,42 +484,43 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
         </label>
       ))}
     </div>
+
+    {/* Injury detail reveals inline the moment "Yes" is picked, so adding an
+        injury is obvious instead of hidden on a separate screen. */}
+    {state.hasInjury === true && (
+      <div className="grid gap-5 animate-screen-in">
+        <div>
+          <FieldLabel>Affected body part</FieldLabel>
+          <input
+            type="text"
+            value={state.injury.bodyPart ?? ''}
+            onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
+            placeholder="e.g. Knee"
+            className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
+          />
+        </div>
+        <div>
+          <FieldLabel>Current recovery stage</FieldLabel>
+          <div role="radiogroup" aria-label="Current recovery stage" className="grid gap-2.5">
+            {RECOVERY_STAGES.map((s) => (
+              <RadioRow
+                key={s.id}
+                name="recovery"
+                value={s.id}
+                checked={state.injury.recoveryStage === s.id}
+                onChange={() => dispatch({ type: 'setInjury', patch: { recoveryStage: s.id } })}
+                title={s.title}
+                desc={s.desc}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+
     <InfoNote>
       This helps us tailor your plan safely. It does not replace professional medical advice.
     </InfoNote>
-  </div>
-);
-
-// --- Ebene 3: Injury detail -------------------------------------------------
-
-const InjuryScreen: FC<ScreenProps> = ({ state, dispatch }) => (
-  <div className="grid gap-7">
-    <div>
-      <FieldLabel>Affected body part</FieldLabel>
-      <input
-        type="text"
-        value={state.injury.bodyPart ?? ''}
-        onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
-        placeholder="e.g. Knee"
-        className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
-      />
-    </div>
-    <div>
-      <FieldLabel>Current recovery stage</FieldLabel>
-      <div role="radiogroup" aria-label="Current recovery stage" className="grid gap-2.5">
-        {RECOVERY_STAGES.map((s) => (
-          <RadioRow
-            key={s.id}
-            name="recovery"
-            value={s.id}
-            checked={state.injury.recoveryStage === s.id}
-            onChange={() => dispatch({ type: 'setInjury', patch: { recoveryStage: s.id } })}
-            title={s.title}
-            desc={s.desc}
-          />
-        ))}
-      </div>
-    </div>
   </div>
 );
 
@@ -655,12 +656,6 @@ export const SCREENS: Record<ScreenId, ScreenDef> = {
     title: 'Any injuries or medical conditions?',
     subtitle: () => 'Help us keep your plan safe.',
     Body: HealthScreen,
-  },
-  injury: {
-    eyebrow: 'Health',
-    title: 'Tell us about the injury',
-    subtitle: () => 'The more we know, the safer your plan.',
-    Body: InjuryScreen,
   },
   review: {
     eyebrow: 'Review',

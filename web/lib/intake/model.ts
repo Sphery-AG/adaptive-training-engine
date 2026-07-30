@@ -338,7 +338,7 @@ export const FITNESS_TO_ACTIVITY: Record<FitnessLevel, ActivityLevel> = {
 export const SECTIONS = [
   { key: 'goals', label: 'Goals', screens: ['goal', 'focus'] },
   { key: 'setup', label: 'Setup', screens: ['status'] },
-  { key: 'health', label: 'Health', screens: ['health', 'injury'] },
+  { key: 'health', label: 'Health', screens: ['health'] },
 ] as const;
 
 export type ScreenId = (typeof SECTIONS)[number]['screens'][number] | 'review';

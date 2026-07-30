@@ -106,10 +106,10 @@ export default function LoginStep({
         <div className="animate-screen-in">
           <div className="flex flex-col items-center text-center">
             <SphereMark />
-            <p className="eyebrow mt-6 text-fuchsia">Sphere</p>
+            <p className="eyebrow mt-6 text-fuchsia">NEXUS</p>
             <h1 className="mt-2 text-5xl leading-[0.9]">Adaptive Training</h1>
             <p className="mt-4 text-sm text-dim">
-              Personalized plans built from your Sphere data, tuned every time you train.
+              Personalized plans built from your training data, tuned every time you train.
             </p>
           </div>
 
@@ -119,19 +119,19 @@ export default function LoginStep({
               className="flex w-full items-center justify-center gap-3 rounded-full bg-[image:var(--gradient-accent)] px-6 py-4 text-base font-semibold text-[color:var(--accent-contrast)] transition hover:brightness-110"
             >
               <SphereMark size={22} mono />
-              Continue with Sphere
+              Continue with NEXUS
             </button>
 
             <button
               onClick={() => signIn(guest)}
               className="w-full rounded-full border border-border-strong px-6 py-4 text-base font-semibold text-foreground transition hover:border-white/40"
             >
-              New to Sphere? Get started
+              New to NEXUS? Get started
             </button>
           </div>
 
           <p className="mt-8 text-center text-xs leading-relaxed text-faint">
-            Your data stays yours. Signing in with Sphere brings your training history with you.
+            Your data stays yours. Signing in with NEXUS brings your training history with you.
           </p>
         </div>
       )}
@@ -139,10 +139,10 @@ export default function LoginStep({
       {phase === 'connecting' && (
         <div className="animate-screen-in flex flex-col items-center text-center">
           <SphereMark size={84} spinning />
-          <p className="eyebrow mt-8 text-cyan">Connecting to Sphere</p>
+          <p className="eyebrow mt-8 text-cyan">Connecting to NEXUS</p>
           <h2 className="mt-2 text-3xl">Syncing your account</h2>
           <p className="mt-3 text-sm text-dim">
-            Verifying your Sphere account and pulling in your training history.
+            Verifying your NEXUS account and pulling in your training history.
           </p>
           <div className="mt-8 h-1 w-40 overflow-hidden rounded-full bg-white/10">
             <div className="h-full w-1/2 rounded-full bg-[image:var(--gradient-accent)] [animation:screen-in_1.3s_ease-in-out] motion-safe:animate-pulse" />
@@ -153,7 +153,7 @@ export default function LoginStep({
       {phase === 'chooser' && (
         <div className="animate-screen-in">
           <div className="text-center">
-            <p className="eyebrow text-cyan">Sphere account</p>
+            <p className="eyebrow text-cyan">NEXUS account</p>
             <h2 className="mt-2 text-4xl">Choose your account</h2>
             <p className="mt-3 text-sm text-dim">Pick up right where you left off.</p>
           </div>

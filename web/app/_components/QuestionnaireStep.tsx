@@ -25,8 +25,7 @@ import type { QuestionnaireAnswers } from '@/lib/types/plan';
 
 function ctaLabel(s: IntakeState): string {
   if (isLastScreen(s)) return 'Create My Plan';
-  if (s.screen === 'health') return s.hasInjury ? 'Continue' : 'Review My Setup';
-  if (s.screen === 'injury') return 'Review My Setup';
+  if (s.screen === 'health') return 'Review My Setup';
   return 'Continue';
 }
 
@@ -43,7 +42,7 @@ export default function QuestionnaireStep({
   const def = SCREENS[state.screen];
   const Body = def.Body;
 
-  const stepCount = state.hasInjury ? 6 : 5;
+  const stepCount = 5;
   const stepNumber = Math.min(state.history.length + 1, stepCount);
 
   return (

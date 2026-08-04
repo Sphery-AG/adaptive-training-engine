@@ -115,26 +115,31 @@ member's gym's real equipment. CreateTrainingRequest is already an ordered
 exercise list, so this makes the export real instead of faked. Decision Aug 4:
 build Wed on the stub (8 goal templates drafted from the Darmstadt floor,
 corrected against Stephan's circle notes when Anthony hands them over).
-- [ ] Session model gains an ordered station sequence (station, minutes, target zone).
-- [ ] 8 per-goal circuit templates from the Sphere Darmstadt station list.
-- [ ] Plan + Today UI show sessions as circuits, not a single station.
+- [x] Session model gains an ordered station sequence (station, minutes, target zone).
+  Seeded Aug 4: circuitFor() resolves any session to warmup + work rotation + cooldown
+  across the gym's floor; the live training flow runs on it.
+- [ ] 8 per-goal circuit templates from the Sphere Darmstadt station list (replace the
+  generic rotation; correct against Stephan's circle notes when Anthony hands them over).
+- [ ] Plan + Today UI show sessions as circuits, not a single station (live flow already
+  does; the session rows still say one station).
 - [ ] Export maps circuit stations 1:1 onto CreateTrainingRequest exercises.
 
 ### J8, live session screen  (pulled up from P2; Stephan, Jul 31; build Thu on J7b)
 Design settled Aug 4 (Anthony): three-state flow with the station timeline as the spine.
 Mockup: scratchpad live-option-b-zones.png; zone-bar reference saved at
 docs/design-reference/sphery-app-workout-hr-zones.png (from app.sphery.ch).
-- [ ] **Preview screen**: tapping play on Today shows the circuit rundown (ordered
-  stations, minutes, target zone each) before a Start Session button.
-- [ ] **Live screen, Option B vertical timeline**: whole circuit visible as a rail; done
+- [x] **Preview screen**: tapping play on Today shows the circuit rundown (ordered
+  stations, minutes, target zone each) before a Start Session button. Built Aug 4.
+- [x] **Live screen, Option B vertical timeline**: whole circuit visible as a rail; done
   stations checked with their zone result, current station expanded (countdown, station
-  progress bar, in-zone + points), upcoming below. HR pill + elapsed time on top.
-- [ ] **Time-in-zones block in Sphery's app language**: horizontal glowing gradient bars
+  progress bar, in-zone + points), upcoming below. HR pill + elapsed time on top. Built
+  Aug 4, verified end to end.
+- [x] **Time-in-zones block in Sphery's app language**: horizontal glowing gradient bars
   per zone, real bpm-range labels computed from the member's estimated hrMax (not Z1-Z5),
   time + percent per row, Avg HR / Max HR alongside. Session-wide on the live screen.
-- [ ] **Post-session summary**: same zone bars per station AND whole session (Stephan's
-  ask), plus HR Recovery, points earned; hands off to the Plan Adapted moment.
-- [ ] Advance mechanic: "Complete station" button (demo-honest, walkable in 30 seconds).
+- [x] **Post-session summary**: zone bars, per-station results, points earned; "Log
+  session" hands off to the Plan Adapted moment. Per-station zone breakdown still to add.
+- [x] Advance mechanic: "Complete station" button (demo-honest, walkable in 30 seconds).
 - [ ] Demo-grade in v1: simulated live HR, no kiosk or wearable wiring. Known data gap:
   circle exercise logs carry only hrAverage today; per-station zone durations are the open
   Michel question.

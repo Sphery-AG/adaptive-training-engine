@@ -47,6 +47,8 @@ const now = () => new Date().toISOString();
 // ---------------------------------------------------------------------------
 
 interface Estimate extends FitnessEstimate {
+  bodyScore: number;
+  brainScore: number;
   bodyAge: number;
   brainAge: number;
   actualAge: number;
@@ -69,6 +71,8 @@ export function estimate(member: DemoMember, answers: QuestionnaireAnswers): Est
     return {
       source: 'session_history',
       fitnessScore: b.fitnessScore,
+      bodyScore: b.bodyScore,
+      brainScore: b.brainScore,
       estimatedHrRest: b.hrRest,
       estimatedHrMax: b.hrMax,
       confidence: Math.min(0.95, 0.4 + b.workoutsAnalyzed / 160),
@@ -85,6 +89,10 @@ export function estimate(member: DemoMember, answers: QuestionnaireAnswers): Est
   return {
     source: 'questionnaire_only',
     fitnessScore,
+    // No session data yet, so both scores start at the activity-based estimate
+    // and diverge once real accuracy/timing data arrives.
+    bodyScore: fitnessScore,
+    brainScore: Math.max(30, fitnessScore - 6),
     estimatedHrRest: Math.round(74 - fitnessScore * 0.18),
     estimatedHrMax: tanaka(age),
     confidence: 0.3,
@@ -182,15 +190,32 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
     ? [...focusStimuli, ...base.filter((s) => !focusStimuli.includes(s))]
     : base;
   const startDiff = baseDifficulty(est.fitnessScore);
-  const WEEKS = 4;
+  // Prescribed blocks are always a minimum of 8 weeks (Stephan), structured as
+  // two 4-week waves: build for three weeks, deload on the fourth, then build
+  // again from a higher floor. The final week doubles as the retest that
+  // re-measures fitness and seeds the next block.
+  const WEEKS = 8;
 
   const weeks: PlannedWeek[] = [];
   const resolved: ResolvedWeek[] = [];
 
   for (let w = 1; w <= WEEKS; w++) {
-    const isDeload = w === WEEKS;
-    const weekDiff = isDeload ? Math.max(1, startDiff - 1) : Math.min(10, startDiff + (w - 1));
-    const focus = isDeload ? 'Consolidation week, lighter to lock in gains' : w === 1 ? 'Base' : `Progression +${w - 1}`;
+    const isDeload = w % 4 === 0;
+    const isRetest = w === WEEKS;
+    const wave = Math.ceil(w / 4);
+    const stepInWave = (w - 1) % 4;
+    const weekDiff = isDeload
+      ? Math.max(1, startDiff + wave - 2)
+      : Math.min(10, startDiff + stepInWave + (wave - 1) * 2);
+    const focus = isRetest
+      ? 'Deload + retest'
+      : isDeload
+        ? 'Deload'
+        : w === 1
+          ? 'Base'
+          : w === 7
+            ? 'Peak'
+            : 'Build';
 
     const sessions: PlannedSession[] = [];
     const rSessions: ResolvedSession[] = [];
@@ -212,7 +237,9 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
         difficulty: weekDiff,
         rationale: substituted
           ? `${gym.name} has no dedicated ${STIMULUS_LABELS[stimulus]} station, so we substituted ${station.name} to keep the stimulus close.`
-          : `${STIMULUS_LABELS[stimulus]} on the ${station.name}, zone ${zone}. ${isDeload ? 'Eased off this week to consolidate.' : `Difficulty ${weekDiff} matches your fitness estimate.`}`,
+          : isRetest && i === perWeek - 1
+            ? `Retest session on the ${station.name}. We re-measure your fitness here and build your next block from it.`
+            : `${STIMULUS_LABELS[stimulus]} on the ${station.name}, zone ${zone}. ${isDeload ? 'Eased off this week so the training sinks in.' : `Difficulty ${weekDiff} matches your fitness estimate.`}`,
       };
       sessions.push(session);
       rSessions.push({
@@ -241,11 +268,14 @@ function tierFor(fitnessScore: number): LeagueTier {
 }
 
 function metricsFor(est: Estimate, weeklyLoadMinutes = 0): MetricSnapshot[] {
+  const fromHistory = est.source === 'session_history';
   return [
-    { key: 'fitness_score', label: 'Fitness', value: est.fitnessScore, unit: 'pts', polarity: 'higher_is_better', caption: est.source === 'session_history' ? `From ${est.workoutsAnalyzed} workouts` : 'Estimated from your questionnaire', measuredAt: now() },
+    { key: 'body_score', label: 'Body Score', value: est.bodyScore, unit: '/100', polarity: 'higher_is_better', caption: fromHistory ? `From ${est.workoutsAnalyzed} workouts` : 'Estimated from your questionnaire', measuredAt: now() },
+    { key: 'brain_score', label: 'Brain Score', value: est.brainScore, unit: '/100', polarity: 'higher_is_better', caption: fromHistory ? 'From your reaction timing' : 'Baseline, sharpens as you train', measuredAt: now() },
     { key: 'body_age', label: 'Body Age', value: est.bodyAge, unit: 'yrs', polarity: 'lower_is_better', caption: `You're ${est.actualAge}. ${est.bodyAge < est.actualAge ? `Training ${est.actualAge - est.bodyAge} yrs younger.` : est.bodyAge > est.actualAge ? `${est.bodyAge - est.actualAge} yrs to catch up.` : 'Right on your age.'}`, measuredAt: now() },
-    { key: 'brain_age', label: 'Brain Age', value: est.brainAge, unit: 'yrs', polarity: 'lower_is_better', caption: est.source === 'session_history' ? 'From your Brain Speed benchmark' : 'Baseline, take a Brain Speed test to refine', measuredAt: now() },
+    { key: 'brain_age', label: 'Brain Age', value: est.brainAge, unit: 'yrs', polarity: 'lower_is_better', caption: fromHistory ? 'From your Brain Speed benchmark' : 'Baseline, take a Brain Speed test to refine', measuredAt: now() },
     { key: 'weekly_load', label: 'This Week', value: weeklyLoadMinutes, unit: 'min', polarity: 'higher_is_better', caption: 'Minutes trained so far', measuredAt: now() },
+    { key: 'hr_recovery', label: 'HR Recovery', value: Math.round(12 + est.fitnessScore * 0.15), unit: 'bpm', polarity: 'higher_is_better', caption: fromHistory ? 'Beats recovered in the minute after effort' : 'Estimated, sharpens with belt data', measuredAt: now() },
   ];
 }
 
@@ -329,7 +359,7 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
     goal: answers.goal,
     createdAt: now(),
     fitnessEstimate: est,
-    rationale: `${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start, questionnaire only'}).`,
+    rationale: `An ${weeks.length}-week block, ${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start, questionnaire only'}).`,
     weeks,
   };
 
@@ -410,7 +440,8 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
     m.measuredAt = now();
     metricChanges.push(m);
   };
-  bump('fitness_score', +1, 'HR recovery improved after this session');
+  bump('body_score', +1, 'Movement accuracy trending up');
+  bump('hr_recovery', +1, 'Faster recovery after this session');
   bump('body_age', -0.3, 'Trending younger');
   const load = e.metrics.find((x) => x.key === 'weekly_load');
   if (load) bump('weekly_load', view.resolved[0].sessions[0]?.session.durationMinutes ?? 30, 'Added this session');
@@ -437,7 +468,7 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
 
   const summary = completedWeek
     ? `Week complete. Streak now ${e.streak.currentWeeks} weeks. +${earned} pts.`
-    : `Session logged. +${earned} pts · fitness ${e.metrics.find((m) => m.key === 'fitness_score')?.value}.`;
+    : `Session logged. +${earned} pts · body score ${e.metrics.find((m) => m.key === 'body_score')?.value}.`;
 
   return { view: next, update: { userId: view.engagement.userId, triggeredBy: now(), planChanges, metricChanges, newlyUnlocked, summary } };
 }

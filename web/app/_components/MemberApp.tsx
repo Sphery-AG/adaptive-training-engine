@@ -102,7 +102,7 @@ export default function MemberApp({
       <header className="flex items-start justify-between gap-3">
         <div>
           <p className="eyebrow text-fuchsia">{head.eyebrow}</p>
-          <h1 className="mt-1 text-3xl leading-none">{head.title(member)}</h1>
+          <h1 className="mt-1 text-3xl leading-none">{head.title(member, view.plan.weeks.length)}</h1>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -123,7 +123,7 @@ export default function MemberApp({
         {tab === 'today' && (
           <TodayTab view={view} completedCount={completedCount} lastUpdate={lastUpdate} onComplete={onComplete} />
         )}
-        {tab === 'plan' && <PlanTab view={view} />}
+        {tab === 'plan' && <PlanTab view={view} completedCount={completedCount} />}
         {tab === 'progress' && <ProgressTab view={view} />}
         {tab === 'circle' && <CircleTab view={view} />}
       </div>
@@ -134,9 +134,9 @@ export default function MemberApp({
   );
 }
 
-const HEAD: Record<Tab, { eyebrow: string; title: (m: DemoMember) => string }> = {
+const HEAD: Record<Tab, { eyebrow: string; title: (m: DemoMember, weeks: number) => string }> = {
   today: { eyebrow: 'Adaptive plan · live', title: (m) => `Hi, ${m.name}` },
-  plan: { eyebrow: 'Adaptive protocol', title: () => '4-Week Plan' },
+  plan: { eyebrow: 'Adaptive protocol', title: (_m, weeks) => `${weeks}-Week Plan` },
   progress: { eyebrow: 'Directionally true', title: () => 'Progress' },
   circle: { eyebrow: 'Habit loop', title: () => 'Your Circle' },
 };
@@ -244,17 +244,68 @@ function TodayTab({
 // Plan
 // ---------------------------------------------------------------------------
 
-function PlanTab({ view }: { view: PlanView }) {
+function PlanTab({ view, completedCount }: { view: PlanView; completedCount: number }) {
   const { plan, resolved } = view;
   const [showJson, setShowJson] = useState(false);
+
+  // Map completedCount (a flat session index) onto per-week boundaries so the
+  // strip and the detail card can mark weeks and sessions done/current/ahead.
+  let acc = 0;
+  const weekMeta = resolved.map((wk) => {
+    const start = acc;
+    acc += wk.sessions.length;
+    return { wk, start, end: acc };
+  });
+  const totalSessions = acc;
+  const pct = Math.round(Math.min(1, completedCount / Math.max(1, totalSessions)) * 100);
+  const currentIdx = weekMeta.findIndex((m) => completedCount < m.end);
+  const allDone = currentIdx === -1;
+  // One week of detail at a time — the current week by default. The strip is
+  // the drill-down into the rest; the full plan is never dumped in one list.
+  const [selectedIdx, setSelectedIdx] = useState(allDone ? resolved.length - 1 : currentIdx);
+  const [weekMenuOpen, setWeekMenuOpen] = useState(false);
+  const sel = weekMeta[selectedIdx];
+  const selStatus: 'done' | 'current' | 'projected' =
+    sel.end <= completedCount ? 'done' : selectedIdx === currentIdx ? 'current' : 'projected';
 
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-dim">{plan.rationale}</p>
+
+      {/* Block progress: percent, week strip, where you are */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <p className="eyebrow text-accent">Block Progress</p>
+          <span className="text-xs font-semibold text-accent tabular">{pct}% complete</span>
+        </div>
+        <Bar className="mt-2.5" fraction={completedCount / Math.max(1, totalSessions)} color="var(--orbit-cyan)" />
+        <div className="mt-3 flex gap-1.5">
+          {weekMeta.map((m, i) => {
+            const done = m.end <= completedCount;
+            const isCurrent = i === currentIdx;
+            return (
+              <div
+                key={m.wk.weekNumber}
+                className={`flex-1 rounded-lg py-1.5 text-center text-[11px] font-semibold tabular ${
+                  done ? 'bg-mint/15 text-mint' : isCurrent ? 'bg-[var(--accent-soft)] text-accent' : 'bg-white/[0.05] text-faint'
+                }`}
+              >
+                {done ? <Icon name="check" size={12} className="mx-auto" /> : m.wk.weekNumber}
+              </div>
+            );
+          })}
+        </div>
+        <p className="mt-2.5 text-[11px] text-faint">
+          {allDone
+            ? `Block complete, all ${totalSessions} sessions logged. The retest sets up your next block.`
+            : `Week ${weekMeta[currentIdx].wk.weekNumber} of ${resolved.length} · ${completedCount} of ${totalSessions} sessions done`}
+        </p>
+      </Card>
+
       <div className="flex items-start gap-2 rounded-xl border border-[var(--border)] bg-[var(--accent-soft)] px-3.5 py-2.5">
         <Icon name="refresh" size={14} className="mt-0.5 shrink-0 text-accent" />
         <p className="text-[13px] leading-snug text-dim">
-          Week 1 is set. The weeks ahead are a projection and re-tune from how you actually perform.
+          Your current week is set. The weeks ahead are projections and re-tune from how you actually perform.
         </p>
       </div>
 
@@ -273,24 +324,86 @@ function PlanTab({ view }: { view: PlanView }) {
         </p>
       </Card>
 
-      {resolved.map((wk) => (
-        <Card key={wk.weekNumber}>
-          <div className="flex items-center justify-between">
-            <p className="eyebrow text-accent">Week {wk.weekNumber}{wk.focus ? ` · ${wk.focus}` : ''}</p>
-            <span className="flex items-center gap-2 text-[11px] text-faint">
-              {wk.weekNumber > 1 && (
-                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 font-semibold text-violet">Projected</span>
-              )}
-              {wk.sessions.length} sessions
+      {/* Selected week detail, week picked via the dropdown on the title */}
+      <Card className="relative">
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={(e) => {
+              // The panel is absolutely positioned, so it can't extend the
+              // page's scroll area; center the trigger first so the capped
+              // panel always fits on a phone screen.
+              if (!weekMenuOpen) e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              setWeekMenuOpen((v) => !v);
+            }}
+            aria-expanded={weekMenuOpen}
+            aria-label="Choose week"
+            className="flex items-center gap-1.5 transition-opacity hover:opacity-80"
+          >
+            <span className="eyebrow text-accent">
+              Week {sel.wk.weekNumber}
+              {sel.wk.focus ? ` · ${sel.wk.focus}` : ''}
             </span>
+            <Icon
+              name="chevron-left"
+              size={13}
+              className={`text-accent transition-transform ${weekMenuOpen ? 'rotate-90' : '-rotate-90'}`}
+            />
+          </button>
+          {selStatus === 'done' && (
+            <span className="rounded bg-mint/15 px-1.5 py-0.5 text-[10px] font-semibold text-mint">Done</span>
+          )}
+          {selStatus === 'current' && (
+            <span className="rounded bg-[var(--accent-soft2)] px-1.5 py-0.5 text-[10px] font-semibold text-accent">Current</span>
+          )}
+          {selStatus === 'projected' && (
+            <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-violet">Projected</span>
+          )}
+        </div>
+        {weekMenuOpen && (
+          <div className="absolute inset-x-3 top-11 z-20 max-h-60 overflow-y-auto overscroll-contain rounded-2xl border border-border bg-zinc-900/95 shadow-xl backdrop-blur">
+            {weekMeta.map((m, i) => {
+              const done = m.end <= completedCount;
+              const isCurrent = i === currentIdx;
+              return (
+                <button
+                  key={m.wk.weekNumber}
+                  type="button"
+                  onClick={() => {
+                    setSelectedIdx(i);
+                    setWeekMenuOpen(false);
+                  }}
+                  className={`flex w-full items-center justify-between px-4 py-2.5 text-sm transition-colors hover:bg-white/5 ${
+                    i === selectedIdx ? 'text-accent' : ''
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    {done ? (
+                      <Icon name="check" size={13} className="text-mint" />
+                    ) : isCurrent ? (
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                    ) : (
+                      <span className="w-3" />
+                    )}
+                    Week {m.wk.weekNumber}
+                    {m.wk.focus ? ` · ${m.wk.focus}` : ''}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-faint">
+                    {done ? 'Done' : isCurrent ? 'Current' : 'Projected'}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-          <ul className="mt-3 space-y-3">
-            {wk.sessions.map((rs) => (
-              <SessionRow key={rs.session.id} rs={rs} />
-            ))}
-          </ul>
-        </Card>
-      ))}
+        )}
+        <ul className="mt-3 space-y-3">
+          {sel.wk.sessions.map((rs, i) => {
+            const flatIdx = sel.start + i;
+            const state = flatIdx < completedCount ? 'done' : flatIdx === completedCount ? 'next' : 'todo';
+            return <SessionRow key={rs.session.id} rs={rs} state={state} />;
+          })}
+        </ul>
+      </Card>
 
       {/* Integration proof */}
       <button
@@ -303,21 +416,30 @@ function PlanTab({ view }: { view: PlanView }) {
       </button>
       {showJson && (
         <pre className="overflow-x-auto rounded-2xl border border-border bg-black/40 p-4 text-[11px] leading-relaxed text-zinc-300">
-{JSON.stringify(toCreateTrainingRequest(view, 1), null, 2)}
+{JSON.stringify(toCreateTrainingRequest(view, sel.wk.weekNumber), null, 2)}
         </pre>
       )}
     </div>
   );
 }
 
-function SessionRow({ rs }: { rs: ResolvedSession }) {
+function SessionRow({ rs, state = 'todo' }: { rs: ResolvedSession; state?: 'done' | 'next' | 'todo' }) {
   const s = rs.session;
   return (
-    <li className="flex items-start gap-3">
-      <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${STIMULUS_DOT[s.stimulusType]}`} />
+    <li className={`flex items-start gap-3 ${state === 'done' ? 'opacity-55' : ''}`}>
+      {state === 'done' ? (
+        <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-mint/20 text-mint">
+          <Icon name="check" size={10} />
+        </span>
+      ) : (
+        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${STIMULUS_DOT[s.stimulusType]}`} />
+      )}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="text-sm font-semibold">{STIMULUS_LABELS[s.stimulusType]}</span>
+          {state === 'next' && (
+            <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Next up</span>
+          )}
           <span className="text-xs text-faint">on {rs.stationName}</span>
           {rs.stationIsSphery && (
             <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Sphery</span>
@@ -343,32 +465,31 @@ function SessionRow({ rs }: { rs: ResolvedSession }) {
 
 function ProgressTab({ view }: { view: PlanView }) {
   const e = view.engagement;
-  const est = view.plan.fitnessEstimate;
-  const fitness = metric(e.metrics, 'fitness_score');
-  const score = fitness?.value ?? est.fitnessScore;
 
   return (
     <div className="space-y-5">
-      {/* Fitness ring */}
-      <div className="grid place-items-center rounded-[26px] border border-border bg-card py-7">
-        <p className="eyebrow text-accent">Your Fitness</p>
-        <div className="mt-3">
-          <RingGauge fraction={score / 100} color="var(--orbit-cyan)">
-            <div>
-              <div className="text-6xl leading-none text-accent">{score}</div>
-              <div className="eyebrow mt-1 text-faint">/ 100</div>
-            </div>
-          </RingGauge>
-        </div>
-        {fitness?.caption && <p className="mt-1 max-w-xs px-6 text-center text-sm text-dim">{fitness.caption}</p>}
+      {/* Body + Brain scores, Sphery's own vocabulary, each explained in a line */}
+      <div className="grid grid-cols-2 gap-4">
+        <ScoreRing
+          m={metric(e.metrics, 'body_score')}
+          color="var(--orbit-cyan)"
+          tone="text-accent"
+          blurb="How well you move: the share of exercises performed correctly."
+        />
+        <ScoreRing
+          m={metric(e.metrics, 'brain_score')}
+          color="var(--orbit-violet)"
+          tone="text-violet"
+          blurb="How sharp you stay under load: the share of reactions timed right."
+        />
       </div>
 
-      {/* Metric grid (Body Age / Brain Age / Weekly Load / Fitness delta) */}
+      {/* Metric grid (Body Age / Brain Age / Weekly Load / HR Recovery) */}
       <div className="grid grid-cols-2 gap-4">
         <MetricCard m={metric(e.metrics, 'body_age')} accent="var(--orbit-cyan)" tone="text-accent" />
         <MetricCard m={metric(e.metrics, 'brain_age')} accent="var(--orbit-violet)" tone="text-violet" />
         <MetricCard m={metric(e.metrics, 'weekly_load')} accent="var(--orbit-mint)" tone="text-mint" />
-        <MetricCard m={fitness} accent="var(--orbit-cyan)" tone="text-accent" />
+        <MetricCard m={metric(e.metrics, 'hr_recovery')} accent="var(--orbit-fuchsia)" tone="text-fuchsia" />
       </div>
 
       <p className="px-2 text-center text-[11px] leading-relaxed text-faint">
@@ -378,12 +499,37 @@ function ProgressTab({ view }: { view: PlanView }) {
   );
 }
 
+function ScoreRing({ m, color, tone, blurb }: { m?: MetricSnapshot; color: string; tone: string; blurb: string }) {
+  if (!m) return null;
+  const good = deltaIsGood(m);
+  return (
+    <div className="grid place-items-center rounded-[26px] border border-border bg-card px-3 py-5 text-center">
+      <p className="eyebrow text-dim">{m.label}</p>
+      <div className="mt-2">
+        <RingGauge fraction={m.value / 100} size={122} stroke={8} color={color}>
+          <div>
+            <div className={`text-4xl leading-none ${tone}`}>{Math.round(m.value)}</div>
+            <div className="eyebrow mt-1 text-faint">/ 100</div>
+          </div>
+        </RingGauge>
+      </div>
+      {m.delta !== undefined && m.delta !== 0 && (
+        <div className={`mt-1.5 inline-flex items-center gap-0.5 text-xs font-semibold ${good ? 'text-mint' : 'text-rose-400'}`}>
+          <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
+          {Math.abs(m.delta)}
+        </div>
+      )}
+      <p className="mt-2 text-[11px] leading-snug text-faint">{blurb}</p>
+    </div>
+  );
+}
+
 // What each Progress metric means + how it's derived, shown on the flip side.
 const METRIC_INFO: Record<string, string> = {
   body_age: 'How old your body performs, not your real age. Estimated from your resting heart rate, recovery speed, and training intensity in real sessions. Below your age means it is working.',
   brain_age: 'How sharp your reactions are under load. From your dual-task precision and reaction speed, benchmarked to age norms. Lower means you react younger.',
   weekly_load: 'Training minutes logged this week. Resets weekly and feeds your push-versus-recover balance.',
-  fitness_score: 'Overall fitness, 0 to 100. Blends recent scores, heart-rate response, and consistency into one number that moves as you train.',
+  hr_recovery: 'How many beats your heart rate drops in the first minute after hard effort. Faster recovery means a fitter heart, and it is one of the strongest longevity signals.',
 };
 
 function MetricCard({ m, accent, tone }: { m?: MetricSnapshot; accent: string; tone: string }) {

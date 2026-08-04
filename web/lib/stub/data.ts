@@ -21,6 +21,10 @@ export interface DemoMember {
   baseline: {
     workoutsAnalyzed: number;
     fitnessScore: number;
+    /** Movement quality 0–100: share of exercises performed correctly. */
+    bodyScore: number;
+    /** Cognitive sharpness 0–100: share of reactions timed right under load. */
+    brainScore: number;
     hrRest: number;
     hrMax: number;
     bodyAge: number;
@@ -38,6 +42,8 @@ export const DEMO_MEMBERS: DemoMember[] = [
     baseline: {
       workoutsAnalyzed: 143,
       fitnessScore: 78,
+      bodyScore: 84,
+      brainScore: 76,
       hrRest: 52,
       hrMax: 188,
       bodyAge: 29,
@@ -52,6 +58,8 @@ export const DEMO_MEMBERS: DemoMember[] = [
     baseline: {
       workoutsAnalyzed: 21,
       fitnessScore: 54,
+      bodyScore: 58,
+      brainScore: 52,
       hrRest: 64,
       hrMax: 181,
       bodyAge: 46,

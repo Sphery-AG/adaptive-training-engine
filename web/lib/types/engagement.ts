@@ -21,14 +21,18 @@
 // ---------------------------------------------------------------------------
 
 export const METRIC_KEYS = [
-  /** Composite 0–100, mirrors FitnessEstimate.fitnessScore. */
-  'fitness_score',
+  /** Movement quality 0–100: share of exercises performed correctly (Sphery bodyScore). */
+  'body_score',
+  /** Cognitive sharpness 0–100: share of reactions timed right under load (Sphery brainScore). */
+  'brain_score',
   /** Intuitive, motivational "you train like a 34-year-old". NOT clinical. */
   'body_age',
   /** Cognitive analogue from the monthly Brain Speed benchmark. */
   'brain_age',
   /** Training volume this week (minutes in target zones), Strava-style. */
   'weekly_load',
+  /** Beats recovered in the first minute after hard effort — the defensible longevity KPI. */
+  'hr_recovery',
 ] as const;
 export type MetricKey = (typeof METRIC_KEYS)[number];
 

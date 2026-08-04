@@ -16,12 +16,15 @@ import type { Reward } from '../types/engagement';
 export interface DemoMember {
   id: string;
   name: string;
-  emoji: string;
   tagline: string;
   /** Fake baseline the stub engine seeds the fitness estimate from. */
   baseline: {
     workoutsAnalyzed: number;
     fitnessScore: number;
+    /** Movement quality 0–100: share of exercises performed correctly. */
+    bodyScore: number;
+    /** Cognitive sharpness 0–100: share of reactions timed right under load. */
+    brainScore: number;
     hrRest: number;
     hrMax: number;
     bodyAge: number;
@@ -35,11 +38,12 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'user-1',
     name: 'Lena',
-    emoji: '🦿',
     tagline: '2 years of ExerCube history · strong engine',
     baseline: {
       workoutsAnalyzed: 143,
       fitnessScore: 78,
+      bodyScore: 84,
+      brainScore: 76,
       hrRest: 52,
       hrMax: 188,
       bodyAge: 29,
@@ -50,11 +54,12 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'user-2',
     name: 'Marco',
-    emoji: '🎯',
     tagline: 'Returning after a break · moderate base',
     baseline: {
       workoutsAnalyzed: 21,
       fitnessScore: 54,
+      bodyScore: 58,
+      brainScore: 52,
       hrRest: 64,
       hrMax: 181,
       bodyAge: 46,
@@ -65,7 +70,6 @@ export const DEMO_MEMBERS: DemoMember[] = [
   {
     id: 'guest',
     name: 'Guest',
-    emoji: '✨',
     tagline: 'No account yet · plan built from the questionnaire',
     baseline: null,
   },
@@ -76,7 +80,7 @@ export const GYMS: GymConcept[] = [
     id: 'sphere-darmstadt',
     name: 'The Sphere Darmstadt',
     location: 'Darmstadt, DE',
-    tagline: 'Full Sphere circle — the flagship concept',
+    tagline: 'Full Sphere circle, the flagship concept',
     stations: [
       { id: 'exercube', name: 'ExerCube', isSpheryEquipment: true, stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'cognitive_motor', 'recovery'] },
       { id: 'xr-fighter', name: 'XR Fighter', isSpheryEquipment: true, stimulusTypes: ['cardio_intensity', 'cognitive_motor', 'power_speed'] },
@@ -93,7 +97,7 @@ export const GYMS: GymConcept[] = [
     id: 'hotel-gym',
     name: 'Grand Hotel Fitness',
     location: 'Zürich, CH',
-    tagline: 'Bare hotel gym — no Sphery equipment at all',
+    tagline: 'Bare hotel gym, no Sphery equipment at all',
     stations: [
       { id: 'treadmill', name: 'Treadmill', stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'power_speed'] },
       { id: 'bike', name: 'Stationary Bike', stimulusTypes: ['cardio_endurance', 'cardio_intensity', 'recovery'] },

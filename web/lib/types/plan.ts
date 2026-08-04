@@ -233,6 +233,31 @@ export interface EquipmentMode {
 // API contract (engine: POST /generate-plan)
 // ---------------------------------------------------------------------------
 
+/** Self-rated fitness level (concept Ebene 2). */
+export type FitnessLevel = 'low' | 'medium' | 'high';
+
+/** Weekday availability ids (concept Ebene 2). */
+export type WeekdayId = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+
+/** Injury recovery stage (concept Ebene 3, branched injury detail). */
+export type RecoveryStage = 'acute' | 'early' | 'strength' | 'return' | 'recovered';
+
+/** Another sport the member does, so the engine can balance total load.
+ * Captured per session (`minutesPerSession`) plus which weekdays it happens on,
+ * so weekly volume = minutesPerSession × days, and the plan can show those days. */
+export interface OtherActivity {
+  name: string;
+  minutesPerSession: number;
+  intensity: 1 | 2 | 3 | 4 | 5;
+  days: WeekdayId[];
+}
+
+/** Optional branched detail when the member flags an injury. */
+export interface InjuryDetail {
+  bodyPart?: string;
+  recoveryStage?: RecoveryStage;
+}
+
 export interface QuestionnaireAnswers {
   age: number;
   weightKg: number;
@@ -240,11 +265,35 @@ export interface QuestionnaireAnswers {
   /** Optional — ~28% filled in production; never required, optional model input. */
   gender?: 'male' | 'female' | 'other';
   goal: TrainingGoal;
+  /**
+   * Up to two focus ids within the goal (concept Ebene 1). For safety-/outcome-
+   * critical goals (Move Pain-Free, Prepare for an Event) at least one is
+   * required; otherwise optional. Refines the plan within the goal.
+   */
+  focus?: string[];
+  /**
+   * Coarse activity level the engine's cold-start estimate keys off. Derived
+   * from `fitnessLevel` by the intake so the estimate stays unchanged.
+   */
   activityLevel: ActivityLevel;
+  /** Self-rated fitness level (concept Ebene 2), a finer signal than activityLevel. */
+  fitnessLevel?: FitnessLevel;
   /** Availability; the engine picks a default if omitted. */
   sessionsPerWeek?: number;
   /** Preferred session length in minutes (whiteboard Ebene 2). */
   sessionLengthMinutes?: 20 | 30 | 45 | 60;
+  /** Current weekly training volume in minutes (concept Ebene 2 slider, 0–720). */
+  currentTrainingMinutesPerWeek?: number;
+  /** Current typical training intensity, 1 (very light) – 5 (maximal). */
+  currentIntensity?: 1 | 2 | 3 | 4 | 5;
+  /** Weekdays the member can train (concept Ebene 2). */
+  availableDays?: WeekdayId[];
+  /** Other sports the member already does, to balance recovery. */
+  otherActivities?: OtherActivity[];
+  /** Flagged injuries / medical conditions (concept Ebene 3). */
+  healthConditions?: string[];
+  /** Branched injury detail when an injury is flagged. */
+  injury?: InjuryDetail;
   /**
    * Safety gate (whiteboard Ebene 3, "Move Pain-Free"/medical): if the member
    * flags a medical condition or recent injury, the plan is held for trainer

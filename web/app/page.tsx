@@ -1,22 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import WelcomeStep from './_components/WelcomeStep';
+import LoginStep from './_components/LoginStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
-import DashboardStep from './_components/DashboardStep';
+import PlanReadyStep from './_components/PlanReadyStep';
+import MemberApp from './_components/MemberApp';
 import { generatePlan, completeSession, type PlanView } from '@/lib/stub/engine';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
 import type { QuestionnaireAnswers } from '@/lib/types/plan';
 import type { AdaptiveUpdate } from '@/lib/types/engagement';
 
-type Step = 'welcome' | 'questionnaire' | 'dashboard';
+type Step = 'welcome' | 'questionnaire' | 'planReady' | 'dashboard';
 
 export default function Home() {
   const [step, setStep] = useState<Step>('welcome');
   const [member, setMember] = useState<DemoMember | null>(null);
   const [gym, setGym] = useState<GymConcept | null>(null);
   const [view, setView] = useState<PlanView | null>(null);
+  const [answers, setAnswers] = useState<QuestionnaireAnswers | null>(null);
   const [completedCount, setCompletedCount] = useState(0);
   const [lastUpdate, setLastUpdate] = useState<AdaptiveUpdate | null>(null);
 
@@ -26,12 +28,17 @@ export default function Home() {
     setStep('questionnaire');
   }
 
-  function submit(answers: QuestionnaireAnswers) {
+  function submit(a: QuestionnaireAnswers) {
     if (!member || !gym) return;
-    setView(generatePlan(member, gym, answers));
-    setCompletedCount(0);
+    setAnswers(a);
+    const generated = generatePlan(member, gym, a);
+    setView(generated);
+    // Returning members open the app already a couple of sessions into week 1,
+    // matching the seeded engagement state, so the dashboard looks alive. A new
+    // member (no baseline) starts fresh at zero.
+    setCompletedCount(generated.engagement.streak.weekProgress.completed);
     setLastUpdate(null);
-    setStep('dashboard');
+    setStep('planReady');
   }
 
   function complete() {
@@ -47,16 +54,26 @@ export default function Home() {
     setMember(null);
     setGym(null);
     setView(null);
+    setAnswers(null);
     setCompletedCount(0);
     setLastUpdate(null);
   }
 
-  if (step === 'welcome') return <WelcomeStep onStart={start} />;
+  if (step === 'welcome') return <LoginStep onStart={start} />;
   if (step === 'questionnaire' && member && gym)
-    return <QuestionnaireStep member={member} gym={gym} onSubmit={submit} onBack={() => setStep('welcome')} />;
+    return <QuestionnaireStep member={member} onSubmit={submit} onBack={() => setStep('welcome')} />;
+  if (step === 'planReady' && view && answers)
+    return (
+      <PlanReadyStep
+        view={view}
+        answers={answers}
+        onStart={() => setStep('dashboard')}
+        onEdit={() => setStep('questionnaire')}
+      />
+    );
   if (step === 'dashboard' && view && member)
     return (
-      <DashboardStep
+      <MemberApp
         member={member}
         view={view}
         completedCount={completedCount}

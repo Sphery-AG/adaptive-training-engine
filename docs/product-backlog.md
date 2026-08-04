@@ -2,7 +2,7 @@
 
 **Project:** Adaptive Training Plan Generator, Sphery AG
 **Author:** Anthony McCrovitz (summer internship)
-**Updated:** July 28, 2026
+**Updated:** August 3, 2026 (Stephan's Friday feedback folded in)
 **Purpose:** Capture everything from the Stephan and Max meetings, and rank it by priority for
 the MVP. The near-term MVP is the full user journey and UX experience, finished and
 demo-grade. The engine and backend come after the journey is complete. This doc is the
@@ -52,12 +52,37 @@ The whole path a member walks, end to end, polished. This is what has to be read
   follow-ups still route correctly: a goal that requires a focus, and a newly flagged injury.
 - [x] **Review screen** restructured, with a separate editable "Current training" group.
 
-### J3, the plan payoff
+### J3, the plan payoff and plan views
 - [ ] Plan Ready screen polished (the "here is your plan" moment).
 - [ ] Every plan part carries a plain-English reason (shown, even if stubbed).
+- [ ] **Plans are always a minimum of 8 weeks** (Stephan, Jul 31). The stub data model and
+  every plan view must handle 8+ weeks, not the current 4.
+- [ ] **Never show the full plan by default** (Stephan, Jul 31). Today's session is the
+  front door; the full plan is a drill-down, not the landing view.
+- [ ] **Progressive disclosure.** Default to the current week in full detail; later weeks
+  stay high-level ("Projected"), because the plan re-adapts week by week, so showing them in
+  full is noise for most members. The detail is opt-in, not the default. (Foundation exists:
+  later weeks already carry a "Projected" tag and the re-tune note.) With 8-week plans this
+  matters even more.
+- [ ] **Three altitudes: day / week / overall.** Today's plan up front, a week view you
+  click into, and an overall view of the whole plan at a glance.
+- [ ] **Completion and percent progress everywhere** (Stephan, Jul 31). Completed workouts
+  visibly marked on the plan page, percent-complete on the overall plan, what's left this
+  week on every altitude.
 
 ### J4, the 4-tab app  (mostly built, needs finishing)
 - [x] Today, Plan, Progress, Circle with bottom nav, in the Sphere Loop skin.
+- [ ] **Today page refocus** (Stephan, Jul 31). Solely what matters for today's training,
+  cut the rest; motivational toward the session coming up today. Research pattern: one
+  named session card with type tag, intent, duration, station count, target HR zone, and
+  the rationale as the one-line "why"; small streak indicator and a "Next: Thu" line;
+  no full plan, analytics, or history here.
+- [ ] **Progress page clarity** (Stephan, Jul 31). Research answer: Body Score is
+  "% of exercises performed correctly" and Brain Score is "% of timings performed
+  correctly", so rename to Movement Accuracy / Timing Accuracy (or keep the brand names
+  with the definition always on the card). Lead the page with HR Recovery and Brain Speed
+  shown as percentiles vs age peers. Check first that bodyScore is not degenerate in the
+  live data (it is ~1 everywhere in our export).
 - [ ] Consistency and polish pass across all four tabs.
 
 ### J5, the feedback / evaluation loop
@@ -72,10 +97,28 @@ The loop that makes the plan feel adaptive to the user. Core to the journey, was
 - [ ] Short, medium, and long-term goals (a quick win, a weekly or monthly goal, a
   quarterly goal).
 - [ ] First pass at ranking emblems / charms (AI-drafted is fine to start).
+- [ ] Research direction: earn from effort and consistency, not vanity. Effort points
+  accruing from time in HR zones (Peloton Strive / Myzone MEPs pattern, "rewards effort,
+  not ability"), weekly streaks, status levels from consecutive months, badges for
+  completed blocks and benchmark sessions. Avoid XP for opening the app, missed-day
+  penalties, and always-on leaderboards.
 
 ### J7, journey polish pass and freeze
 - [ ] Walk the full path on a phone, fix every rough edge, lock it.
-- [ ] Then, and only then, deploy to a link (Vercel) for the RSG / Gold's demo.
+- [x] Deploy to a link (Vercel) for the RSG / Gold's demo. Done ahead of full freeze for the
+  Thursday deadline; RSG call went well, they visit Darmstadt Aug 26. Freeze still pending
+  the polish pass above.
+
+### J8, live session screen  (pulled up from P2; Stephan, Jul 31)
+- [ ] Real-time view of a session in progress: where you are in the circuit, station by
+  station.
+- [ ] Time in HR zones, per station and for the whole session.
+- [ ] Demo-grade in v1: simulated live data, no kiosk or wearable wiring. Known data gap:
+  circle exercise logs carry only hrAverage today; per-station zone durations are the open
+  Michel question.
+- [ ] Research pattern: current station big, countdown + circuit segment dots, "Next Up"
+  strip, live zone color, one accruing effort score; per-station zone breakdown lives in
+  the post-session summary, not the live screen. Big tap targets.
 
 ---
 
@@ -87,14 +130,20 @@ Once the journey is finished, make it true on real data.
 - [ ] Real fitness estimate from a member's ExerCube history (resting/max HR, zone shares,
   a readable Body/Brain age).
 - [ ] Rule-based plan generation from that estimate plus the goal.
+- [ ] Generated plans span a minimum of 8 weeks (Stephan, Jul 31).
 - [ ] Adaptation: a new session updates the plan, with a reason.
 - [ ] Wire the UI to the FastAPI engine (replace the TypeScript stub).
 - [ ] Output every plan as a valid `CreateTrainingRequest` (kiosk-ready proof).
 
 ### E2, the eight Darmstadt circle trainings
-- [ ] Define 8 predefined circle trainings, one per questionnaire goal, using the real
-  Sphere Darmstadt equipment (the kiosk ships 6 today, we extend to 8).
-- [ ] Map goal to circle to stimulus, then adapt each from the member's data.
+- [ ] **Equipment audit first.** Inventory exactly what Sphere Darmstadt has on the floor,
+  then design the circles around that real equipment, not a generic gym.
+- [ ] Define 8 predefined circle trainings, one per questionnaire goal, using that equipment
+  (the kiosk ships 6 today, we extend to 8).
+- [ ] Map goal to circle to stimulus to station, then adapt each from the member's data.
+- [ ] **Define these with the team, not solo.** Working sessions with Max, Stephan, Julie,
+  and Helen across next week to agree the plans and circles. They know the floor and the
+  coaching intent; I turn it into the mapping the engine drives.
 - [ ] Sign-off on the goal to station mapping before it drives real plans.
 
 ### E3, own the backend and database
@@ -120,13 +169,31 @@ Captured, prioritized roughly, handed off. Not built before I leave.
   per-gym equipment profiles.
 - **Wearables and HR.** Garmin, Apple Watch, Whoop, Fitbit. Opt-in kiosk HR link that does
   not force the big-screen display. Live HR zone monitoring.
-- **Live session page.** HR at the top, zone time, a station map showing where you are,
-  per-station reps and duration, a timeline through the circuit.
+- **Live session page on real data.** The screen itself moved up to P0 (J8, demo-grade,
+  simulated); wiring it to real live HR and kiosk state stays here.
 - **Tandem plans.** Two goals at once (build muscle while training for HYROX).
 - **Individual sport plans.** Run-only, swim-only, cycle-only, no gym needed.
 - **Social.** Buddy / kudos system, send a workout, challenge a friend, friend matching.
 - **Platform polish.** Light and dark mode, redesigned icons/tabs, extra training columns,
   where session progress gets entered (app vs kiosk vs Sphery app).
+
+---
+
+## Research (done Aug 3, feeds design decisions)
+
+- **HYROX training apps** → `docs/research-hyrox-apps.md`. Headlines: Today = one
+  prescribed session card with intent and a one-line why; live screen = current station +
+  timer + "Next Up" strip + live HR zone, one accruing effort score (Peloton/Myzone
+  pattern); blocks of 8 to 12 weeks with a deload every 4th and benchmark sessions as
+  milestones; progress = week strip + "Week 5 of 8, Build" phase bar + percent, never the
+  full plan. Demo angle: the official HYROX gym product has no HR layer and no adaptive
+  planning; our combination does not exist in their stack.
+- **Longevity center KPIs** → `docs/research-longevity-kpis.md`. Verdict: mostly not
+  reachable from our data, two exceptions we already compute: HR recovery (strong
+  mortality science) and Brain Speed (uniquely ours, the Aug 26 demo moment). Show
+  percentiles vs age peers, not a "fitness age". Skip VO2max as a headline. Body/Brain
+  score confusion is a naming problem: they are movement accuracy and timing accuracy.
+  Blocker to raise: ~90% of workouts have no HR data, belts need to become default.
 
 ---
 
@@ -137,15 +204,24 @@ Captured, prioritized roughly, handed off. Not built before I leave.
 3. **New-user gym:** do new users pick their gym during onboarding (chain story), or default
    to Darmstadt for now.
 4. **Read path from Michel:** replica credential or a small read API. One written spec.
-5. **Goal to station mapping sign-off** before it drives real plans.
+5. **Goal to station mapping sign-off** before it drives real plans. Draft from Stephan's
+   notes and the Darmstadt equipment audit; sign-off with the team when Stephan is back.
+6. **HR belts as default?** ~90% of workouts have no HR data; every HR-based KPI and the
+   live session screen render empty without the belt. Operations decision for Stephan,
+   raise it when he is back.
+7. **Score naming.** Rename Body/Brain Score to Movement/Timing Accuracy, or keep the
+   names with an always-visible definition. Confirm with Stephan.
 
 ---
 
 ## Sprint frame (rest of the internship)
 
-- **This week (Jul 28 to Aug 1):** finish the P0 journey (questionnaire, feedback loop,
-  quest/rewards page, polish), then deploy the Thursday link.
-- **Aug 3 to 7:** P1 engine. Real estimate and generation, plans differ by history,
-  adaptation, the eight Darmstadt trainings, own database.
+- **This week (Jul 28 to Aug 1) ✅:** intake finalized (Stephan + Max feedback), login +
+  create-account + home-gym picker, demo link deployed. RSG call went well; they visit
+  Darmstadt Aug 26.
+- **Aug 3 to 7:** two tracks. Finish the journey (Today refocus, 8-week plan views +
+  completion state, feedback loop, XP / emblems page, live session screen, polish) and start
+  the real backend (own database, wire UI to the engine, first real estimate). Stephan is out
+  this week: draft the Darmstadt circles from his notes, sign-off when he is back.
 - **Aug 10 to 14:** wire it all together, docs, final demo Fri Aug 14.
 - **Aug 17 to 20:** stabilize and rehearse the Aug 26 handoff so Stephan can demo solo.

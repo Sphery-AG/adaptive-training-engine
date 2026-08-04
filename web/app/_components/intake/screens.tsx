@@ -201,6 +201,49 @@ const FocusScreen: FC<ScreenProps> = ({ state, dispatch }) => {
 
 // --- Ebene 2: Training status ----------------------------------------------
 
+/**
+ * Controlled number input that tolerates an empty field while typing. A plain
+ * controlled input coerces '' to 0 on clear, and the 0 snaps straight back
+ * into the field; here the raw string lives in a local draft during editing,
+ * only real numbers reach state, and blur restores the last valid value.
+ */
+const DraftNumberInput = ({
+  value,
+  onChange,
+  className,
+  min,
+  max,
+  step,
+  ariaLabel,
+}: {
+  value: number;
+  onChange: (n: number) => void;
+  className: string;
+  min?: number;
+  max?: number;
+  step?: number;
+  ariaLabel?: string;
+}) => {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <input
+      type="number"
+      inputMode="numeric"
+      value={draft ?? String(value)}
+      min={min}
+      max={max}
+      step={step}
+      aria-label={ariaLabel}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        if (e.target.value !== '') onChange(Number(e.target.value));
+      }}
+      onBlur={() => setDraft(null)}
+      className={className}
+    />
+  );
+};
+
 const NumberField = ({
   label,
   value,
@@ -215,10 +258,9 @@ const NumberField = ({
   <label className="rounded-2xl border border-border bg-card px-3.5 py-3">
     <span className="text-xs text-faint">{label}</span>
     <div className="mt-1 flex items-baseline gap-1">
-      <input
-        type="number"
+      <DraftNumberInput
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={onChange}
         className="w-full min-w-0 bg-transparent text-xl font-semibold outline-none"
       />
       <span className="text-xs text-faint">{unit}</span>
@@ -421,23 +463,21 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
           <div className="grid grid-cols-2 gap-3">
             <label className="rounded-xl border border-border bg-background px-3 py-2">
               <span className="text-xs text-faint">Minutes / session</span>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={minutes}
                 min={0}
                 step={15}
-                onChange={(e) => setMinutes(Number(e.target.value))}
+                onChange={setMinutes}
                 className="mt-0.5 w-full bg-transparent text-lg font-semibold outline-none"
               />
             </label>
             <label className="rounded-xl border border-border bg-background px-3 py-2">
               <span className="text-xs text-faint">Intensity (1–5)</span>
-              <input
-                type="number"
+              <DraftNumberInput
                 value={intensity}
                 min={1}
                 max={5}
-                onChange={(e) => setIntensity(Math.min(5, Math.max(1, Number(e.target.value))) as 1 | 2 | 3 | 4 | 5)}
+                onChange={(n) => setIntensity(Math.min(5, Math.max(1, n)) as 1 | 2 | 3 | 4 | 5)}
                 className="mt-0.5 w-full bg-transparent text-lg font-semibold outline-none"
               />
             </label>
@@ -471,7 +511,15 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
 
 // --- Ebene 3: Health --------------------------------------------------------
 
-const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
+/** Common injury sites, so members pick instead of type. "Other" reveals text. */
+const BODY_PARTS = ['Knee', 'Shoulder', 'Lower back', 'Hip', 'Ankle', 'Elbow', 'Wrist', 'Neck', 'Hamstring'];
+
+const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => {
+  const bodyPart = state.injury.bodyPart;
+  const [customBodyPart, setCustomBodyPart] = useState(
+    bodyPart != null && bodyPart !== '' && !BODY_PARTS.includes(bodyPart),
+  );
+  return (
   <div className="grid gap-5">
     <div role="radiogroup" aria-label="Any injuries or medical conditions" className="grid grid-cols-2 gap-3">
       {[
@@ -499,13 +547,49 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
       <div className="grid gap-5 animate-screen-in">
         <div>
           <FieldLabel>Affected body part</FieldLabel>
-          <input
-            type="text"
-            value={state.injury.bodyPart ?? ''}
-            onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
-            placeholder="e.g. Knee"
-            className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
-          />
+          <div className="flex flex-wrap gap-2">
+            {BODY_PARTS.map((part) => (
+              <button
+                key={part}
+                type="button"
+                onClick={() => {
+                  setCustomBodyPart(false);
+                  dispatch({ type: 'setInjury', patch: { bodyPart: part } });
+                }}
+                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                  !customBodyPart && bodyPart === part
+                    ? 'border-accent bg-[var(--accent-soft)] text-accent'
+                    : 'border-border text-dim hover:border-[var(--border-strong)]'
+                }`}
+              >
+                {part}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setCustomBodyPart(true);
+                dispatch({ type: 'setInjury', patch: { bodyPart: '' } });
+              }}
+              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                customBodyPart
+                  ? 'border-accent bg-[var(--accent-soft)] text-accent'
+                  : 'border-border text-dim hover:border-[var(--border-strong)]'
+              }`}
+            >
+              Other
+            </button>
+          </div>
+          {customBodyPart && (
+            <input
+              type="text"
+              value={bodyPart ?? ''}
+              onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
+              placeholder="Which body part?"
+              aria-label="Custom body part"
+              className="mt-2.5 w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
+            />
+          )}
         </div>
         <div>
           <FieldLabel>Current recovery stage</FieldLabel>
@@ -530,7 +614,8 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => (
       This helps us tailor your plan safely. It does not replace professional medical advice.
     </InfoNote>
   </div>
-);
+  );
+};
 
 // --- Review -----------------------------------------------------------------
 

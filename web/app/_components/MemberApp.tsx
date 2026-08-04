@@ -18,6 +18,14 @@ import type { DemoMember } from '@/lib/stub/data';
 import { Icon, type IconName } from './icons';
 import { RingGauge } from './RingGauge';
 import { Sparkline } from './Sparkline';
+import LiveSession from './LiveSession';
+
+/** Flatten the plan into session order, so completedCount maps to "current". */
+function flatSessions(view: PlanView) {
+  return view.resolved.flatMap((wk) =>
+    wk.sessions.map((rs, i) => ({ rs, weekNumber: wk.weekNumber, sessionInWeek: i + 1 })),
+  );
+}
 
 type Tab = 'today' | 'plan' | 'progress' | 'circle';
 
@@ -85,8 +93,12 @@ export default function MemberApp({
   onRestart: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('today');
+  const [training, setTraining] = useState(false);
   const [dismissed, setDismissed] = useState<AdaptiveUpdate | null>(null);
   const toast = lastUpdate && lastUpdate !== dismissed ? lastUpdate : null;
+
+  const flat = flatSessions(view);
+  const trainingSession = flat[Math.min(completedCount, flat.length - 1)];
 
   useEffect(() => {
     if (!toast) return;
@@ -121,7 +133,7 @@ export default function MemberApp({
 
       <div key={tab} className="animate-screen-in mt-6 flex-1">
         {tab === 'today' && (
-          <TodayTab view={view} completedCount={completedCount} lastUpdate={lastUpdate} onComplete={onComplete} />
+          <TodayTab view={view} completedCount={completedCount} lastUpdate={lastUpdate} onStart={() => setTraining(true)} />
         )}
         {tab === 'plan' && <PlanTab view={view} completedCount={completedCount} />}
         {tab === 'progress' && <ProgressTab view={view} />}
@@ -130,6 +142,20 @@ export default function MemberApp({
 
       {toast && <Toast toast={toast} />}
       <BottomNav tab={tab} setTab={setTab} />
+
+      {training && trainingSession && (
+        <LiveSession
+          view={view}
+          rs={trainingSession.rs}
+          weekNumber={trainingSession.weekNumber}
+          sessionInWeek={trainingSession.sessionInWeek}
+          onFinish={() => {
+            onComplete();
+            setTraining(false);
+          }}
+          onClose={() => setTraining(false)}
+        />
+      )}
     </div>
   );
 }
@@ -149,20 +175,18 @@ function TodayTab({
   view,
   completedCount,
   lastUpdate,
-  onComplete,
+  onStart,
 }: {
   view: PlanView;
   completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
-  onComplete: () => void;
+  onStart: () => void;
 }) {
-  const { resolved, engagement: e } = view;
+  const { engagement: e } = view;
   // Walk the plan as sessions are logged: flatten every week's sessions in
   // order, then point at the next one to do. This is what makes logging a
   // session visibly advance the current protocol instead of freezing on #1.
-  const flat = resolved.flatMap((wk) =>
-    wk.sessions.map((rs, i) => ({ rs, weekNumber: wk.weekNumber, sessionInWeek: i + 1 })),
-  );
+  const flat = flatSessions(view);
   const allDone = completedCount >= flat.length;
   const current = flat[Math.min(completedCount, flat.length - 1)];
   const next = current?.rs;
@@ -201,8 +225,8 @@ function TodayTab({
             </div>
             <button
               type="button"
-              onClick={onComplete}
-              aria-label="Start and complete this session"
+              onClick={onStart}
+              aria-label="Start this session"
               className="grid h-16 w-16 place-items-center rounded-full bg-white text-black transition hover:brightness-95"
               style={{ boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
             >

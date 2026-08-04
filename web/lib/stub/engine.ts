@@ -258,6 +258,69 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
 }
 
 // ---------------------------------------------------------------------------
+// Circuit resolution — a session as an ordered station sequence (J7b seed)
+// ---------------------------------------------------------------------------
+
+/** One leg of a session's circuit: a station, a duration, a target zone. */
+export interface CircuitStation {
+  station: GymStation;
+  minutes: number;
+  targetZone: HrZone;
+}
+
+/**
+ * Resolve a session into an ordered circuit across the gym's floor. Demo-grade
+ * composition until the per-goal templates land (J7b): warm up one zone below
+ * target, rotate the stations that can deliver the session's stimulus (Sphery
+ * equipment leading), cool down in zone 1. Durations sum to the session's.
+ */
+export function circuitFor(view: PlanView, rs: ResolvedSession): CircuitStation[] {
+  const gym = view.gym;
+  const s = rs.session;
+  const zone = s.hrTarget.zone;
+  const matching = gym.stations.filter((st) => st.stimulusTypes.includes(s.stimulusType));
+  const pool = (matching.length ? matching : gym.stations)
+    .slice()
+    .sort((a, b) => Number(!!b.isSpheryEquipment) - Number(!!a.isSpheryEquipment));
+
+  const total = s.durationMinutes;
+  const ease = Math.max(1, zone - 1) as HrZone;
+  const bookend = total >= 30 ? 5 : 3;
+  const work = total - bookend * 2;
+  const workCount = Math.min(4, Math.max(2, Math.floor(work / 7)));
+  const per = Math.floor(work / workCount);
+  let remainder = work - per * workCount;
+
+  // Warm up somewhere other than the first work station, so the circuit
+  // never opens with the same station twice in a row.
+  const warmStation =
+    gym.stations.find((st) => st.stimulusTypes.includes('cardio_endurance') && st.id !== pool[0].id) ??
+    gym.stations.find((st) => st.stimulusTypes.includes('cardio_endurance')) ??
+    pool[0];
+
+  const circuit: CircuitStation[] = [
+    { station: warmStation, minutes: bookend, targetZone: ease },
+  ];
+  for (let i = 0; i < workCount; i++) {
+    const extra = remainder > 0 ? 1 : 0;
+    if (remainder > 0) remainder--;
+    circuit.push({ station: pool[i % pool.length], minutes: per + extra, targetZone: zone });
+  }
+  circuit.push({ station: warmStation, minutes: bookend, targetZone: 1 });
+  return circuit;
+}
+
+/**
+ * Zone boundaries in bpm from the member's estimated max HR, so the zone
+ * display speaks real numbers like the Sphery app ("142–160 bpm"), not Z1–Z5.
+ * Returns the lower bounds of zones 2–5.
+ */
+export function zoneBoundsFor(est: FitnessEstimate): [number, number, number, number] {
+  const m = est.estimatedHrMax;
+  return [Math.round(m * 0.6), Math.round(m * 0.7), Math.round(m * 0.83), Math.round(m * 0.91)];
+}
+
+// ---------------------------------------------------------------------------
 // Engagement — the habit loop
 // ---------------------------------------------------------------------------
 

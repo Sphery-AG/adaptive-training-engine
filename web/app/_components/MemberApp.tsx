@@ -156,7 +156,7 @@ function TodayTab({
   lastUpdate: AdaptiveUpdate | null;
   onComplete: () => void;
 }) {
-  const { plan, resolved, engagement: e } = view;
+  const { resolved, engagement: e } = view;
   // Walk the plan as sessions are logged: flatten every week's sessions in
   // order, then point at the next one to do. This is what makes logging a
   // session visibly advance the current protocol instead of freezing on #1.
@@ -166,15 +166,10 @@ function TodayTab({
   const allDone = completedCount >= flat.length;
   const current = flat[Math.min(completedCount, flat.length - 1)];
   const next = current?.rs;
-  // "This Week" tracks progress inside the current plan week and resets as you
-  // roll into the next one, so logging a session always moves it (it used to
-  // cap at the target and freeze).
-  const curWeekNum = current?.weekNumber;
-  const weekTarget = flat.filter((f) => f.weekNumber === curWeekNum).length || 1;
-  const doneThisWeek = flat.filter((f, i) => f.weekNumber === curWeekNum && i < completedCount).length;
-  const bodyAge = metric(e.metrics, 'body_age');
-  const conf = plan.fitnessEstimate;
-  const quest = e.quests.find((q) => !q.completed) ?? e.quests[0];
+  // Today shows only what serves today's session: the hero, one slim
+  // streak/up-next row, and the adaptation note when the plan just changed.
+  // Weekly progress lives on Plan, quests on Circle, metrics on Progress.
+  const upNext = allDone ? undefined : flat[completedCount + 1];
 
   return (
     <div className="space-y-4">
@@ -217,86 +212,28 @@ function TodayTab({
         </div>
       )}
 
-      {/* Body Age + Streak */}
-      <div className="grid grid-cols-2 gap-4">
-        <Card>
-          <p className="eyebrow text-accent">Body Age</p>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className="text-4xl text-accent">{bodyAge?.value ?? '—'}</span>
-            {bodyAge?.delta !== undefined && bodyAge.delta !== 0 && (
-              <span className="eyebrow text-mint">
-                {bodyAge.delta > 0 ? '+' : ''}{bodyAge.delta} yrs
-              </span>
-            )}
-          </div>
-          <p className="mt-2 text-xs leading-tight text-faint">{bodyAge?.caption ?? 'Trending with your training.'}</p>
-        </Card>
-        <Card>
-          <p className="eyebrow text-fuchsia">Streak</p>
-          <div className="mt-1 flex items-center gap-2 text-4xl">
-            <Icon name="flame" size={26} className="text-fuchsia" />
-            {e.streak.currentWeeks}
-            <span className="text-base text-faint">wks</span>
-          </div>
-          <p className="mt-2 text-xs text-faint">Longest: {e.streak.longestWeeks} wks</p>
-        </Card>
-      </div>
-
-      {/* This week's load */}
-      <Card>
-        <div className="flex items-center justify-between">
-          <p className="eyebrow text-dim">This Week</p>
-          <p className="text-sm font-semibold text-accent tabular">
-            {doneThisWeek}/{weekTarget}
-          </p>
-        </div>
-        <Bar fraction={doneThisWeek / weekTarget} />
-        <div className="mt-2 flex justify-between text-[11px] text-faint">
-          <span>Sessions completed</span>
-          <span>Target {weekTarget}</span>
-        </div>
+      {/* Streak + up next, one slim row */}
+      <Card className="flex items-center justify-between gap-3">
+        <span className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+          <Icon name="flame" size={18} className="text-fuchsia" />
+          <span className="text-lg font-semibold tabular">{e.streak.currentWeeks}</span>
+          <span className="text-[11px] uppercase tracking-wide text-faint">wk streak</span>
+        </span>
+        {upNext && (
+          <span className="whitespace-nowrap text-[11px] text-faint">
+            Next: {STIMULUS_LABELS[upNext.rs.session.stimulusType]} · Zone {upNext.rs.session.hrTarget.zone}
+          </span>
+        )}
       </Card>
 
-      {/* Today's quest */}
-      {quest && (
-        <Card>
-          <div className="flex items-center justify-between">
-            <p className="eyebrow text-fuchsia">Today&rsquo;s Quest</p>
-            <span className="text-xs text-faint tabular">{quest.progress.current}/{quest.progress.target}</span>
-          </div>
-          <div className="mt-2 flex items-center gap-3">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-fuchsia/40 text-fuchsia">
-              <Icon name="target" size={16} />
-            </span>
-            <span className="text-sm font-medium">{quest.title}</span>
-          </div>
-          <Bar className="mt-3" fraction={quest.progress.current / Math.max(1, quest.progress.target)} color="var(--orbit-fuchsia)" />
-        </Card>
-      )}
-
-      {/* Plan adapted / confidence */}
-      {lastUpdate ? (
+      {/* Plan adapted, only when there is something to say */}
+      {lastUpdate && (
         <Card className="border-violet/25">
           <div className="flex items-center justify-between">
             <p className="eyebrow text-violet">Plan Adapted</p>
             <Icon name="refresh" size={15} className="text-violet" />
           </div>
           <p className="mt-2 text-sm leading-relaxed text-dim">{lastUpdate.summary}</p>
-        </Card>
-      ) : (
-        <Card>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Icon name="info" size={15} className="text-accent" />
-              <span className="eyebrow text-dim">Plan Confidence</span>
-            </span>
-            <LevelPill level={confidenceLevel(conf.confidence)} />
-          </div>
-          <p className="mt-2 text-xs text-faint">
-            {conf.source === 'questionnaire_only'
-              ? 'Cold start, built from your questionnaire. Sharpens with every session.'
-              : `Based on ${conf.workoutsAnalyzed} analyzed workouts.`}
-          </p>
         </Card>
       )}
     </div>
@@ -320,6 +257,21 @@ function PlanTab({ view }: { view: PlanView }) {
           Week 1 is set. The weeks ahead are a projection and re-tune from how you actually perform.
         </p>
       </div>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Icon name="info" size={15} className="text-accent" />
+            <span className="eyebrow text-dim">Plan Confidence</span>
+          </span>
+          <LevelPill level={confidenceLevel(plan.fitnessEstimate.confidence)} />
+        </div>
+        <p className="mt-2 text-xs text-faint">
+          {plan.fitnessEstimate.source === 'questionnaire_only'
+            ? 'Cold start, built from your questionnaire. Sharpens with every session.'
+            : `Based on ${plan.fitnessEstimate.workoutsAnalyzed} analyzed workouts.`}
+        </p>
+      </Card>
 
       {resolved.map((wk) => (
         <Card key={wk.weekNumber}>

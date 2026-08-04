@@ -55,35 +55,34 @@ The whole path a member walks, end to end, polished. This is what has to be read
 ### J3, the plan payoff and plan views
 - [ ] Plan Ready screen polished (the "here is your plan" moment).
 - [ ] Every plan part carries a plain-English reason (shown, even if stubbed).
-- [ ] **Plans are always a minimum of 8 weeks** (Stephan, Jul 31). The stub data model and
-  every plan view must handle 8+ weeks, not the current 4.
-- [ ] **Never show the full plan by default** (Stephan, Jul 31). Today's session is the
-  front door; the full plan is a drill-down, not the landing view.
-- [ ] **Progressive disclosure.** Default to the current week in full detail; later weeks
-  stay high-level ("Projected"), because the plan re-adapts week by week, so showing them in
-  full is noise for most members. The detail is opt-in, not the default. (Foundation exists:
-  later weeks already carry a "Projected" tag and the re-tune note.) With 8-week plans this
-  matters even more.
-- [ ] **Three altitudes: day / week / overall.** Today's plan up front, a week view you
-  click into, and an overall view of the whole plan at a glance.
-- [ ] **Completion and percent progress everywhere** (Stephan, Jul 31). Completed workouts
-  visibly marked on the plan page, percent-complete on the overall plan, what's left this
-  week on every altitude.
+- [x] **Plans are always a minimum of 8 weeks** (Stephan, Jul 31). Done Aug 4: stub builds
+  an 8-week block as two 4-week waves (build 3, deload on the 4th), week 8 is deload +
+  retest that seeds the next block.
+- [x] **Never show the full plan by default** (Stephan, Jul 31). Done Aug 4: the Plan tab
+  shows one week of detail at a time; the week strip is the drill-down.
+- [x] **Progressive disclosure.** Done Aug 4: current week opens by default, other weeks
+  are one tap away on the strip or chevrons, future weeks keep the "Projected" tag, past
+  weeks read "Done".
+- [x] **Three altitudes: day / week / overall.** Done Aug 4: Today tab (day), selected-week
+  detail card (week), Block Progress card with percent bar + 8-week strip (overall).
+- [x] **Completion and percent progress everywhere** (Stephan, Jul 31). Done Aug 4:
+  completed sessions get a check and dim, completed weeks turn to checks on the strip,
+  percent-complete and "N of M sessions done" sit on top of the Plan tab.
 
 ### J4, the 4-tab app  (mostly built, needs finishing)
 - [x] Today, Plan, Progress, Circle with bottom nav, in the Sphere Loop skin.
-- [ ] **Today page refocus** (Stephan, Jul 31). Solely what matters for today's training,
-  cut the rest; motivational toward the session coming up today. Research pattern: one
-  named session card with type tag, intent, duration, station count, target HR zone, and
-  the rationale as the one-line "why"; small streak indicator and a "Next: Thu" line;
-  no full plan, analytics, or history here.
-- [ ] **Progress page clarity** (Stephan, Jul 31). Research answer: Body Score is
-  "% of exercises performed correctly" and Brain Score is "% of timings performed
-  correctly", so rename to Movement Accuracy / Timing Accuracy (or keep the brand names
-  with the definition always on the card). Lead the page with HR Recovery and Brain Speed
-  shown as percentiles vs age peers. Check first that bodyScore is not degenerate in the
-  live data (it is ~1 everywhere in our export).
+- [x] **Today page refocus** (Stephan, Jul 31). Done Aug 3: hero session card + one slim
+  streak/up-next row + adaptation note, everything else moved to its own tab.
+- [x] **Progress page clarity** (Stephan, Jul 31). Done Aug 4, Anthony's call: page leads
+  with Body Score and Brain Score rings (Sphery's own vocabulary), each with its plain
+  one-line definition on the card; single Fitness number retired from the page; HR
+  Recovery added to the metric grid. Still open for live data: bodyScore is ~1 everywhere
+  in our export, so the real engine needs a fallback before this ships beyond the stub.
 - [ ] Consistency and polish pass across all four tabs.
+- [x] **Intake fixes** (Anthony, Aug 4): number fields no longer snap to 0 when cleared;
+  injury body part is a pick-list of common sites with an Other option.
+- [x] **Week navigation** now a dropdown on the week card (Anthony's pick over the
+  tap-strip); strip is display-only progress.
 
 ### J5, the feedback / evaluation loop
 The loop that makes the plan feel adaptive to the user. Core to the journey, was on my list.
@@ -109,16 +108,36 @@ The loop that makes the plan feel adaptive to the user. Core to the journey, was
   Thursday deadline; RSG call went well, they visit Darmstadt Aug 26. Freeze still pending
   the polish pass above.
 
-### J8, live session screen  (pulled up from P2; Stephan, Jul 31)
-- [ ] Real-time view of a session in progress: where you are in the circuit, station by
-  station.
-- [ ] Time in HR zones, per station and for the whole session.
-- [ ] Demo-grade in v1: simulated live data, no kiosk or wearable wiring. Known data gap:
+### J7b, circuit-based sessions  (Anthony, Aug 4; prerequisite for J8)
+Sessions stop being "one machine for 45 minutes" and become circle trainings: an
+ordered sequence of stations composed from a per-goal template, filled with the
+member's gym's real equipment. CreateTrainingRequest is already an ordered
+exercise list, so this makes the export real instead of faked. Decision Aug 4:
+build Wed on the stub (8 goal templates drafted from the Darmstadt floor,
+corrected against Stephan's circle notes when Anthony hands them over).
+- [ ] Session model gains an ordered station sequence (station, minutes, target zone).
+- [ ] 8 per-goal circuit templates from the Sphere Darmstadt station list.
+- [ ] Plan + Today UI show sessions as circuits, not a single station.
+- [ ] Export maps circuit stations 1:1 onto CreateTrainingRequest exercises.
+
+### J8, live session screen  (pulled up from P2; Stephan, Jul 31; build Thu on J7b)
+Design settled Aug 4 (Anthony): three-state flow with the station timeline as the spine.
+Mockup: scratchpad live-option-b-zones.png; zone-bar reference saved at
+docs/design-reference/sphery-app-workout-hr-zones.png (from app.sphery.ch).
+- [ ] **Preview screen**: tapping play on Today shows the circuit rundown (ordered
+  stations, minutes, target zone each) before a Start Session button.
+- [ ] **Live screen, Option B vertical timeline**: whole circuit visible as a rail; done
+  stations checked with their zone result, current station expanded (countdown, station
+  progress bar, in-zone + points), upcoming below. HR pill + elapsed time on top.
+- [ ] **Time-in-zones block in Sphery's app language**: horizontal glowing gradient bars
+  per zone, real bpm-range labels computed from the member's estimated hrMax (not Z1-Z5),
+  time + percent per row, Avg HR / Max HR alongside. Session-wide on the live screen.
+- [ ] **Post-session summary**: same zone bars per station AND whole session (Stephan's
+  ask), plus HR Recovery, points earned; hands off to the Plan Adapted moment.
+- [ ] Advance mechanic: "Complete station" button (demo-honest, walkable in 30 seconds).
+- [ ] Demo-grade in v1: simulated live HR, no kiosk or wearable wiring. Known data gap:
   circle exercise logs carry only hrAverage today; per-station zone durations are the open
   Michel question.
-- [ ] Research pattern: current station big, countdown + circuit segment dots, "Next Up"
-  strip, live zone color, one accruing effort score; per-station zone breakdown lives in
-  the post-session summary, not the live screen. Big tap targets.
 
 ---
 

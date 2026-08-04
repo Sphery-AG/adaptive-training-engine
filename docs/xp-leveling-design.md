@@ -1,7 +1,11 @@
 # XP & Leveling System — first pass (Aug 3)
 
-**Status:** draft for Anthony to react to, then build. Grounded in the HYROX app
-research (`docs/research-hyrox-apps.md`): reward effort and consistency, never
+**Status:** approved Aug 4. Anthony signed off the shape (effort + consistency
+points, three quest tiers, monthly rank) and picked the familiar medal ladder
+over the orbit-themed rank names. Monthly target stays fixed at 1,000 pts for
+v1 (simplest to explain; revisit scaled-to-plan later). Ready to build the J6
+Circle detail page. Grounded in the HYROX app research
+(`docs/research-hyrox-apps.md`): reward effort and consistency, never
 vanity; no points for opening the app, no missed-day penalties, no forced
 leaderboards.
 
@@ -35,11 +39,12 @@ flat completion points only — which quietly makes the belt worth wearing.
 
 ## 2. Status ranks (the monthly level)
 
-Myzone's model, in Sphere Loop language. Hit the monthly point target
-(target ≈ 1,000 pts, roughly 3 solid sessions/week) and your rank advances one
-tier per consecutive month:
+Myzone's model. Hit the monthly point target (fixed 1,000 pts, roughly 3 solid
+sessions/week) and your rank advances one tier per consecutive month. Decided
+Aug 4: use the medal ladder everyone already understands (it also matches the
+league tiers the app ships today), not invented orbit names:
 
-**Drift → Pulse → Orbit → Momentum → Apex → Legend**
+**Bronze → Silver → Gold → Platinum → Diamond**
 
 - Miss a month: drop one tier, never to zero. Gentle, not punishing.
 - The rank ring lives on the Circle tab (the league ring already built).
@@ -60,7 +65,7 @@ tier per consecutive month:
 |---|---|---|---|
 | Quick win | Today / this week | "Show up this week (2/3)", "First zone-4 minute this week" | 25–50 pts |
 | Medium | Weekly / monthly | "Hit your monthly point target", "Complete all 3 sessions two weeks running", "Do the benchmark session" | 100–200 pts |
-| Long | Quarterly / per block | "Finish the 8-week block", "Improve HR recovery vs your baseline", "3 consecutive months at Orbit or above" | Emblem + 200–500 pts |
+| Long | Quarterly / per block | "Finish the 8-week block", "Improve HR recovery vs your baseline", "3 consecutive months at Gold or above" | Emblem + 200–500 pts |
 
 Rules: max 3 active quests visible at once (one per tier), auto-assigned from
 plan + goal, refreshed by the engine with a reason string like everything else.
@@ -93,7 +98,7 @@ First art pass: AI-drafted tiles, replaced later.
 
 ## Open questions for Anthony / Stephan
 
-1. Rank names: orbit-theme (Drift → Legend) or something closer to Sphery brand?
+1. ~~Rank names~~ — decided Aug 4: Bronze → Silver → Gold → Platinum → Diamond.
 2. Monthly target: fixed 1,000 pts for everyone, or scaled to the member's plan?
 3. Do points ever convert to anything real at the gym (a smoothie, a guest pass)
    — retention gold at a chain like Gold's, but an operations question.

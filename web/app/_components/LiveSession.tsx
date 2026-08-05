@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PlanView, ResolvedSession, CircuitStation } from '@/lib/stub/engine';
-import { circuitFor, zoneBoundsFor } from '@/lib/stub/engine';
+import { circuitFor, zoneBoundsFor, CIRCUIT_NAMES } from '@/lib/stub/engine';
 import type { HrZone } from '@/lib/types/plan';
 import { STIMULUS_LABELS } from '@/lib/labels';
 import { Icon } from './icons';
@@ -135,6 +135,7 @@ export default function LiveSession({
         {stage === 'preview' && (
           <Preview
             rs={rs}
+            circuitName={CIRCUIT_NAMES[view.plan.goal]}
             circuit={circuit}
             weekNumber={weekNumber}
             sessionInWeek={sessionInWeek}
@@ -283,6 +284,7 @@ export default function LiveSession({
 
 function Preview({
   rs,
+  circuitName,
   circuit,
   weekNumber,
   sessionInWeek,
@@ -291,6 +293,7 @@ function Preview({
   onClose,
 }: {
   rs: ResolvedSession;
+  circuitName: string;
   circuit: CircuitStation[];
   weekNumber: number;
   sessionInWeek: number;
@@ -323,7 +326,7 @@ function Preview({
       </div>
 
       <div className="mt-6 rounded-[22px] border border-border bg-card p-4">
-        <p className="eyebrow text-dim">The circuit</p>
+        <p className="eyebrow text-dim">{circuitName}</p>
         <ul className="mt-3 space-y-3">
           {circuit.map((leg, i) => (
             <li key={i} className="flex items-center gap-3">

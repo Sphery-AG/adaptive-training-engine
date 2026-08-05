@@ -92,10 +92,30 @@ The loop that makes the plan feel adaptive to the user. Core to the journey, was
 - [ ] Show that the feedback changes the next plan (the payoff of answering).
 
 ### J6, quest / XP / rewards detail page
-- [ ] A page you tap into from the Circle tab: active quests, XP, progress, earned tiles.
-- [ ] Short, medium, and long-term goals (a quick win, a weekly or monthly goal, a
-  quarterly goal).
-- [ ] First pass at ranking emblems / charms (AI-drafted is fine to start).
+- [x] A page you tap into from the Circle tab: monthly rank ring (tier + pts toward
+  the fixed 1,000 target), the Bronze→Diamond ladder with passed/current/locked
+  states, the how-you-earn table (zone rates matching the live session's ZONE_PTS),
+  quests, emblems. Built Aug 5.
+- [x] Short, medium, and long-term goals: the three active quests now carry tier
+  labels (Quick win · this week / Medium · this month / Long · this block). Aug 5.
+- [x] First pass at emblems: six earned/locked tiles derived from real state (first
+  session, 12-week streak, zone chaser, benchmark, block finisher, month at Gold).
+  Icon tiles for now, art pass later. Aug 5.
+- [x] Circle tab card retitled Monthly Rank (was This Week's League) and the
+  "4th of 30" cohort line dropped, matching the approved no-forced-leaderboards
+  design. LeagueStanding contract unchanged. Aug 5.
+- [x] Rank medals: gradient SVG medal per tier (ribbon + coin + star, tier
+  metal colors) replaces plain text on the Circle card, the detail ring, and
+  the ladder rows (grayscale when locked). Feedback Aug 5: "more prominent,
+  more exciting" — sized up with glow. Aug 5.
+- [x] Emblem flip cards: earned emblems flip on tap to show what they mean and
+  when they were earned (stub dates until the real ledger). Aug 5.
+- [x] Feedback fixes Aug 5: kiosk CreateTrainingRequest JSON removed from the
+  Plan tab (members never needed it; the export function stays for the kiosk
+  handoff); a new account's typed name now greets them (was "Hi, Guest").
+  Bottom-nav "not sticking" report investigated: nav is correctly fixed in
+  the browser, the floating look was a full-page screenshot artifact, so all
+  Miro shots are now viewport-framed.
 - [ ] Research direction: earn from effort and consistency, not vanity. Effort points
   accruing from time in HR zones (Peloton Strive / Myzone MEPs pattern, "rewards effort,
   not ability"), weekly streaks, status levels from consecutive months, badges for
@@ -113,16 +133,29 @@ Sessions stop being "one machine for 45 minutes" and become circle trainings: an
 ordered sequence of stations composed from a per-goal template, filled with the
 member's gym's real equipment. CreateTrainingRequest is already an ordered
 exercise list, so this makes the export real instead of faked. Decision Aug 4:
-build Wed on the stub (8 goal templates drafted from the Darmstadt floor,
-corrected against Stephan's circle notes when Anthony hands them over).
+build Wed on the stub. Correction Aug 5: no written circle notes from Stephan
+exist; the 8 templates are our drafts and get validated by asking Stephan
+directly when he's back Aug 8 (one Miro frame / message: "here are the 8
+rotations per goal, what would you change?").
 - [x] Session model gains an ordered station sequence (station, minutes, target zone).
   Seeded Aug 4: circuitFor() resolves any session to warmup + work rotation + cooldown
   across the gym's floor; the live training flow runs on it.
-- [ ] 8 per-goal circuit templates from the Sphere Darmstadt station list (replace the
-  generic rotation; correct against Stephan's circle notes when Anthony hands them over).
-- [ ] Plan + Today UI show sessions as circuits, not a single station (live flow already
-  does; the session rows still say one station).
-- [ ] Export maps circuit stations 1:1 onto CreateTrainingRequest exercises.
+- [x] 8 per-goal circuit templates (Burn/Strength/Engine/Foundation/Longevity/
+  Performance/Race Prep/Dual Flow) written in stimulus, resolved onto the gym's real
+  floor, session's own stimulus leading on its day. Built Aug 5; drafts pending
+  Stephan's sign-off (no written notes exist, ask him directly Aug 8+).
+- [x] Stub Darmstadt floor updated to the real station list from the-sphere.fit:
+  17 stations incl. Medical Leg Press, Performance Bike, Free Weights & Racks,
+  Cable Pulls, Tidal Tanks, and the full HYROX setup. Aug 5.
+- [x] Templates evidence-checked against the literature (docs/
+  circuit-templates-evidence.md). Changes from the pass: Race Prep reworked to
+  HYROX "compromised running" (cardio/station alternation + prefers real race
+  stations); Foundation prefers the medical/rehab corner; balance-first
+  equipment (ICAROS) capped at zone 2 on any leg. Aug 5.
+- [x] Plan + Today UI show sessions as circuits: Today hero shows circuit name +
+  station count, Plan session rows show the full station rundown. Built Aug 5.
+- [x] Export maps one session's circuit legs 1:1 onto CreateTrainingRequest
+  exercises (one circle training = one session, not a week). Built Aug 5.
 
 ### J8, live session screen  (pulled up from P2; Stephan, Jul 31; build Thu on J7b)
 Design settled Aug 4 (Anthony): three-state flow with the station timeline as the spine.

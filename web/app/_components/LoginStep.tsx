@@ -180,7 +180,9 @@ export default function LoginStep({
           </div>
 
           <button
-            onClick={() => signIn(guest)}
+            // A new account is still the cold-start "guest" member under the
+            // hood, but the app greets them by the name they just typed.
+            onClick={() => signIn({ ...guest, name: signupName.trim().split(/\s+/)[0] || guest.name })}
             disabled={!signupName.trim() || !signupEmail.trim()}
             className="mt-5 w-full rounded-full bg-[image:var(--gradient-accent)] px-6 py-4 text-base font-semibold text-[color:var(--accent-contrast)] transition hover:brightness-110 disabled:opacity-40"
           >

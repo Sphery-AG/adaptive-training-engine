@@ -269,45 +269,126 @@ export interface CircuitStation {
 }
 
 /**
- * Resolve a session into an ordered circuit across the gym's floor. Demo-grade
- * composition until the per-goal templates land (J7b): warm up one zone below
- * target, rotate the stations that can deliver the session's stimulus (Sphery
- * equipment leading), cool down in zone 1. Durations sum to the session's.
+ * Per-goal circuit templates (J7b): the ordered stimulus rotation a circle
+ * training runs for each goal. Written in stimulus, not stations, so the same
+ * template resolves onto the Sphere Darmstadt floor, a hotel gym, or a HYROX
+ * box. The session's own stimulus leads the rotation on its day.
+ */
+const CIRCUIT_TEMPLATES: Record<TrainingGoal, StimulusType[]> = {
+  lose_weight_burn_fat: ['cardio_intensity', 'strength', 'cardio_endurance', 'cardio_intensity', 'strength'],
+  build_strength_muscle: ['strength', 'power_speed', 'strength', 'cardio_intensity', 'strength'],
+  improve_fitness_endurance: ['cardio_endurance', 'cardio_intensity', 'cardio_endurance', 'cognitive_motor', 'cardio_endurance'],
+  move_pain_free: ['mobility_stability', 'cardio_endurance', 'mobility_stability', 'recovery', 'mobility_stability'],
+  boost_health_longevity: ['cardio_endurance', 'strength', 'mobility_stability', 'cognitive_motor', 'recovery'],
+  improve_sports_performance: ['power_speed', 'cognitive_motor', 'strength', 'cardio_intensity', 'power_speed'],
+  // HYROX-style "compromised running": every station leg follows a cardio leg,
+  // so functional work always happens under aerobic fatigue, like race day.
+  prepare_for_event: ['cardio_intensity', 'strength', 'cardio_intensity', 'power_speed', 'strength'],
+  train_body_mind: ['cognitive_motor', 'cardio_intensity', 'cognitive_motor', 'mobility_stability', 'cardio_endurance'],
+};
+
+/**
+ * Per-goal station preference (by station id, best first). When set, these
+ * outrank the default Sphery-first ordering: an event-prep circuit should look
+ * like the race (HYROX stations), and a pain-free circuit should live in the
+ * medical/rehab corner. Stations a gym doesn't have are simply skipped.
+ */
+const CIRCUIT_PREFERRED_STATIONS: Partial<Record<TrainingGoal, string[]>> = {
+  prepare_for_event: ['runner', 'ski-erg', 'row-erg', 'sled-push', 'sled-pull', 'wall-balls', 'sandbag-lunges', 'farmers-carry', 'burpees'],
+  move_pain_free: ['icaros', 'leg-press', 'cable-pulls', 'tidal-tank', 'bike'],
+};
+
+/** Display name of each goal's circuit, for headers and the kiosk export. */
+export const CIRCUIT_NAMES: Record<TrainingGoal, string> = {
+  lose_weight_burn_fat: 'Burn Circuit',
+  build_strength_muscle: 'Strength Circuit',
+  improve_fitness_endurance: 'Engine Circuit',
+  move_pain_free: 'Foundation Circuit',
+  boost_health_longevity: 'Longevity Circuit',
+  improve_sports_performance: 'Performance Circuit',
+  prepare_for_event: 'Race Prep Circuit',
+  train_body_mind: 'Dual Flow Circuit',
+};
+
+/**
+ * Resolve a session into an ordered circuit across the gym's floor, following
+ * the goal's template: warm up one zone below target, run the template's
+ * stimulus rotation with the session's own stimulus leading, cool down in
+ * zone 1. Each leg lands on a station that can deliver its stimulus (Sphery
+ * equipment first, no station twice while others are free, never the same
+ * station back to back). Leg zones are capped at the session's target zone so
+ * deload sessions stay eased. Durations sum to the session's.
  */
 export function circuitFor(view: PlanView, rs: ResolvedSession): CircuitStation[] {
   const gym = view.gym;
   const s = rs.session;
   const zone = s.hrTarget.zone;
-  const matching = gym.stations.filter((st) => st.stimulusTypes.includes(s.stimulusType));
-  const pool = (matching.length ? matching : gym.stations)
-    .slice()
-    .sort((a, b) => Number(!!b.isSpheryEquipment) - Number(!!a.isSpheryEquipment));
+  const template = CIRCUIT_TEMPLATES[view.plan.goal];
+  const lead = template.indexOf(s.stimulusType);
+  const order = lead > 0 ? [...template.slice(lead), ...template.slice(0, lead)] : template;
 
   const total = s.durationMinutes;
   const ease = Math.max(1, zone - 1) as HrZone;
   const bookend = total >= 30 ? 5 : 3;
   const work = total - bookend * 2;
-  const workCount = Math.min(4, Math.max(2, Math.floor(work / 7)));
+  const workCount = Math.min(order.length, Math.max(2, Math.floor(work / 7)));
   const per = Math.floor(work / workCount);
   let remainder = work - per * workCount;
 
-  // Warm up somewhere other than the first work station, so the circuit
-  // never opens with the same station twice in a row.
-  const warmStation =
-    gym.stations.find((st) => st.stimulusTypes.includes('cardio_endurance') && st.id !== pool[0].id) ??
-    gym.stations.find((st) => st.stimulusTypes.includes('cardio_endurance')) ??
-    pool[0];
+  // Station ranking: the goal's preferred stations first (in their listed
+  // order), then Sphery equipment, then the rest of the floor.
+  const preferred = CIRCUIT_PREFERRED_STATIONS[view.plan.goal] ?? [];
+  const rank = (st: GymStation): number => {
+    const p = preferred.indexOf(st.id);
+    return p !== -1 ? p : preferred.length + (st.isSpheryEquipment ? 0 : 1);
+  };
 
-  const circuit: CircuitStation[] = [
-    { station: warmStation, minutes: bookend, targetZone: ease },
-  ];
+  const used = new Set<string>();
+  let prev: GymStation | undefined;
+  const pick = (stim: StimulusType): GymStation => {
+    const matching = gym.stations
+      .filter((st) => st.stimulusTypes.includes(stim))
+      .sort((a, b) => rank(a) - rank(b));
+    const pool = matching.length ? matching : gym.stations;
+    const station =
+      pool.find((c) => !used.has(c.id) && c.id !== prev?.id) ??
+      pool.find((c) => c.id !== prev?.id) ??
+      pool[0];
+    used.add(station.id);
+    prev = station;
+    return station;
+  };
+
+  const workLegs: CircuitStation[] = [];
   for (let i = 0; i < workCount; i++) {
+    const stim = order[i % order.length];
+    const station = pick(stim);
+    // Balance-first equipment (ICAROS and the like) never drives real HR:
+    // cap those legs at zone 2 no matter what the session prescribes.
+    const balanceFirst = station.stimulusTypes[0] === 'mobility_stability';
+    const raw = stim === s.stimulusType ? zone : Math.min(ZONE_FOR_STIMULUS[stim], zone);
+    const legZone = Math.min(raw, balanceFirst ? 2 : 5) as HrZone;
     const extra = remainder > 0 ? 1 : 0;
     if (remainder > 0) remainder--;
-    circuit.push({ station: pool[i % pool.length], minutes: per + extra, targetZone: zone });
+    workLegs.push({ station, minutes: per + extra, targetZone: legZone });
   }
-  circuit.push({ station: warmStation, minutes: bookend, targetZone: 1 });
-  return circuit;
+
+  // Warm up on a station the work block doesn't already use (and never the
+  // first work station), so the circuit reads varied, not repetitive.
+  const warmCandidates = gym.stations
+    .filter((st) => st.stimulusTypes.includes('cardio_endurance'))
+    .sort((a, b) => rank(a) - rank(b));
+  const warmStation =
+    warmCandidates.find((st) => !used.has(st.id)) ??
+    warmCandidates.find((st) => st.id !== workLegs[0].station.id) ??
+    warmCandidates[0] ??
+    workLegs[0].station;
+
+  return [
+    { station: warmStation, minutes: bookend, targetZone: ease },
+    ...workLegs,
+    { station: warmStation, minutes: bookend, targetZone: 1 },
+  ];
 }
 
 /**
@@ -551,20 +632,23 @@ export interface CreateTrainingRequest {
   exercises: { orderIndex: number; style: 'duration' | 'score' | 'repetitions'; name: string; target: string }[];
 }
 
-export function toCreateTrainingRequest(view: PlanView, weekNumber = 1): CreateTrainingRequest {
-  const week = view.resolved.find((w) => w.weekNumber === weekNumber) ?? view.resolved[0];
+export function toCreateTrainingRequest(view: PlanView, rs: ResolvedSession): CreateTrainingRequest {
+  // One circle training = one session: its circuit legs map 1:1 onto the
+  // kiosk's ordered exercise list.
+  const week = view.resolved.find((w) => w.sessions.some((x) => x.session.id === rs.session.id));
+  const circuit = circuitFor(view, rs);
   return {
     kioskId: view.gym.id,
     setupByUserId: null,
     hyrox: false,
-    name: `${view.plan.goal.replace(/_/g, ' ')}, week ${week.weekNumber}`,
+    name: `${CIRCUIT_NAMES[view.plan.goal]}, week ${week?.weekNumber ?? 1} session ${rs.session.order}`,
     mode: 'single',
     style: 'duration',
-    exercises: week.sessions.map((rs, i) => ({
+    exercises: circuit.map((leg, i) => ({
       orderIndex: i,
       style: 'duration',
-      name: rs.stationName,
-      target: `${rs.session.durationMinutes} min @ zone ${rs.session.hrTarget.zone}`,
+      name: leg.station.name,
+      target: `${leg.minutes} min @ zone ${leg.targetZone}`,
     })),
   };
 }

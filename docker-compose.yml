@@ -5,9 +5,38 @@ services:
       MYSQL_ROOT_PASSWORD: devpassword
       MYSQL_DATABASE: spherych_devapp
     ports:
-      - "3306:3306"
+      # Bound to loopback: the export holds real member health data and must
+      # not be reachable from the local network.
+      - "127.0.0.1:3306:3306"
     volumes:
       - dbdata:/var/lib/mysql
+      # On first boot of a fresh volume, MySQL imports any *.sql found here.
+      # Put the Sphery export at _local/db/spherych_devapp.sql (never
+      # committed - see .gitignore).
+      - ./_local/db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pdevpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  engine:
+    build: ./engine
+    environment:
+      SPHERY_DB_URL: mysql://root:devpassword@db:3306/spherych_devapp
+      WEB_ORIGIN: http://localhost:3000
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./web
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - engine
 
 volumes:
   dbdata:

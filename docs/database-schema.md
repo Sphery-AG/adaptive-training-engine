@@ -74,18 +74,47 @@ Hard rules at the seam:
 - `CircleTrainingExerciseLogs` stays out of scope until v2 (sparse data,
   ~19 users).
 
+## What the Aug 6 API findings change (see docs/kiosk-api.md)
+
+Verified against the dev system (`devapp.sphery.ch`), these findings soften
+three of the open questions below:
+
+- **The API is a viable live bridge.** Circle trainings and their results
+  (per-exercise times, scores, calories, hrAverage) are readable via public
+  v1 GETs — no DB access, no credentials. Proposal: in production the app
+  reads live *results* through the API, and the SQL bridge stays what it is
+  today — a static export used for estimate modeling. This shrinks question
+  2 from "give us DB access" to "confirm the API is the sanctioned bridge,
+  and what is its production base URL".
+- **Identity mapping is the Sphery user id.** `auth/sign_in` returns a token
+  carrying the user's id (verified with Anthony's own account, id 738, role
+  coach). `members.sphery_user_id` maps to exactly that. The kiosk's QR
+  login (`auth/qr_exercube`) is the same identity system, so app login via
+  Sphere account or kiosk QR both resolve to the same key. Question 3 is
+  effectively answered; it remains listed for confirmation.
+- **Schema V2.6 will feed the engine's existing features.** v2 adds
+  per-member HR time-series and pause logs with `hr60sRecovery` — the same
+  signals the engine already derives from `HrValues`/`HrStats`. Our feature
+  set carries over to live v2 data without redesign.
+
 ## Open questions for the Michel meeting
 
 1. **GDPR and health data.** Where is this DB allowed to live, do we need a
    data processing agreement, and what is Sphery's position on us storing
    HR-derived data about members? (Also one for Helen and Julian.)
-2. **Live access mechanism.** When we go beyond the static export: read
-   replica, scheduled export sync, or an API in front of the production DB?
-3. **Identity mapping.** How does a plan-app member get matched to a Sphery
-   user reliably: email, kiosk account id, something else?
+2. **Live access mechanism.** Aug 6 finding: the v1 API already exposes what
+   the adaptive loop needs (see above). Remaining ask: bless the API as the
+   bridge, share the production base URL, and confirm the public-read policy
+   is intentional and will persist.
+3. **Identity mapping.** Aug 6 finding: `auth/sign_in` token carries the
+   Sphery user id; `sphery_user_id` maps to it. Confirm this is the intended
+   long-term key (and how gym-chain tenants fit).
 4. **HR-zone gap in the kiosk format.** `CreateTrainingRequest` exercises
-   carry no hrTarget or zone today (Michel's TODO from Jul 17). Our circuits
-   prescribe a zone per leg, so we need a field or an agreed convention.
+   carry no hrTarget or zone today (confirmed again on the Miro API frames —
+   neither v1 nor v2 has it). Our circuits prescribe a zone per leg, so we
+   need a field or an agreed convention. **This is now the single real
+   schema ask.**
 5. **CircleTrainingExerciseLogs roadmap.** When does it become the production
    log for circle trainings, and is the schema stable enough to design
-   `session_logs` imports against?
+   `session_logs` imports against? (The Miro v2 frames suggest the answer is
+   "V2.6, in progress" — confirm timing.)

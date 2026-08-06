@@ -6,6 +6,7 @@ import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
 import MemberApp from './_components/MemberApp';
 import { generatePlan, completeSession, type PlanView } from '@/lib/stub/engine';
+import { withLiveBaseline } from '@/lib/engine/client';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
 import type { QuestionnaireAnswers } from '@/lib/types/plan';
@@ -28,10 +29,14 @@ export default function Home() {
     setStep('questionnaire');
   }
 
-  function submit(a: QuestionnaireAnswers) {
+  async function submit(a: QuestionnaireAnswers) {
     if (!member || !gym) return;
     setAnswers(a);
-    const generated = generatePlan(member, gym, a);
+    // Local dev with the Python engine running: swap the persona's fake
+    // baseline for one computed from the real export before generating.
+    // On Vercel (no NEXT_PUBLIC_ENGINE_URL) this resolves to the member as-is.
+    const { member: liveMember } = await withLiveBaseline(member);
+    const generated = generatePlan(liveMember, gym, a);
     setView(generated);
     // Returning members open the app already a couple of sessions into week 1,
     // matching the seeded engagement state, so the dashboard looks alive. A new

@@ -17,6 +17,13 @@ export interface DemoMember {
   id: string;
   name: string;
   tagline: string;
+  /**
+   * Bridge key into the real Sphery export (Users.id), the same seam the
+   * schema doc reserves as members.sphery_user_id. Only used when
+   * NEXT_PUBLIC_ENGINE_URL points at the local Python engine; the Vercel
+   * demo never touches it.
+   */
+  spheryUserId?: number;
   /** Fake baseline the stub engine seeds the fitness estimate from. */
   baseline: {
     workoutsAnalyzed: number;
@@ -39,6 +46,7 @@ export const DEMO_MEMBERS: DemoMember[] = [
     id: 'user-1',
     name: 'Lena',
     tagline: '2 years of ExerCube history · strong engine',
+    spheryUserId: 535, // Elite in the export: 108 sessions, 66 HR-tracked
     baseline: {
       workoutsAnalyzed: 143,
       fitnessScore: 78,
@@ -55,6 +63,7 @@ export const DEMO_MEMBERS: DemoMember[] = [
     id: 'user-2',
     name: 'Marco',
     tagline: 'Returning after a break · moderate base',
+    spheryUserId: 19, // mid-pack in the export: moderate scores, long history
     baseline: {
       workoutsAnalyzed: 21,
       fitnessScore: 54,

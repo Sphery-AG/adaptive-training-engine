@@ -1,0 +1,89 @@
+/**
+ * Bridge to the real Python engine (local dev only).
+ *
+ * When NEXT_PUBLIC_ENGINE_URL is set and the signed-in demo member carries a
+ * spheryUserId, the app asks the engine for a fitness estimate computed from
+ * the real MySQL export and grafts it onto the member's baseline before plan
+ * generation. When the variable is unset (the Vercel demo), everything runs
+ * on the stub exactly as before — same screens, same flow.
+ *
+ * The web stays UI-only: nothing here computes; it fetches and reshapes.
+ */
+
+import type { DemoMember } from '../stub/data';
+
+/** Raw response of GET /estimate/{user_id} on the Python engine. */
+export interface EngineEstimate {
+  user_id: number;
+  ready: boolean;
+  level: string | null;
+  percentile: number | null;
+  population_n: number;
+  workouts_analyzed: number;
+  hr_workouts: number;
+  avg_score: number | null;
+  score_swing: number | null;
+  avg_brain_score: number | null;
+  est_rest_hr: number | null;
+  est_max_hr: number | null;
+  max_hr_source: 'observed' | 'tanaka' | null;
+  hr_recovery_bpm: number | null;
+  recovery_quality: string | null;
+  effort_habit: string | null;
+  zone_shares: number[] | null;
+  rationale: string[];
+}
+
+export function engineUrl(): string | null {
+  return process.env.NEXT_PUBLIC_ENGINE_URL || null;
+}
+
+export async function fetchEngineEstimate(spheryUserId: number): Promise<EngineEstimate | null> {
+  const base = engineUrl();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/estimate/${spheryUserId}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as EngineEstimate;
+  } catch {
+    // Engine down or unreachable: fall back to the stub silently. The demo
+    // must never break because a local service isn't running.
+    return null;
+  }
+}
+
+/**
+ * Return the member with their baseline replaced by real engine numbers.
+ * Falls back to the member unchanged whenever live data isn't available.
+ */
+export async function withLiveBaseline(
+  member: DemoMember,
+): Promise<{ member: DemoMember; live: EngineEstimate | null }> {
+  if (!member.spheryUserId) return { member, live: null };
+  const est = await fetchEngineEstimate(member.spheryUserId);
+  if (!est || !est.ready) return { member, live: est };
+
+  const prior = member.baseline;
+  return {
+    live: est,
+    member: {
+      ...member,
+      baseline: {
+        // Real history: the percentile among regular members is the composite
+        // 0-100 fitness score the plan difficulty derives from.
+        workoutsAnalyzed: est.workouts_analyzed,
+        fitnessScore: est.percentile ?? prior?.fitnessScore ?? 50,
+        hrRest: est.est_rest_hr ?? prior?.hrRest ?? 60,
+        hrMax: est.est_max_hr ?? prior?.hrMax ?? 180,
+        // The export's bodyScore column is degenerate (~1 everywhere, see
+        // engine/app/features.py), so movement/cognitive scores keep the
+        // persona seed until a real source exists.
+        bodyScore: prior?.bodyScore ?? est.percentile ?? 50,
+        brainScore: prior?.brainScore ?? est.percentile ?? 50,
+        bodyAge: prior?.bodyAge ?? 35,
+        brainAge: prior?.brainAge ?? 35,
+        actualAge: prior?.actualAge ?? 35,
+      },
+    },
+  };
+}

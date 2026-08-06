@@ -5,8 +5,9 @@ import LoginStep from './_components/LoginStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
 import MemberApp from './_components/MemberApp';
-import { generatePlan, completeSession, type PlanView } from '@/lib/stub/engine';
-import { withLiveBaseline } from '@/lib/engine/client';
+import { generatePlan, planViewFromEngine, completeSession, type PlanView, type ResolvedWeek } from '@/lib/stub/engine';
+import { fetchEnginePlan, withLiveBaseline } from '@/lib/engine/client';
+import type { Plan } from '@/lib/types/plan';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
 import type { QuestionnaireAnswers } from '@/lib/types/plan';
@@ -32,11 +33,14 @@ export default function Home() {
   async function submit(a: QuestionnaireAnswers) {
     if (!member || !gym) return;
     setAnswers(a);
-    // Local dev with the Python engine running: swap the persona's fake
-    // baseline for one computed from the real export before generating.
-    // On Vercel (no NEXT_PUBLIC_ENGINE_URL) this resolves to the member as-is.
+    // Local dev with the Python engine running: the engine generates the plan
+    // (real estimate + rules in Python). The stub only assembles engagement
+    // and remains the full fallback on Vercel or when the engine is down.
     const { member: liveMember } = await withLiveBaseline(member);
-    const generated = generatePlan(liveMember, gym, a);
+    const enginePlan = await fetchEnginePlan(liveMember, gym, a);
+    const generated = enginePlan
+      ? planViewFromEngine(enginePlan as { plan: Plan; resolved: ResolvedWeek[] }, liveMember, gym, a)
+      : generatePlan(liveMember, gym, a);
     setView(generated);
     // Returning members open the app already a couple of sessions into week 1,
     // matching the seeded engagement state, so the dashboard looks alive. A new

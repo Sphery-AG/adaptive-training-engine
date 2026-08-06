@@ -53,6 +53,45 @@ export async function fetchEngineEstimate(spheryUserId: number): Promise<EngineE
 }
 
 /**
+ * Ask the Python engine to generate the full plan. Returns null whenever the
+ * engine isn't configured or reachable, so callers can fall back to the stub.
+ * The gym's stations travel in the request — the engine stays
+ * equipment-agnostic and this app stays UI-only.
+ */
+export async function fetchEnginePlan(
+  member: DemoMember,
+  gym: { id: string; name: string; stations: unknown[] },
+  answers: { age: number; goal: string; focus?: string[]; activityLevel: string; sessionsPerWeek?: number; sessionLengthMinutes?: number },
+): Promise<{ plan: unknown; resolved: unknown[] } | null> {
+  const base = engineUrl();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/generate-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spheryUserId: member.spheryUserId ?? null,
+        memberName: member.name,
+        answers: {
+          age: answers.age,
+          goal: answers.goal,
+          focus: answers.focus ?? [],
+          activityLevel: answers.activityLevel,
+          sessionsPerWeek: answers.sessionsPerWeek ?? 3,
+          sessionLengthMinutes: answers.sessionLengthMinutes ?? 30,
+        },
+        gym: { id: gym.id, name: gym.name, stations: gym.stations },
+      }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { plan: unknown; resolved: unknown[] };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Return the member with their baseline replaced by real engine numbers.
  * Falls back to the member unchanged whenever live data isn't available.
  */

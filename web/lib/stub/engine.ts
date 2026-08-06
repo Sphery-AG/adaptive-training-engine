@@ -485,6 +485,26 @@ function engagementFor(member: DemoMember, gym: GymConcept, answers: Questionnai
 // Public API — mirrors the real engine endpoints
 // ---------------------------------------------------------------------------
 
+/**
+ * Assemble a PlanView from the Python engine's POST /generate-plan response.
+ * The engine owns the plan and its gym resolution; engagement (streaks, XP,
+ * quests) is demo-side state and stays in the stub for now.
+ */
+export function planViewFromEngine(
+  enginePlan: { plan: Plan; resolved: ResolvedWeek[] },
+  member: DemoMember,
+  gym: GymConcept,
+  answers: QuestionnaireAnswers,
+): PlanView {
+  const est = estimate(member, answers);
+  return {
+    plan: enginePlan.plan,
+    gym,
+    resolved: enginePlan.resolved,
+    engagement: engagementFor(member, gym, answers, est),
+  };
+}
+
 /** POST /generate-plan */
 export function generatePlan(member: DemoMember, gym: GymConcept, answers: QuestionnaireAnswers): PlanView {
   const est = estimate(member, answers);

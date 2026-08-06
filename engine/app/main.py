@@ -23,6 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .contract import CreateTrainingRequest
 from .estimate import estimate_for_member
 from .generate import generate_for_member
+from .plangen import GeneratePlanRequest, generate_plan as generate_plan_full
 
 app = FastAPI(title="Adaptive Training Engine", version="0.2.0")
 
@@ -46,6 +47,14 @@ def generate_plan(user_id: int) -> CreateTrainingRequest:
         return generate_for_member(user_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@app.post("/generate-plan")
+def generate_plan_post(req: GeneratePlanRequest) -> dict:
+    """Full plan generation: estimate (real or cold start) + rules -> 8-week
+    plan resolved onto the gym sent in the request. The web app's primary
+    endpoint when running against the local engine."""
+    return generate_plan_full(req)
 
 
 @app.get("/estimate/{user_id}")

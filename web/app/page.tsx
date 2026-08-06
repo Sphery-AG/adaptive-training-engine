@@ -6,7 +6,7 @@ import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
 import MemberApp from './_components/MemberApp';
 import { generatePlan, planViewFromEngine, completeSession, type PlanView, type ResolvedWeek } from '@/lib/stub/engine';
-import { fetchEnginePlan, withLiveBaseline } from '@/lib/engine/client';
+import { fetchEnginePlan, fetchEngineUpdate, withLiveBaseline } from '@/lib/engine/client';
 import type { Plan } from '@/lib/types/plan';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
@@ -50,12 +50,37 @@ export default function Home() {
     setStep('planReady');
   }
 
-  function complete() {
+  async function complete() {
     if (!view) return;
     const { view: next, update } = completeSession(view, completedCount);
+    // With the local engine running, the adaptive decision comes from Python
+    // (real score-trend evidence); the stub's hardcoded nudge is replaced by
+    // whatever the engine actually concluded, including "plan holds".
+    if (member) {
+      const sessionId = nthSessionId(view, completedCount);
+      const engineUpdate = sessionId ? await fetchEngineUpdate(member, view, sessionId) : null;
+      if (engineUpdate) {
+        next.plan = engineUpdate.plan as PlanView['plan'];
+        next.resolved = engineUpdate.resolved as ResolvedWeek[];
+        update.planChanges = engineUpdate.planChanges;
+        update.summary = engineUpdate.summary;
+      }
+    }
     setView(next);
     setCompletedCount((c) => c + 1);
     setLastUpdate(update);
+  }
+
+  /** Id of the (n+1)-th session across the plan's weeks, in order. */
+  function nthSessionId(v: PlanView, n: number): string | null {
+    let i = 0;
+    for (const wk of v.resolved) {
+      for (const rs of wk.sessions) {
+        if (i === n) return rs.session.id;
+        i++;
+      }
+    }
+    return null;
   }
 
   function restart() {

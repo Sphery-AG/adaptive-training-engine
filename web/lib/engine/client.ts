@@ -92,6 +92,39 @@ export async function fetchEnginePlan(
 }
 
 /**
+ * Report a completed session to the engine's adaptive loop. Returns the
+ * adjusted plan + what changed and why, or null to keep the stub behavior.
+ * Evidence: the engine compares the member's recent real scores in the
+ * export against their long-run average (result payload reserved for the
+ * day the app captures HR / perceived effort).
+ */
+export async function fetchEngineUpdate(
+  member: DemoMember,
+  view: { plan: unknown; resolved: unknown[] },
+  completedSessionId: string,
+): Promise<{ plan: unknown; resolved: unknown[]; planChanges: string[]; summary: string } | null> {
+  const base = engineUrl();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/update-plan`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        spheryUserId: member.spheryUserId ?? null,
+        plan: view.plan,
+        resolved: view.resolved,
+        completedSessionId,
+      }),
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as { plan: unknown; resolved: unknown[]; planChanges: string[]; summary: string };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Return the member with their baseline replaced by real engine numbers.
  * Falls back to the member unchanged whenever live data isn't available.
  */

@@ -20,6 +20,7 @@ import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
+from .adapt import UpdatePlanRequest, apply_update
 from .contract import CreateTrainingRequest
 from .estimate import estimate_for_member
 from .generate import generate_for_member
@@ -64,6 +65,6 @@ def estimate(user_id: int) -> dict:
 
 
 @app.post("/update-plan")
-def update_plan() -> dict:
-    # step 4: fold ExerciseLogs + HR zones back in and adapt.
-    raise HTTPException(status_code=501, detail="adaptation not implemented yet")
+def update_plan(req: UpdatePlanRequest) -> dict:
+    """Fold a completed session back into the plan and explain what changed."""
+    return apply_update(req)

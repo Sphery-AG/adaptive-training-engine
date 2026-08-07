@@ -277,6 +277,9 @@ function PlanTab({ view, completedCount }: { view: PlanView; completedCount: num
   // the drill-down into the rest; the full plan is never dumped in one list.
   const [selectedIdx, setSelectedIdx] = useState(allDone ? resolved.length - 1 : currentIdx);
   const [weekMenuOpen, setWeekMenuOpen] = useState(false);
+  // Sessions collapse to one line each; at most one is expanded at a time
+  // (Max's review, Aug 6: the full list read as too busy).
+  const [openSession, setOpenSession] = useState<string | null>(null);
   const sel = weekMeta[selectedIdx];
   const selStatus: 'done' | 'current' | 'projected' =
     sel.end <= completedCount ? 'done' : selectedIdx === currentIdx ? 'current' : 'projected';
@@ -338,17 +341,11 @@ function PlanTab({ view, completedCount }: { view: PlanView; completedCount: num
       </Card>
 
       {/* Selected week detail, week picked via the dropdown on the title */}
-      <Card className="relative">
+      <Card>
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={(e) => {
-              // The panel is absolutely positioned, so it can't extend the
-              // page's scroll area; center the trigger first so the capped
-              // panel always fits on a phone screen.
-              if (!weekMenuOpen) e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              setWeekMenuOpen((v) => !v);
-            }}
+            onClick={() => setWeekMenuOpen((v) => !v)}
             aria-expanded={weekMenuOpen}
             aria-label="Choose week"
             className="flex items-center gap-1.5 transition-opacity hover:opacity-80"
@@ -373,8 +370,10 @@ function PlanTab({ view, completedCount }: { view: PlanView; completedCount: num
             <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-semibold text-violet">Projected</span>
           )}
         </div>
-        {weekMenuOpen && (
-          <div className="absolute inset-x-3 top-11 z-20 max-h-60 overflow-y-auto overscroll-contain rounded-2xl border border-border bg-zinc-900/95 shadow-xl backdrop-blur">
+        {weekMenuOpen ? (
+          // In-flow, and it replaces the session list while open, so nothing
+          // shows through behind it (Max's review, Aug 6).
+          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-white/[0.03]">
             {weekMeta.map((m, i) => {
               const done = m.end <= completedCount;
               const isCurrent = i === currentIdx;
@@ -408,62 +407,103 @@ function PlanTab({ view, completedCount }: { view: PlanView; completedCount: num
               );
             })}
           </div>
+        ) : (
+          <ul className="mt-3 space-y-1">
+            {sel.wk.sessions.map((rs, i) => {
+              const flatIdx = sel.start + i;
+              const state = flatIdx < completedCount ? 'done' : flatIdx === completedCount ? 'next' : 'todo';
+              return (
+                <SessionRow
+                  key={rs.session.id}
+                  view={view}
+                  rs={rs}
+                  state={state}
+                  open={openSession === rs.session.id}
+                  onToggle={() => setOpenSession((v) => (v === rs.session.id ? null : rs.session.id))}
+                />
+              );
+            })}
+          </ul>
         )}
-        <ul className="mt-3 space-y-3">
-          {sel.wk.sessions.map((rs, i) => {
-            const flatIdx = sel.start + i;
-            const state = flatIdx < completedCount ? 'done' : flatIdx === completedCount ? 'next' : 'todo';
-            return <SessionRow key={rs.session.id} view={view} rs={rs} state={state} />;
-          })}
-        </ul>
       </Card>
 
     </div>
   );
 }
 
-function SessionRow({ view, rs, state = 'todo' }: { view: PlanView; rs: ResolvedSession; state?: 'done' | 'next' | 'todo' }) {
+function SessionRow({
+  view,
+  rs,
+  state = 'todo',
+  open,
+  onToggle,
+}: {
+  view: PlanView;
+  rs: ResolvedSession;
+  state?: 'done' | 'next' | 'todo';
+  open: boolean;
+  onToggle: () => void;
+}) {
   const s = rs.session;
   const circuit = circuitFor(view, rs);
   const hasSphery = circuit.some((leg) => leg.station.isSpheryEquipment);
   return (
-    <li className={`flex items-start gap-3 ${state === 'done' ? 'opacity-55' : ''}`}>
-      {state === 'done' ? (
-        <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-mint/20 text-mint">
-          <Icon name="check" size={10} />
-        </span>
-      ) : (
-        <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${STIMULUS_DOT[s.stimulusType]}`} />
+    <li className={state === 'done' ? 'opacity-55' : ''}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-start gap-3 rounded-xl px-1 py-2 text-left transition-colors hover:bg-white/[0.03]"
+      >
+        {state === 'done' ? (
+          <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-mint/20 text-mint">
+            <Icon name="check" size={10} />
+          </span>
+        ) : (
+          <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${STIMULUS_DOT[s.stimulusType]}`} />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-sm font-semibold">{STIMULUS_LABELS[s.stimulusType]}</span>
+            {state === 'next' && (
+              <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Next up</span>
+            )}
+            {hasSphery && (
+              <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Sphery</span>
+            )}
+            {rs.substituted && (
+              <span className="inline-flex items-center gap-0.5 rounded bg-amber/15 px-1.5 text-[10px] font-semibold text-amber">
+                <Icon name="refresh" size={9} /> substituted
+              </span>
+            )}
+          </div>
+          <div className="mt-0.5 text-xs text-faint">
+            {s.durationMinutes} min · zone {s.hrTarget.zone}
+            {s.hrTarget.bpm ? ` (${s.hrTarget.bpm.min}–${s.hrTarget.bpm.max} bpm)` : ''} · difficulty {s.difficulty}/10
+          </div>
+        </div>
+        <Icon
+          name="chevron-left"
+          size={13}
+          className={`mt-1 shrink-0 text-faint transition-transform ${open ? 'rotate-90' : '-rotate-90'}`}
+        />
+      </button>
+      {open && (
+        <div className="mb-2 ml-8 mr-1">
+          <p className="eyebrow text-faint">{CIRCUIT_NAMES[view.plan.goal]}</p>
+          <ol className="mt-1.5 space-y-1.5">
+            {circuit.map((leg, i) => (
+              <li key={i} className="flex items-center gap-2.5 text-xs">
+                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/[0.06] text-[10px] font-semibold text-dim tabular">
+                  {i + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate">{leg.station.name}</span>
+                <span className="shrink-0 text-faint tabular">{leg.minutes} min</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-sm font-semibold">{STIMULUS_LABELS[s.stimulusType]}</span>
-          {state === 'next' && (
-            <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Next up</span>
-          )}
-          <span className="text-xs text-faint">{CIRCUIT_NAMES[view.plan.goal]}</span>
-          {hasSphery && (
-            <span className="rounded bg-[var(--accent-soft2)] px-1.5 text-[10px] font-semibold text-accent">Sphery</span>
-          )}
-          {rs.substituted && (
-            <span className="inline-flex items-center gap-0.5 rounded bg-amber/15 px-1.5 text-[10px] font-semibold text-amber">
-              <Icon name="refresh" size={9} /> substituted
-            </span>
-          )}
-        </div>
-        <div className="mt-0.5 text-xs text-faint">
-          {s.durationMinutes} min · zone {s.hrTarget.zone}
-          {s.hrTarget.bpm ? ` (${s.hrTarget.bpm.min}–${s.hrTarget.bpm.max} bpm)` : ''} · difficulty {s.difficulty}/10
-        </div>
-        <div className="mt-1 text-[11px] leading-relaxed text-faint">
-          {circuit.map((leg, i) => (
-            <span key={i}>
-              {i > 0 && <span className="mx-1 text-accent/60">→</span>}
-              {leg.station.name}
-            </span>
-          ))}
-        </div>
-      </div>
     </li>
   );
 }
@@ -765,6 +805,7 @@ const QUEST_TIER_LABELS = ['Quick win · this week', 'Medium · this month', 'Lo
 function RankDetail({ view, completedCount, onClose }: { view: PlanView; completedCount: number; onClose: () => void }) {
   const e = view.engagement;
   const l = e.league;
+  const [emblemInfo, setEmblemInfo] = useState(false);
   const monthly = monthlyPointsFor(e);
   const tierIdx = LEAGUE_TIERS.indexOf(l.tier);
   const totalSessions = view.resolved.reduce((n, wk) => n + wk.sessions.length, 0);
@@ -875,15 +916,28 @@ function RankDetail({ view, completedCount, onClose }: { view: PlanView; complet
         {/* Emblems */}
         <Card className="mt-4">
           <div className="flex items-center justify-between">
-            <p className="eyebrow text-mint">Emblems</p>
+            <span className="flex items-center gap-1.5">
+              <p className="eyebrow text-mint">Emblems</p>
+              <button
+                type="button"
+                onClick={() => setEmblemInfo((v) => !v)}
+                aria-label="How emblems work"
+                aria-expanded={emblemInfo}
+                className="grid h-5 w-5 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <Icon name="info" size={13} />
+              </button>
+            </span>
             <span className="eyebrow text-faint">Earned, never bought</span>
           </div>
+          {emblemInfo && (
+            <p className="mt-2 text-[11px] text-faint">Tap an earned emblem to see what it means and when you got it.</p>
+          )}
           <div className="mt-3 grid grid-cols-3 gap-2.5">
             {emblems.map((em) => (
               <EmblemTile key={em.id} em={em} />
             ))}
           </div>
-          <p className="mt-3 text-[11px] text-faint">Tap an earned emblem to see what it means and when you got it.</p>
         </Card>
       </div>
     </div>

@@ -159,7 +159,7 @@ export default function LiveSession({
               </span>
               <span className="text-right">
                 <span className="block text-2xl tabular">{fmt(elapsed)}</span>
-                <span className="eyebrow text-faint">elapsed · {totalMinutes} min total</span>
+                <span className="eyebrow text-faint">duration {totalMinutes} min</span>
               </span>
             </div>
 

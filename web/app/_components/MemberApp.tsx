@@ -79,7 +79,7 @@ export default function MemberApp({
   view: PlanView;
   completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
-  onComplete: () => void;
+  onComplete: (livePoints: number) => void;
   onRestart: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('today');
@@ -139,8 +139,8 @@ export default function MemberApp({
           rs={trainingSession.rs}
           weekNumber={trainingSession.weekNumber}
           sessionInWeek={trainingSession.sessionInWeek}
-          onFinish={() => {
-            onComplete();
+          onFinish={(livePoints) => {
+            onComplete(livePoints);
             setTraining(false);
           }}
           onClose={() => setTraining(false)}
@@ -788,12 +788,13 @@ function CircleTab({ view, completedCount }: { view: PlanView; completedCount: n
   );
 }
 
-// How points are earned (docs/xp-leveling-design.md, approved Aug 4). Zone
-// rates match ZONE_PTS in the live session so the app never contradicts itself.
+// How points are earned (docs/xp-leveling-design.md). Reworked Aug 7 per
+// Max's review: rewarding zones 4–5 more punished members whose plan
+// prescribes zone 2. Rates match the live session so the app never
+// contradicts itself.
 const EARN_TABLE: Array<{ label: string; pts: string; why: string }> = [
-  { label: 'Training in zones 1–2', pts: '1 pt / min', why: 'Showing up counts' },
-  { label: 'Training in zone 3', pts: '2 pts / min', why: 'Solid work' },
-  { label: 'Training in zones 4–5', pts: '4 pts / min', why: 'Max effort, max reward' },
+  { label: 'Training time', pts: '1 pt / min', why: 'Showing up counts' },
+  { label: 'Time in your target zone', pts: '2 pts / min', why: 'Following your plan pays double' },
   { label: 'Planned session completed', pts: '+25', why: 'The plan is the product' },
   { label: 'Benchmark session', pts: '+50', why: 'Marks the re-estimate' },
   { label: 'Post-session feedback', pts: '+10', why: 'Feeds the adaptive loop' },

@@ -50,9 +50,9 @@ export default function Home() {
     setStep('planReady');
   }
 
-  async function complete() {
+  async function complete(livePoints: number) {
     if (!view) return;
-    const { view: next, update } = completeSession(view, completedCount);
+    const { view: next, update } = completeSession(view, completedCount, livePoints);
     // With the local engine running, the adaptive decision comes from Python
     // (real score-trend evidence); the stub's hardcoded nudge is replaced by
     // whatever the engine actually concluded, including "plan holds".

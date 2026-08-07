@@ -1,7 +1,13 @@
 # XP & Leveling System — first pass (Aug 3)
 
-**Status:** approved Aug 4. Anthony signed off the shape (effort + consistency
-points, three quest tiers, monthly rank) and picked the familiar medal ladder
+**Status:** approved Aug 4; earn rates reworked Aug 7 after Max's review.
+Zone-tiered rates (more points for zones 4–5) punished members whose plan
+prescribes zone 2 and nudged everyone toward overtraining, against the
+system's own effort-not-ability rule. New rule: every training minute earns
+1 pt, minutes in your prescribed target zone earn 2. Following the plan is
+what pays.
+
+Anthony signed off the shape (effort + consistency points, three quest tiers, monthly rank) and picked the familiar medal ladder
 over the orbit-themed rank names. Monthly target stays fixed at 1,000 pts for
 v1 (simplest to explain; revisit scaled-to-plan later). Ready to build the J6
 Circle detail page. Grounded in the HYROX app research
@@ -13,8 +19,8 @@ leaderboards.
 
 ## The one-sentence design
 
-You earn points for effort (time in heart-rate zones) and consistency (showing
-up on plan), points build a monthly status rank, and quests give short, medium,
+You earn points for training (every minute counts, minutes in your target
+zone count double) and consistency (showing up on plan), points build a monthly status rank, and quests give short, medium,
 and long-term reasons to come back.
 
 ## 1. The currency: Points
@@ -24,16 +30,16 @@ things the member actually did:
 
 | Source | Points | Why |
 |---|---|---|
-| Training time in zones 1–2 | 1 pt / min | Showing up counts |
-| Training time in zone 3 | 2 pts / min | Solid work |
-| Training time in zones 4–5 | 4 pts / min | Max effort, max reward |
+| Training time | 1 pt / min | Showing up counts |
+| Time in your prescribed target zone | 2 pts / min | Following your plan pays double |
 | Completing a planned session | +25 | The plan is the product |
 | Completing a benchmark / test session | +50 | Marks the re-estimate moment |
 | Giving post-session feedback | +10 | Feeds the adaptive loop |
 | Finishing a full plan block (8 weeks) | +200 + emblem | The big earn |
 
-This is the Peloton Strive / Myzone MEPs pattern: a beginner and an athlete
-working equally hard earn equally. No points for logins, shares, or streaks
+A beginner on a zone-2 plan and an athlete on a zone-4 plan earn identically
+when both follow their plan — the target zone is theirs, not an absolute
+bar. No points for logins, shares, or streaks
 themselves (streaks are their own display). Sessions without a HR belt earn the
 flat completion points only — which quietly makes the belt worth wearing.
 
@@ -63,7 +69,7 @@ league tiers the app ships today), not invented orbit names:
 
 | Tier | Cadence | Examples | Reward |
 |---|---|---|---|
-| Quick win | Today / this week | "Show up this week (2/3)", "First zone-4 minute this week" | 25–50 pts |
+| Quick win | Today / this week | "Show up this week (2/3)", "10 target-zone minutes in one session" | 25–50 pts |
 | Medium | Weekly / monthly | "Hit your monthly point target", "Complete all 3 sessions two weeks running", "Do the benchmark session" | 100–200 pts |
 | Long | Quarterly / per block | "Finish the 8-week block", "Improve HR recovery vs your baseline", "3 consecutive months at Gold or above" | Emblem + 200–500 pts |
 

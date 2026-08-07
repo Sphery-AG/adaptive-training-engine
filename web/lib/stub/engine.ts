@@ -423,9 +423,11 @@ function metricsFor(est: Estimate, weeklyLoadMinutes = 0): MetricSnapshot[] {
   ];
 }
 
-// Points a completed session awards. Kept in one place so the seeded demo
-// state and the live completeSession award stay in lockstep.
+// Points a completed session awards when the live session didn't report what
+// it actually earned (seeded demo history). Sized to a typical 45-min session
+// under the Aug 7 rates: ~95 pts trained plus the completion bonus.
 const POINTS_PER_SESSION = 120;
+const SESSION_COMPLETION_BONUS = 25;
 
 function engagementFor(member: DemoMember, gym: GymConcept, answers: QuestionnaireAnswers, est: Estimate): MemberEngagement {
   const perWeek = answers.sessionsPerWeek ?? 3;
@@ -534,7 +536,7 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
  * POST /update-plan — apply one completed session and return what changed.
  * Mutates a copy of the view and hands back the AdaptiveUpdate for the toast.
  */
-export function completeSession(view: PlanView, completedSoFar: number): { view: PlanView; update: AdaptiveUpdate } {
+export function completeSession(view: PlanView, completedSoFar: number, livePoints?: number): { view: PlanView; update: AdaptiveUpdate } {
   const e = structuredClone(view.engagement);
   const planChanges: string[] = [];
   const newlyUnlocked: Reward[] = [];
@@ -558,8 +560,10 @@ export function completeSession(view: PlanView, completedSoFar: number): { view:
   }
   if (completedWeek) e.streak.currentWeeks += 1;
 
-  // Points → league + wallet
-  const earned = POINTS_PER_SESSION;
+  // Points → league + wallet. The live session reports what it actually
+  // earned; the completion bonus rides on top (the EARN_TABLE's +25).
+  const earned =
+    livePoints !== undefined ? livePoints + SESSION_COMPLETION_BONUS : POINTS_PER_SESSION;
   e.league.pointsThisWeek += earned;
   e.wallet.pointsBalance += earned;
   if (e.league.pointsToPromotion !== undefined) {

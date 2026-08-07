@@ -17,8 +17,12 @@ import type { HrZone } from '@/lib/types/plan';
 import { STIMULUS_LABELS } from '@/lib/labels';
 import { Icon } from './icons';
 
-/** Points per planned minute by zone — the effort-not-ability rule. */
-const ZONE_PTS: Record<HrZone, number> = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 4 };
+// Points: every training minute earns 1, minutes in the station's target
+// zone earn 2 (1 base + 1 bonus). Reworked Aug 7 per Max's review: paying
+// more for zones 4–5 punished members whose plan prescribes zone 2 and
+// nudged everyone toward overtraining. Following the plan is the win.
+const BASE_PT_PER_MIN = 1;
+const TARGET_BONUS_PER_MIN = 1;
 
 const ZONE_BAR: Record<HrZone, { bg: string; glow: string }> = {
   5: { bg: 'linear-gradient(90deg,#fb7185,#ec4899)', glow: '0 0 9px rgba(236,72,153,0.6)' },
@@ -47,7 +51,7 @@ export default function LiveSession({
   weekNumber: number;
   sessionInWeek: number;
   /** Log the session (parent adaptation flow) and leave the live view. */
-  onFinish: () => void;
+  onFinish: (pointsEarned: number) => void;
   /** Leave without logging (preview only). */
   onClose: () => void;
 }) {
@@ -64,6 +68,7 @@ export default function LiveSession({
   const [hr, setHr] = useState(0);
   const hrRef = useRef(0);
   const hrStats = useRef({ sum: 0, n: 0, max: 0 });
+  const stationTargetSec = useRef(0);
 
   const zoneOf = (bpm: number): HrZone =>
     bpm < bounds[0] ? 1 : bpm < bounds[1] ? 2 : bpm < bounds[2] ? 3 : bpm < bounds[3] ? 4 : 5;
@@ -90,6 +95,7 @@ export default function LiveSession({
       hrStats.current.n += 1;
       hrStats.current.max = Math.max(hrStats.current.max, next);
       setHr(next);
+      if (zoneOf(next) === circuit[idx].targetZone) stationTargetSec.current += 1;
       setZoneSec((prev) => {
         const c = prev.slice();
         c[zoneOf(next) - 1] += 1;
@@ -119,7 +125,11 @@ export default function LiveSession({
       c[above - 1] += remaining - hit - easy;
       return c;
     });
-    setPoints((p) => p + leg.minutes * ZONE_PTS[leg.targetZone]);
+    // The credited remainder counts toward the target-zone bonus at the same
+    // 70% rate the zone buckets get.
+    const targetSec = stationTargetSec.current + Math.round(remaining * 0.7);
+    setPoints((p) => p + leg.minutes * BASE_PT_PER_MIN + Math.round(targetSec / 60) * TARGET_BONUS_PER_MIN);
+    stationTargetSec.current = 0;
     setDoneSec((s) => s + plannedSec);
     setStationSec(0);
     if (idx + 1 < circuit.length) setIdx(idx + 1);
@@ -192,8 +202,8 @@ export default function LiveSession({
                       />
                     </div>
                     <p className={`mt-2 text-xs font-semibold ${inTarget ? 'text-mint' : 'text-amber'}`}>
-                      {inTarget ? 'In target zone' : `Get to zone ${leg.targetZone}`} ·{' '}
-                      <span className="text-fuchsia">+{leg.minutes * ZONE_PTS[leg.targetZone]} pts</span> this station
+                      {inTarget ? 'In target zone · earning double' : `Get to zone ${leg.targetZone}`} ·{' '}
+                      <span className="text-fuchsia">up to +{leg.minutes * (BASE_PT_PER_MIN + TARGET_BONUS_PER_MIN)} pts</span> this station
                     </p>
                   </div>
                 ) : (
@@ -225,6 +235,13 @@ export default function LiveSession({
               style={{ background: 'linear-gradient(90deg,#7dd3fc,#e879f9)', boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
             >
               {idx + 1 < circuit.length ? 'Complete station' : 'Finish session'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-2.5 w-full py-1.5 text-center text-xs font-semibold text-faint transition-colors hover:text-dim"
+            >
+              End session without logging
             </button>
           </>
         )}
@@ -269,7 +286,7 @@ export default function LiveSession({
             <div className="flex-1" />
             <button
               type="button"
-              onClick={onFinish}
+              onClick={() => onFinish(points)}
               className="mt-5 w-full rounded-full py-4 text-base font-bold text-black"
               style={{ background: 'linear-gradient(90deg,#7dd3fc,#e879f9)', boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
             >

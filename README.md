@@ -76,3 +76,5 @@ Pure-logic tests always run; DB-backed tests skip cleanly when MySQL is down.
   bridge to Sphery's data.
 - `docs/circuit-templates-evidence.md` — the training-science evidence behind
   the eight per-goal circuit templates.
+- `docs/path-to-production.md` — what separates the demo from a standalone
+  product, sequenced, plus the Aug 26 demo slice.

@@ -11,6 +11,7 @@
  */
 
 import type { DemoMember } from '../stub/data';
+import type { PerceivedEffort } from '../types/engagement';
 
 /** Raw response of GET /estimate/{user_id} on the Python engine. */
 export interface EngineEstimate {
@@ -94,14 +95,20 @@ export async function fetchEnginePlan(
 /**
  * Report a completed session to the engine's adaptive loop. Returns the
  * adjusted plan + what changed and why, or null to keep the stub behavior.
- * Evidence: the engine compares the member's recent real scores in the
- * export against their long-run average (result payload reserved for the
- * day the app captures HR / perceived effort).
+ *
+ * We send the member's own effort rating and deliberately do NOT send
+ * `hrAverage`. The engine's evidence ladder (engine/app/adapt.py) puts heart
+ * rate above perceived effort, and our live-session HR is simulated — sending
+ * it would make invented numbers outrank the member's real answer and then
+ * quote them back as the reason. Without it the ladder falls to perceived
+ * effort, then to the real score trend from the export. Both are honest.
+ * Send HR here the day it comes from an actual belt or watch.
  */
 export async function fetchEngineUpdate(
   member: DemoMember,
   view: { plan: unknown; resolved: unknown[] },
   completedSessionId: string,
+  effort?: PerceivedEffort,
 ): Promise<{ plan: unknown; resolved: unknown[]; planChanges: string[]; summary: string } | null> {
   const base = engineUrl();
   if (!base) return null;
@@ -114,6 +121,7 @@ export async function fetchEngineUpdate(
         plan: view.plan,
         resolved: view.resolved,
         completedSessionId,
+        result: effort ? { perceivedEffort: effort } : undefined,
       }),
       cache: 'no-store',
     });

@@ -11,10 +11,12 @@
  * while the numbers stay plausible.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { PlanView, ResolvedSession, CircuitStation } from '@/lib/stub/engine';
+import type { PlanView, ResolvedSession, CircuitStation, AdaptationResult } from '@/lib/stub/engine';
 import { circuitFor, zoneBoundsFor, CIRCUIT_NAMES } from '@/lib/stub/engine';
 import type { HrZone } from '@/lib/types/plan';
+import type { PerceivedEffort } from '@/lib/types/engagement';
 import { STIMULUS_LABELS } from '@/lib/labels';
+import { RingGauge } from './RingGauge';
 import { Icon } from './icons';
 
 // Points: every training minute earns 1, minutes in the station's target
@@ -38,6 +40,24 @@ function fmt(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * preview → live → summary → effort → adapting → adapted.
+ *
+ * The last three are the payoff the whole product is for, so they get screens
+ * rather than a notification: the member answers how it felt, watches the plan
+ * recalculate, and reads what changed and why before leaving.
+ */
+type Stage = 'preview' | 'live' | 'summary' | 'effort' | 'adapting' | 'adapted';
+
+/** How long the recalculating beat holds, even if the engine answers sooner. */
+const ADAPTING_MS = 1200;
+
+const EFFORT_CHOICES: { id: PerceivedEffort; label: string; hint: string }[] = [
+  { id: 'easy', label: 'Easy', hint: 'I had more in the tank' },
+  { id: 'right', label: 'Right', hint: 'Hard, but I held it' },
+  { id: 'hard', label: 'Brutal', hint: 'I was hanging on' },
+];
+
 export default function LiveSession({
   view,
   rs,
@@ -45,21 +65,27 @@ export default function LiveSession({
   sessionInWeek,
   onFinish,
   onClose,
+  onDone,
 }: {
   view: PlanView;
   rs: ResolvedSession;
   weekNumber: number;
   sessionInWeek: number;
-  /** Log the session (parent adaptation flow) and leave the live view. */
-  onFinish: (pointsEarned: number) => void;
+  /** Log the session and run the adaptive update; resolves with what changed. */
+  onFinish: (pointsEarned: number, effort?: PerceivedEffort) => Promise<AdaptationResult>;
   /** Leave without logging (preview only). */
   onClose: () => void;
+  /** Leave after the plan has already been updated. */
+  onDone: () => void;
 }) {
   const circuit = useMemo(() => circuitFor(view, rs), [view, rs]);
   const bounds = useMemo(() => zoneBoundsFor(view.plan.fitnessEstimate), [view]);
   const totalMinutes = circuit.reduce((n, leg) => n + leg.minutes, 0);
 
-  const [stage, setStage] = useState<'preview' | 'live' | 'summary'>('preview');
+  const [stage, setStage] = useState<Stage>('preview');
+  const [effort, setEffort] = useState<PerceivedEffort | null>(null);
+  const [result, setResult] = useState<AdaptationResult | null>(null);
+  const [failed, setFailed] = useState(false);
   const [idx, setIdx] = useState(0);
   const [stationSec, setStationSec] = useState(0);
   const [doneSec, setDoneSec] = useState(0);
@@ -134,6 +160,25 @@ export default function LiveSession({
     setStationSec(0);
     if (idx + 1 < circuit.length) setIdx(idx + 1);
     else setStage('summary');
+  }
+
+  /**
+   * The payoff. Hold the recalculating beat for a minimum so the moment reads
+   * as work actually happening, and never drop the member without an answer:
+   * if the update throws, say so on the same screen rather than closing.
+   */
+  async function submitEffort(choice?: PerceivedEffort) {
+    setEffort(choice ?? null);
+    setStage('adapting');
+    const beat = new Promise((r) => setTimeout(r, ADAPTING_MS));
+    try {
+      const [res] = await Promise.all([onFinish(points, choice), beat]);
+      setResult(res);
+    } catch {
+      await beat;
+      setFailed(true);
+    }
+    setStage('adapted');
   }
 
   const inTarget = stage === 'live' && zoneOf(hr) === circuit[idx].targetZone;
@@ -286,16 +331,228 @@ export default function LiveSession({
             <div className="flex-1" />
             <button
               type="button"
-              onClick={() => onFinish(points)}
-              className="mt-5 w-full rounded-full py-4 text-base font-bold text-black"
-              style={{ background: 'linear-gradient(90deg,#7dd3fc,#e879f9)', boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
+              onClick={() => setStage('effort')}
+              className="mt-5 w-full rounded-full py-4 text-base font-semibold"
+              style={{
+                background: 'var(--gradient-accent)',
+                color: 'var(--accent-contrast)',
+                boxShadow: 'var(--shadow-glow)',
+              }}
             >
               Log session · update my plan
             </button>
           </>
         )}
+
+        {stage === 'effort' && (
+          <EffortStep points={points} onChoose={submitEffort} />
+        )}
+
+        {stage === 'adapting' && <AdaptingStep />}
+
+        {stage === 'adapted' && (
+          <AdaptedStep result={result} failed={failed} effort={effort} points={points} onDone={onDone} />
+        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * "How did that feel?" — one tap, three answers, asked once while the session
+ * is still in the member's body. This is the only member-supplied evidence the
+ * adaptive loop gets, so it comes before the recalculation, not after it.
+ */
+function EffortStep({ points, onChoose }: { points: number; onChoose: (e?: PerceivedEffort) => void }) {
+  return (
+    <>
+      <div className="flex-1" />
+      <p className="eyebrow text-mint">Session logged · +{points} pts</p>
+      <h2 className="mt-1 text-4xl leading-[0.95]">How did that feel?</h2>
+      <p className="mt-3 text-sm leading-relaxed text-dim">
+        Your answer is what tunes the next sessions. There is no wrong one.
+      </p>
+
+      <div className="mt-6 space-y-2.5">
+        {EFFORT_CHOICES.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onChoose(c.id)}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left transition-colors hover:border-[var(--border-strong)]"
+          >
+            <span>
+              <span className="block text-lg font-semibold">{c.label}</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-dim">{c.hint}</span>
+            </span>
+            <Icon name="chevron-left" size={18} className="shrink-0 rotate-180 text-faint" />
+          </button>
+        ))}
+      </div>
+
+      <div className="flex-1" />
+      <button
+        type="button"
+        onClick={() => onChoose(undefined)}
+        className="mt-4 h-11 w-full rounded-full text-sm font-medium text-dim transition-colors hover:text-white"
+      >
+        Skip · update my plan anyway
+      </button>
+    </>
+  );
+}
+
+/** The recalculating beat: the signature ring doing the one thing it means. */
+function AdaptingStep() {
+  const [sweep, setSweep] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setSweep(1), 40);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <>
+      <div className="flex-1" />
+      <div className="grid place-items-center" role="status" aria-live="polite">
+        <RingGauge fraction={sweep} size={168} stroke={9} color="var(--orbit-violet)">
+          <Icon name="refresh" size={26} className="text-violet" />
+        </RingGauge>
+        <p className="mt-6 text-2xl">Recalculating your plan</p>
+        <p className="mt-2 max-w-[17rem] text-center text-sm leading-relaxed text-dim">
+          Reading this session against the rest of your block.
+        </p>
+      </div>
+      <div className="flex-1" />
+    </>
+  );
+}
+
+/**
+ * What changed and why. Reads entirely from the update the engine returned:
+ * its reason, its plan changes, the metrics that moved, and the difficulty
+ * numbers diffed off the plan itself.
+ */
+function AdaptedStep({
+  result,
+  failed,
+  effort,
+  points,
+  onDone,
+}: {
+  result: AdaptationResult | null;
+  failed: boolean;
+  effort: PerceivedEffort | null;
+  points: number;
+  onDone: () => void;
+}) {
+  if (failed || !result) {
+    return (
+      <>
+        <div className="flex-1" />
+        <p className="eyebrow text-amber">Not saved</p>
+        <h2 className="mt-1 text-4xl leading-[0.95]">We couldn&apos;t update your plan</h2>
+        <p className="mt-3 text-sm leading-relaxed text-dim">
+          Your session and its {points} points are safe. The plan will re-tune from it the next
+          time the app reaches the engine.
+        </p>
+        <div className="flex-1" />
+        <button
+          type="button"
+          onClick={onDone}
+          className="mt-5 h-14 w-full rounded-full text-base font-semibold"
+          style={{ background: 'var(--gradient-accent)', color: 'var(--accent-contrast)', boxShadow: 'var(--shadow-glow)' }}
+        >
+          Back to today
+        </button>
+      </>
+    );
+  }
+
+  const { update, shift } = result;
+  const changed = update.planChanges.length > 0;
+  const moved = update.metricChanges.filter((m) => m.delta !== undefined && m.delta !== 0);
+
+  return (
+    <>
+      <p className="eyebrow text-violet">{changed ? 'Plan updated' : 'Plan holds'}</p>
+      <h2 className="mt-1 text-4xl leading-[0.95]">
+        {changed ? 'Your next sessions changed' : 'Your plan is holding'}
+      </h2>
+      <p className="mt-3 text-[15px] leading-relaxed text-dim">{update.summary}</p>
+
+      {shift && (
+        <div className="mt-6 rounded-[26px] border border-violet/30 bg-card p-5">
+          <p className="eyebrow text-dim">Difficulty</p>
+          <p className="mt-2 flex items-baseline gap-3">
+            <span className="text-3xl text-faint line-through tabular">{shift.from}</span>
+            <Icon name="chevron-left" size={18} className="rotate-180 text-faint" />
+            <span className="animate-pop text-5xl leading-none text-violet tabular">{shift.to}</span>
+            <span className="text-sm text-faint">/ 10</span>
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-dim">
+            Across {shift.sessions} upcoming session{shift.sessions === 1 ? '' : 's'}.
+          </p>
+        </div>
+      )}
+
+      {changed && (
+        <ul className="mt-4 space-y-2">
+          {update.planChanges.map((c, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-sm leading-relaxed">
+              <Icon name="refresh" size={14} className="mt-1 shrink-0 text-violet" />
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {moved.length > 0 && (
+        <div className="mt-5 rounded-2xl border border-border bg-card p-4">
+          <p className="eyebrow text-dim">What moved</p>
+          <ul className="mt-3 space-y-2.5">
+            {moved.map((m) => {
+              const d = m.delta as number;
+              const better = m.polarity === 'higher_is_better' ? d > 0 : d < 0;
+              return (
+                <li key={m.key} className="flex items-baseline justify-between gap-3 text-sm">
+                  <span className="flex-1">
+                    <span className="font-medium">{m.label}</span>
+                    {m.caption && <span className="mt-0.5 block text-[12.5px] leading-snug text-faint">{m.caption}</span>}
+                  </span>
+                  <span className={`shrink-0 font-semibold tabular ${better ? 'text-mint' : 'text-amber'}`}>
+                    {d > 0 ? '+' : ''}
+                    {Math.round(d * 10) / 10}
+                    {m.unit ? ` ${m.unit}` : ''}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {update.newlyUnlocked.map((r) => (
+        <p key={r.id} className="mt-4 flex items-center gap-2 text-sm font-semibold text-mint">
+          <Icon name="gift" size={15} /> Unlocked: {r.label}
+        </p>
+      ))}
+
+      {effort && (
+        <p className="mt-5 text-xs leading-relaxed text-faint">
+          Based on your effort rating. Feedback earns +10 pts.
+        </p>
+      )}
+
+      <div className="flex-1" />
+      <button
+        type="button"
+        onClick={onDone}
+        className="mt-6 h-14 w-full rounded-full text-base font-semibold"
+        style={{ background: 'var(--gradient-accent)', color: 'var(--accent-contrast)', boxShadow: 'var(--shadow-glow)' }}
+      >
+        Back to today
+      </button>
+    </>
   );
 }
 

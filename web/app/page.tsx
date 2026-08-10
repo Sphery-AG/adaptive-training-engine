@@ -5,13 +5,21 @@ import LoginStep from './_components/LoginStep';
 import QuestionnaireStep from './_components/QuestionnaireStep';
 import PlanReadyStep from './_components/PlanReadyStep';
 import MemberApp from './_components/MemberApp';
-import { generatePlan, planViewFromEngine, completeSession, type PlanView, type ResolvedWeek } from '@/lib/stub/engine';
+import {
+  generatePlan,
+  planViewFromEngine,
+  completeSession,
+  difficultyShift,
+  type AdaptationResult,
+  type PlanView,
+  type ResolvedWeek,
+} from '@/lib/stub/engine';
 import { fetchEnginePlan, fetchEngineUpdate, withLiveBaseline } from '@/lib/engine/client';
 import type { Plan } from '@/lib/types/plan';
 import type { DemoMember } from '@/lib/stub/data';
 import type { GymConcept } from '@/lib/types/gym';
 import type { QuestionnaireAnswers } from '@/lib/types/plan';
-import type { AdaptiveUpdate } from '@/lib/types/engagement';
+import type { AdaptiveUpdate, PerceivedEffort } from '@/lib/types/engagement';
 
 type Step = 'welcome' | 'questionnaire' | 'planReady' | 'dashboard';
 
@@ -50,15 +58,16 @@ export default function Home() {
     setStep('planReady');
   }
 
-  async function complete(livePoints: number) {
-    if (!view) return;
-    const { view: next, update } = completeSession(view, completedCount, livePoints);
+  async function complete(livePoints: number, effort?: PerceivedEffort): Promise<AdaptationResult> {
+    if (!view) throw new Error('No plan to update');
+    const { view: next, update } = completeSession(view, completedCount, livePoints, effort);
     // With the local engine running, the adaptive decision comes from Python
-    // (real score-trend evidence); the stub's hardcoded nudge is replaced by
-    // whatever the engine actually concluded, including "plan holds".
+    // (the member's effort rating, then real score-trend evidence); the stub's
+    // own step is replaced by whatever the engine concluded, "plan holds"
+    // included.
     if (member) {
       const sessionId = nthSessionId(view, completedCount);
-      const engineUpdate = sessionId ? await fetchEngineUpdate(member, view, sessionId) : null;
+      const engineUpdate = sessionId ? await fetchEngineUpdate(member, view, sessionId, effort) : null;
       if (engineUpdate) {
         next.plan = engineUpdate.plan as PlanView['plan'];
         next.resolved = engineUpdate.resolved as ResolvedWeek[];
@@ -69,6 +78,9 @@ export default function Home() {
     setView(next);
     setCompletedCount((c) => c + 1);
     setLastUpdate(update);
+    // The shift is read off the two plans rather than reported, so the number
+    // the member sees is the one that actually landed.
+    return { update, shift: difficultyShift(view, next) };
   }
 
   /** Id of the (n+1)-th session across the plan's weeks, in order. */

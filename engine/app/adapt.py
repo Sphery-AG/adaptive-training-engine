@@ -5,7 +5,10 @@ The rules ladder, most direct evidence first:
 1. Heart rate from the completed session (result.hrAverage) against the
    session's prescribed bpm band: clearly under -> the member absorbed the
    work, raise difficulty; clearly over -> ease off.
-2. Perceived effort, when the app sends it ("easy" | "right" | "hard").
+2. Perceived effort, when the app sends it: a 1-5 rating where 1 means the
+   session was too easy and 5 means it was too hard. Only the extremes move a
+   plan (1 raises, 5 eases, 2-4 hold), so one unusual day does not swing a
+   whole block.
 3. Score trend from the member's real history (static export): the average
    of their most recent completed scores against their long-run average.
    Improving -> nudge up; declining -> ease.
@@ -30,12 +33,28 @@ TREND_UP = 1.10
 TREND_DOWN = 0.75
 RECENT_WINDOW = 5
 
+# The 1-5 effort scale. Only the ends move a plan: a single hard day should not
+# derail a block, and a single easy one should not accelerate it.
+EFFORT_TOO_EASY = 1
+EFFORT_TOO_HARD = 5
+
 
 class SessionResult(BaseModel):
+    """What came back from a completed session.
+
+    Field names mirror the kiosk's own result payload (`hrAverage`, `score`,
+    `calories`, `repetitions`) so an app-run session and a kiosk-run session
+    arrive in the same shape.
+    """
+
     model_config = ConfigDict(populate_by_name=True)
     hr_average: Optional[float] = Field(default=None, alias="hrAverage")
-    perceived_effort: Optional[str] = Field(default=None, alias="perceivedEffort")
+    hr_max: Optional[float] = Field(default=None, alias="hrMax")
+    # 1 = too easy, 5 = too hard. See EFFORT_* below.
+    perceived_effort: Optional[int] = Field(default=None, alias="perceivedEffort", ge=1, le=5)
     score: Optional[float] = None
+    calories: Optional[int] = None
+    repetitions: Optional[int] = None
 
 
 class UpdatePlanRequest(BaseModel):
@@ -97,12 +116,21 @@ def decide_delta(req: UpdatePlanRequest, session: dict) -> tuple[int, str]:
             f"target zone ({band['min']}–{band['max']} bpm) — the plan holds."
         )
 
-    if r and r.perceived_effort in {"easy", "right", "hard"}:
-        if r.perceived_effort == "easy":
-            return 1, "You rated the session easy — difficulty steps up one notch."
-        if r.perceived_effort == "hard":
-            return -1, "You rated the session hard — easing the next ones a notch."
-        return 0, "You rated the effort about right — the plan holds."
+    if r and r.perceived_effort is not None:
+        if r.perceived_effort == EFFORT_TOO_EASY:
+            return 1, (
+                "You rated this one too easy, so difficulty steps up one notch "
+                "on the sessions ahead."
+            )
+        if r.perceived_effort == EFFORT_TOO_HARD:
+            return -1, (
+                "You rated this one too hard, so the next ones ease off a notch "
+                "to keep you training."
+            )
+        return 0, (
+            f"You rated the effort {r.perceived_effort} out of 5, which is the "
+            "range the plan is built for. It holds."
+        )
 
     if req.sphery_user_id is not None:
         trend = score_trend(req.sphery_user_id)

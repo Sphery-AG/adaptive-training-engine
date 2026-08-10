@@ -25,14 +25,14 @@ Checked first, so the ask stays small.
 | `Users`, `HealthData` | Identity and profile. `auth/sign_in` already returns the user id. |
 | `Workouts`, `HrValues`, `HrStats` | The fitness estimate reads these. No changes. |
 | `Progresses` (`totalExp`), `Achievements` (`expAmount`) | Sphery's own EXP. The plan app's points are a **separate currency with different rules** and stay in their own tables. See Part 3. |
-| `TrainingFeeds` | Already a unified cross-activity feed with `calories`, `avgHeartRate`, `score`, `durationSec`. This is the natural home for plan session history too. |
+| `TrainingFeeds` | Already a unified cross-activity feed (`calories`, `avgHeartRate`, `score`, `durationSec`). Plan sessions should appear here too so a member's history stays in one place. The plan app still needs its own per-station detail record, which is `TrainingPlanSessionLogs` in Part 3. |
 | `RaceConfigs.hrTarget` | Precedent for item 2 below: HR targets already exist for ExerCube races. |
 
 That last row matters. We are not asking for a new concept anywhere. Every
 addition either extends something already in the schema or fills a gap that is
 currently held together with free text.
 
-## Part 1: four new tables
+## Part 1: the plan itself
 
 ### `Gyms` and `GymStations`
 

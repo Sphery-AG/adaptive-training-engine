@@ -9,20 +9,44 @@ progress at the Aug 26 NEXUS kiosk demo.
 A complete working demo of the product, end to end, on real data:
 
 - Fitness estimated from a member's real training history (July 2026 export,
-  183 members with regular history), with rationale and evidence counts.
+  ranked against the 183 members with 15+ completed workouts), with rationale
+  and evidence counts.
 - Goal + questionnaire + gym floor turned into an 8-week plan of circle
   trainings, resolved onto the real Darmstadt stations.
 - Completed sessions fold back into the plan with a plain-language
   explanation (HR vs target zone, perceived effort, or real score trend).
-- Output is kiosk-compatible: the engine emits the exact
-  CreateTrainingRequest JSON the NEXUS kiosk accepts, verified against the
-  live dev API.
-- One command runs the whole system on a fresh machine; 30 tests pass.
+- Output is kiosk-compatible: the exact CreateTrainingRequest JSON the NEXUS
+  kiosk accepts, verified against the live dev API. Caveat below.
+- One command runs the whole system on a fresh machine; 27 tests pass, 3
+  DB-backed tests skip cleanly when MySQL is down.
 
 What it is not yet: a standalone product. The gaps below are known, scoped,
 and each has a designed answer. None of them are research problems.
 
 ## The gaps, in order of how blocking they are
+
+### 0. The engine does not own all of its own rules yet
+Two pieces of plan logic still live on the web side, so the same rules exist
+twice and can drift:
+
+- **Circuit resolution.** `circuit_for()` in `engine/app/plangen.py` is correct
+  but only called by tests. Every member-facing screen resolves stations,
+  zones, and minutes with the TypeScript copy in `web/lib/stub/engine.ts`,
+  even when the plan itself came from Python.
+- **Kiosk export.** `GET /generate-plan/{user_id}` still runs the original
+  step-1 path in `engine/app/generate.py`: it copies a reference Darmstadt
+  circle and places the member in it, ignoring the generated plan. The real
+  session→CreateTrainingRequest mapping is `toCreateTrainingRequest` in the
+  web stub.
+
+Nothing visible in the demo is wrong today, because the two implementations
+agree. But acceptance criterion 4 is only shallowly met, and the split
+violates the architecture rule that all generation logic lives in `engine/`.
+
+Answer: move both into the engine, return circuits in the `/generate-plan`
+response, and make the web render what it is given.
+Effort: a day or two. Worth doing before persistence, since everything after
+this builds on which side owns the rules.
 
 ### 1. Nothing is persisted
 Plans, completed sessions, XP, and streaks live in the browser. A refresh
@@ -87,6 +111,7 @@ Effort: one meeting.
 
 ## Sequenced
 
+0. Engine owns circuit resolution and the kiosk export
 1. Persistence (own DB from the designed schema)
 2. Real sign-in via the kiosk API
 3. Hosting plus the GDPR decision

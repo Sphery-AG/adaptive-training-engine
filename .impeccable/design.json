@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-10T00:00:00.000Z",
+  "title": "Design System: Sphere Loop",
+  "extensions": {
+    "colorMeta": {
+      "bright-sky-cyan": {
+        "role": "primary",
+        "displayName": "Bright Sky Cyan",
+        "canonical": "oklch(0.82 0.14 210)",
+        "tonalRamp": [
+          "oklch(0.15 0.14 210)",
+          "oklch(0.26 0.14 210)",
+          "oklch(0.37 0.14 210)",
+          "oklch(0.48 0.14 210)",
+          "oklch(0.59 0.14 210)",
+          "oklch(0.70 0.14 210)",
+          "oklch(0.82 0.14 210)",
+          "oklch(0.93 0.14 210)"
+        ]
+      },
+      "deep-electric-violet": {
+        "role": "secondary",
+        "displayName": "Deep Electric Violet",
+        "canonical": "oklch(0.62 0.22 295)",
+        "tonalRamp": [
+          "oklch(0.15 0.22 295)",
+          "oklch(0.26 0.22 295)",
+          "oklch(0.37 0.22 295)",
+          "oklch(0.48 0.22 295)",
+          "oklch(0.62 0.22 295)",
+          "oklch(0.73 0.22 295)",
+          "oklch(0.84 0.22 295)",
+          "oklch(0.95 0.22 295)"
+        ]
+      },
+      "hot-signal-fuchsia": {
+        "role": "secondary",
+        "displayName": "Hot Signal Fuchsia",
+        "canonical": "oklch(0.68 0.28 330)",
+        "tonalRamp": [
+          "oklch(0.15 0.28 330)",
+          "oklch(0.26 0.28 330)",
+          "oklch(0.37 0.28 330)",
+          "oklch(0.48 0.28 330)",
+          "oklch(0.59 0.28 330)",
+          "oklch(0.68 0.28 330)",
+          "oklch(0.82 0.28 330)",
+          "oklch(0.93 0.28 330)"
+        ]
+      },
+      "fresh-mint": {
+        "role": "tertiary",
+        "displayName": "Fresh Mint",
+        "canonical": "oklch(0.79 0.17 165)",
+        "tonalRamp": [
+          "oklch(0.15 0.17 165)",
+          "oklch(0.26 0.17 165)",
+          "oklch(0.37 0.17 165)",
+          "oklch(0.48 0.17 165)",
+          "oklch(0.59 0.17 165)",
+          "oklch(0.70 0.17 165)",
+          "oklch(0.79 0.17 165)",
+          "oklch(0.93 0.17 165)"
+        ]
+      },
+      "warm-amber": {
+        "role": "tertiary",
+        "displayName": "Warm Amber",
+        "canonical": "oklch(0.83 0.16 85)",
+        "tonalRamp": [
+          "oklch(0.15 0.16 85)",
+          "oklch(0.26 0.16 85)",
+          "oklch(0.37 0.16 85)",
+          "oklch(0.48 0.16 85)",
+          "oklch(0.59 0.16 85)",
+          "oklch(0.70 0.16 85)",
+          "oklch(0.83 0.16 85)",
+          "oklch(0.94 0.16 85)"
+        ]
+      },
+      "void": {
+        "role": "neutral",
+        "displayName": "Void",
+        "canonical": "oklch(0.1 0.02 260)",
+        "tonalRamp": [
+          "oklch(0.10 0.02 260)",
+          "oklch(0.12 0.03 265)",
+          "oklch(0.20 0.03 260)",
+          "oklch(0.32 0.03 258)",
+          "oklch(0.45 0.03 258)",
+          "oklch(0.55 0.03 258)",
+          "oklch(0.72 0.03 255)",
+          "oklch(0.97 0.01 250)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Screen titles and hero metrics in Bebas Neue. One weight only; never synthesized."
+      },
+      "headline": { "displayName": "Headline", "purpose": "Section headings inside a screen." },
+      "title": { "displayName": "Title", "purpose": "Card titles and control labels, in Space Grotesk." },
+      "body": { "displayName": "Body", "purpose": "Reading copy, rationale strings, explanations." },
+      "label": {
+        "displayName": "Eyebrow",
+        "purpose": "10px uppercase at 0.2em tracking. Names a region rather than speaking in it."
+      }
+    },
+    "shadows": [
+      {
+        "name": "accent-glow",
+        "value": "0 18px 55px -14px oklch(0.68 0.28 330 / 0.55)",
+        "purpose": "Beneath the primary CTA when enabled. Removed on the disabled state."
+      },
+      {
+        "name": "ring-glow",
+        "value": "drop-shadow(0 0 9px <ring color>)",
+        "purpose": "On a ring gauge's progress stroke, in that ring's own accent."
+      },
+      {
+        "name": "zone-glow",
+        "value": "0 0 9px rgba(236,72,153,0.6)",
+        "purpose": "On a filled heart-rate zone bar, tinted per zone. Zone 1 does not glow."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-orbital",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "The system's only easing curve. Ring fills, screen entrances, state changes."
+      },
+      {
+        "name": "pop",
+        "value": "350ms",
+        "purpose": "A metric that just changed scales 0.96 to 1.04 to 1. How an adaptive update announces itself."
+      },
+      {
+        "name": "screen-in",
+        "value": "340ms",
+        "purpose": "Intake screens enter with a 10px rise and fade."
+      },
+      {
+        "name": "ring-fill",
+        "value": "900ms",
+        "purpose": "A ring gauge sweeping to its value on mount or update."
+      }
+    ],
+    "breakpoints": [
+      { "name": "app-column", "value": "448px" },
+      { "name": "reading-column", "value": "576px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action on a screen, pinned to the bottom in a sticky footer.",
+      "html": "<button class=\"ds-btn-primary\">Build my plan</button>",
+      "css": ".ds-btn-primary { height: 56px; width: 100%; border: none; border-radius: 9999px; background: linear-gradient(135deg, var(--orbit-cyan, oklch(0.82 0.14 210)) 0%, var(--orbit-fuchsia, oklch(0.68 0.28 330)) 118%); color: var(--void, oklch(0.1 0.02 260)); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 18px 55px -14px oklch(0.68 0.28 330 / 0.55); transition: opacity 0.2s, box-shadow 0.2s; } .ds-btn-primary:hover { opacity: 0.94; } .ds-btn-primary:focus-visible { outline: 2px solid var(--orbit-cyan, oklch(0.82 0.14 210)); outline-offset: 2px; } .ds-btn-primary:disabled { opacity: 0.25; box-shadow: none; cursor: not-allowed; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "The retreat: Skip, Back, Not now. Never competes with the primary.",
+      "html": "<button class=\"ds-btn-ghost\">Skip</button>",
+      "css": ".ds-btn-ghost { height: 44px; width: 100%; border: none; background: none; border-radius: 9999px; color: var(--text-mid, oklch(0.86 0.02 255)); font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.875rem; font-weight: 500; cursor: pointer; transition: color 0.2s; } .ds-btn-ghost:hover { color: #fff; } .ds-btn-ghost:focus-visible { outline: 2px solid var(--orbit-cyan, oklch(0.82 0.14 210)); outline-offset: 2px; }"
+    },
+    {
+      "name": "Surface Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Every container in the app. Translucent so the background bloom reads through. No shadow.",
+      "html": "<div class=\"ds-card\"><p class=\"ds-card-eyebrow\">Today</p><h3 class=\"ds-card-title\">Engine Builder</h3><p class=\"ds-card-body\">6 stations · 30 min · target zone 3</p></div>",
+      "css": ".ds-card { border-radius: 26px; border: 1px solid oklch(1 0 0 / 10%); background: oklch(0.2 0.03 260 / 45%); padding: 16px; color: oklch(0.97 0.01 250); } .ds-card-eyebrow { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(0.55 0.03 258); margin: 0 0 6px; } .ds-card-title { font-family: 'Bebas Neue', system-ui, sans-serif; font-weight: 400; font-size: 1.5rem; letter-spacing: 0.015em; line-height: 1.1; margin: 0 0 4px; } .ds-card-body { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.875rem; line-height: 1.6; color: oklch(0.86 0.02 255); margin: 0; }"
+    },
+    {
+      "name": "Selection Row",
+      "kind": "chip",
+      "refersTo": "select-row",
+      "description": "The intake workhorse. A real checkbox hidden behind a styled sibling, so keyboard and screen-reader behavior comes from the platform.",
+      "html": "<label class=\"ds-select-row\"><input type=\"checkbox\" checked><span class=\"ds-select-face\"><span class=\"ds-select-label\">Build endurance</span><span class=\"ds-select-mark\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"20 6 9 17 4 12\"></polyline></svg></span></span></label>",
+      "css": ".ds-select-row { display: block; cursor: pointer; } .ds-select-row input { position: absolute; width: 1px; height: 1px; opacity: 0; } .ds-select-face { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid oklch(1 0 0 / 10%); background: oklch(0.2 0.03 260 / 45%); transition: border-color 0.2s, background 0.2s; } .ds-select-row:hover .ds-select-face { border-color: oklch(1 0 0 / 22%); } .ds-select-row input:checked + .ds-select-face { border-color: oklch(0.82 0.14 210); background: oklch(0.82 0.14 210 / 14%); } .ds-select-row input:focus-visible + .ds-select-face { outline: 2px solid oklch(0.82 0.14 210); outline-offset: 2px; } .ds-select-label { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 500; color: oklch(0.97 0.01 250); } .ds-select-mark { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 9999px; border: 1px solid oklch(1 0 0 / 22%); color: transparent; } .ds-select-row input:checked + .ds-select-face .ds-select-mark { border-color: oklch(0.82 0.14 210); background: oklch(0.82 0.14 210); color: oklch(0.1 0.02 260); }"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "input",
+      "refersTo": "select-row-checked",
+      "description": "Three-way single select for bounded scales like activity level.",
+      "html": "<div class=\"ds-segmented\" role=\"radiogroup\"><label><input type=\"radio\" name=\"lvl\"><span>Low</span></label><label><input type=\"radio\" name=\"lvl\" checked><span>Medium</span></label><label><input type=\"radio\" name=\"lvl\"><span>High</span></label></div>",
+      "css": ".ds-segmented { display: grid; grid-auto-flow: column; gap: 0; padding: 4px; border-radius: 16px; border: 1px solid oklch(1 0 0 / 10%); background: oklch(0.2 0.03 260 / 45%); } .ds-segmented label { cursor: pointer; text-align: center; } .ds-segmented input { position: absolute; width: 1px; height: 1px; opacity: 0; } .ds-segmented span { display: block; padding: 12px 0; border-radius: 12px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 500; color: oklch(0.86 0.02 255); transition: background 0.2s, color 0.2s; } .ds-segmented input:checked + span { background: oklch(0.82 0.14 210 / 30%); color: #fff; } .ds-segmented input:focus-visible + span { outline: 2px solid oklch(0.82 0.14 210); outline-offset: 2px; }"
+    },
+    {
+      "name": "Bottom Navigation",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Fixed four-tab bar with a backdrop blur, clearing the home indicator.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item is-active\" aria-current=\"page\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"></circle><polyline points=\"12 7 12 12 15 14\"></polyline></svg><span>Today</span></button><button class=\"ds-nav-item\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"17\" rx=\"3\"></rect><path d=\"M3 10h18M8 2v4M16 2v4\"></path></svg><span>Plan</span></button><button class=\"ds-nav-item\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 17 9 11 13 15 21 7\"></polyline></svg><span>Progress</span></button><button class=\"ds-nav-item\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"></circle><circle cx=\"12\" cy=\"12\" r=\"3\"></circle></svg><span>Circle</span></button></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-around; max-width: 448px; margin: 0 auto; padding: 12px 16px; border-top: 1px solid oklch(1 0 0 / 10%); background: oklch(0.1 0.02 260 / 95%); backdrop-filter: blur(12px); } .ds-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0 12px; border: none; background: none; cursor: pointer; color: oklch(0.55 0.03 258); transition: color 0.2s; } .ds-nav-item span { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; } .ds-nav-item:hover { color: oklch(0.86 0.02 255); } .ds-nav-item.is-active { color: oklch(0.82 0.14 210); } .ds-nav-item:focus-visible { outline: 2px solid oklch(0.82 0.14 210); outline-offset: 2px; border-radius: 12px; }"
+    },
+    {
+      "name": "Ring Gauge",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The signature form. Circular progress sweeping clockwise from top, glowing in its own accent, with a number and label at center.",
+      "html": "<div class=\"ds-ring\"><svg width=\"180\" height=\"180\" viewBox=\"0 0 180 180\"><circle cx=\"90\" cy=\"90\" r=\"85\" fill=\"none\" stroke=\"oklch(1 0 0 / 10%)\" stroke-width=\"10\"></circle><circle class=\"ds-ring-fill\" cx=\"90\" cy=\"90\" r=\"85\" fill=\"none\" stroke=\"oklch(0.82 0.14 210)\" stroke-width=\"10\" stroke-linecap=\"round\" stroke-dasharray=\"400 534\" transform=\"rotate(-90 90 90)\"></circle></svg><div class=\"ds-ring-center\"><span class=\"ds-ring-value\">74</span><span class=\"ds-ring-label\">Fitness</span></div></div>",
+      "css": ".ds-ring { position: relative; display: grid; place-items: center; width: 180px; height: 180px; } .ds-ring-fill { filter: drop-shadow(0 0 9px oklch(0.82 0.14 210)); transition: stroke-dasharray 0.9s cubic-bezier(0.22, 1, 0.36, 1); } .ds-ring-center { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; text-align: center; } .ds-ring-value { display: block; font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 3rem; font-weight: 400; line-height: 1; color: oklch(0.97 0.01 250); font-variant-numeric: tabular-nums; } .ds-ring-label { display: block; margin-top: 4px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(0.55 0.03 258); }"
+    },
+    {
+      "name": "Heart-Rate Zone Bar",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Time in zone, using the universal training ramp rather than the orbit accents. The one sanctioned palette exception.",
+      "html": "<div class=\"ds-zones\"><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z4</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z4\" style=\"width:62%\"></span></span><span class=\"ds-zone-time\">8:12</span></div><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z3</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z3\" style=\"width:38%\"></span></span><span class=\"ds-zone-time\">5:04</span></div><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z2</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z2\" style=\"width:20%\"></span></span><span class=\"ds-zone-time\">2:40</span></div></div>",
+      "css": ".ds-zones { display: flex; flex-direction: column; gap: 10px; } .ds-zone-row { display: flex; align-items: center; gap: 10px; } .ds-zone-name { width: 24px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(0.55 0.03 258); } .ds-zone-track { flex: 1; height: 10px; border-radius: 9999px; background: oklch(1 0 0 / 10%); overflow: hidden; } .ds-zone-fill { display: block; height: 100%; border-radius: 9999px; } .ds-zone-fill.z4 { background: linear-gradient(90deg,#fb923c,#f97316); box-shadow: 0 0 9px rgba(249,115,22,0.55); } .ds-zone-fill.z3 { background: linear-gradient(90deg,#fde047,#facc15); box-shadow: 0 0 9px rgba(250,204,21,0.55); } .ds-zone-fill.z2 { background: linear-gradient(90deg,#4ade80,#34d399); box-shadow: 0 0 8px rgba(52,211,153,0.5); } .ds-zone-time { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.75rem; color: oklch(0.86 0.02 255); font-variant-numeric: tabular-nums; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Orbital Loop",
+    "overview": "A member in training is a body in orbit. The interface is built from rings that close, accents that hold fixed positions in a semantic orbit, and a habit loop that comes back around every week. Nothing here is decorative dark-mode styling. The ring gauge is the signature form, the five accents are a fixed vocabulary rather than a palette to pick from, and the whole app sits on a near-black void with a single cyan bloom behind it, the way a lit object sits against deep space.\n\nThe voice holds two things at once, and the tension between them is the point. It is precise, calm, and engineered, because the plan behind it is a real estimate from real training history and the interface has to be worth trusting: tabular numerals, exact heart-rate ranges, evidence counts, a plain reason attached to every change. It is also warm, encouraging, and human, because the member reading it at 6am is not an analyst. Numbers arrive with a sentence explaining what they mean. Progress is shown as something you closed, not something you failed to close. Precision earns the trust; warmth is why anyone comes back.\n\nIt is phone-first without apology. Every surface is designed inside a 448px column, thumb-reachable, with the primary action pinned to the bottom of the screen. Depth comes from light, never from shadow: surfaces are flat and translucent, and a glow appears only where something is live, earned, or selected.",
+    "keyCharacteristics": [
+      "Near-black void canvas with one radial cyan bloom, never a flat gray",
+      "Five accents with fixed semantic ownership, used sparingly",
+      "Condensed uppercase display type against a geometric body face",
+      "Flat translucent surfaces separated by hairlines, not shadows",
+      "Glow reserved for live, earned, or selected states",
+      "Phone-first single column, bottom-anchored actions"
+    ],
+    "rules": [
+      {
+        "name": "The Fixed Orbit Rule",
+        "body": "Each accent owns one meaning: cyan is physical, violet is cognitive, fuchsia is the habit loop, mint is positive change, amber is caution. Never pick an accent because a screen needs variety. If a new element has no meaning in that list, it is neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sparse Accent Rule",
+        "body": "Accent color covers well under 10% of any screen. The ground is void and hairlines; color marks the one thing that matters. A screen where three accents compete has already failed.",
+        "section": "colors"
+      },
+      {
+        "name": "The Zone Ramp Exception",
+        "body": "Heart-rate zone bars use the universal training ramp (#475569 to #4ade80 to #fde047 to #fb923c to #fb7185, zone 1 to 5), not the orbit accents. Athletes read this ramp everywhere; overriding it with brand color would cost comprehension for nothing. This is the only sanctioned palette outside the orbit, and it applies to zone visualization alone.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Weight Rule",
+        "body": "Bebas Neue has a single weight. Never apply font-weight above 400 to display type, and never let the browser synthesize it. Emphasis in display type comes from size, never from weight.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Numbers Rule",
+        "body": "Any number that updates in place, such as heart rate, elapsed time, points, or percent complete, carries .tabular. Digits must not shift horizontally as they change.",
+        "section": "typography"
+      },
+      {
+        "name": "The Thumb Reach Rule",
+        "body": "The primary action of any screen is within reach at the bottom of the viewport. A member mid-session should never scroll to continue.",
+        "section": "layout"
+      },
+      {
+        "name": "The Earned Light Rule",
+        "body": "Glow marks live, earned, or selected. A disabled button, a locked medal, and a resting card do not glow. If everything glows, nothing reads as achieved.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do assign accents by meaning, not by variety. Cyan physical, violet cognitive, fuchsia habit loop, mint positive change, amber caution.",
+      "Do keep accent coverage under 10% of a screen. The void and hairlines carry the layout.",
+      "Do put every number that updates in place on .tabular.",
+      "Do pin the primary action to the bottom of the viewport in a sticky footer with a background scrim.",
+      "Do pair a metric with a plain sentence saying what it means. Precision is the trust, warmth is the reason anyone returns.",
+      "Do reach for the ring gauge first when a new completion or progress metric needs a form.",
+      "Do respect prefers-reduced-motion on every animation added.",
+      "Do use real form inputs behind styled siblings, so platform keyboard and screen-reader behavior comes for free."
+    ],
+    "donts": [
+      "Don't add a drop shadow to a card. Depth is surface alpha, hairline, and the bloom.",
+      "Don't let anything glow at rest. Glow means live, earned, or selected.",
+      "Don't apply a weight above 400 to Bebas Neue or let the browser synthesize one.",
+      "Don't introduce a sixth accent, or restyle the heart-rate zone ramp into brand colors.",
+      "Don't build a desktop layout, sidebar, or dense data table. Wider viewports center the same phone column.",
+      "Don't drift toward a light fitness-tracker look: white cards, stock illustrations, or a generic blue primary.",
+      "Don't drift toward a corporate SaaS dashboard: gray chrome, chart-library defaults, or a data grid.",
+      "Don't drift toward a crypto/AI dark dashboard, which is the nearest and most dangerous neighbor. The difference is discipline: fixed accent meanings, glow only on earned state, and generous space. Glassmorphism everywhere, everything glowing, and purple gradients with no hierarchy are the failure mode."
+    ]
+  }
+}

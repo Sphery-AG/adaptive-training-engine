@@ -23,7 +23,9 @@ Built by Anthony McCrovitz, summer internship 2026.
     and why (HR vs. target zone, perceived effort, or real score trend).
   - `GET /generate-plan/{user_id}` — kiosk-compatible CreateTrainingRequest
     JSON (the exact shape the NEXUS kiosk POSTs, verified against the live
-    dev API — see docs/kiosk-api.md).
+    dev API — see docs/kiosk-api.md). Still the step-1 path: it places the
+    member in a reference Darmstadt circle rather than exporting their
+    generated plan (docs/path-to-production.md, gap 0).
 - MySQL 8 (Docker) — the July 2026 Sphery production export, local only.
 
 ## Run it (one command)

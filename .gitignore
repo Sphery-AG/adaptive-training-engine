@@ -9,6 +9,8 @@ venv/
 *.sql
 # schema drafts under docs/ are source, not DB dumps — keep them tracked
 !docs/*.sql
+# same for migrations: these are DDL we author, and carry no member data
+!engine/db/*.sql
 *.db
 .gstack
 

@@ -753,7 +753,7 @@ type GeneratePlanResponse = {
 Give Michel a focused packet, not the whole concept universe.
 
 Use `docs/michel_schema_handoff.md` as the self-contained handoff. Michel does not need access to `_local` or the kiosk repo to understand the proposal.
-Use `docs/adaptive_schema_draft.sql` as the implementation-shaped draft he can review or adapt.
+Use `docs/adaptive_schema_draft.sql` as the implementation-shaped draft he can review or adapt. (Superseded Aug 10: `engine/db/sphery_additions.sql`.)
 
 1. **One-sentence product explanation**
    - "I am building the adaptive planning layer between the Sphery app and Nexus kiosk: the app knows who the member is, my layer decides what they should do next and why, and the kiosk runs the generated circle training."
@@ -765,7 +765,7 @@ Use `docs/adaptive_schema_draft.sql` as the implementation-shaped draft he can r
    - `AdaptiveTrainingPlanSessions`
    - `AdaptiveTrainingPlanAdjustments`
    - Include the examples, derivation notes, purpose, and limitations from `docs/michel_schema_handoff.md`.
-   - Include the draft SQL from `docs/adaptive_schema_draft.sql`.
+   - Include the draft SQL. (Superseded Aug 10: `engine/db/sphery_additions.sql`.)
 
 3. **The reason these tables are not duplicates**
    - Existing Sphery tables store identity, health basics, completed workouts, circle trainings, and runtime exercise logs.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from app.adapt import SessionResult, UpdatePlanRequest, apply_update, decide_delta
 from app.plangen import build_weeks, planning_estimate
@@ -70,11 +71,28 @@ def test_in_zone_holds_plan(darmstadt):
     assert "plan holds" in out["summary"]
 
 
-def test_perceived_effort_fallback(darmstadt):
-    out = _update(darmstadt, result={"perceivedEffort": "easy"})
-    assert out["planChanges"]
-    out2 = _update(darmstadt, result={"perceivedEffort": "right"})
-    assert out2["planChanges"] == []
+def test_perceived_effort_extremes_move_the_plan(darmstadt):
+    """1 is too easy so difficulty rises; 5 is too hard so it eases."""
+    harder = _update(darmstadt, result={"perceivedEffort": 1})
+    assert harder["planChanges"]
+    assert "raised" in harder["planChanges"][0]
+
+    easier = _update(darmstadt, result={"perceivedEffort": 5})
+    assert easier["planChanges"]
+    assert "lowered" in easier["planChanges"][0]
+
+
+@pytest.mark.parametrize("rating", [2, 3, 4])
+def test_perceived_effort_middle_holds(darmstadt, rating):
+    """The middle of the scale is the range the plan is built for."""
+    out = _update(darmstadt, result={"perceivedEffort": rating})
+    assert out["planChanges"] == []
+    assert "holds" in out["summary"]
+
+
+def test_perceived_effort_rejects_out_of_range(darmstadt):
+    with pytest.raises(ValidationError):
+        _update(darmstadt, result={"perceivedEffort": 6})
 
 
 def test_no_evidence_no_change(darmstadt):

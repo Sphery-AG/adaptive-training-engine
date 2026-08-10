@@ -35,7 +35,7 @@ Fixed programs, not free-form goals. That's the pattern to copy.
 | 5 | Healthy back / counter sitting | keep — huge desk-worker market | strength (posterior chain), mobility |
 | 6 | Peak performance | keep ("extract maximum performance") | cardio_intensity, power, cognitive_motor |
 | 7 | Event preparation | keep — at Darmstadt this concretely = **HYROX prep** (full original setup on site) | event-specific periodized mix |
-| 8 | Rehab / therapy | keep, but **gate behind trainer sign-off** (liability; RehaFlow + medical leg press exist for this) | recovery, mobility |
+| 8 | Rehab / therapy | keep. Reported injuries drive station exclusions rather than a hold on the plan (RehaFlow + medical leg press exist for this) | recovery, mobility |
 | — | Create your own | **Cut as free text for v1.** A rules engine can't act on free text. Replace with "pick a primary + secondary goal" → engine blends stimulus weights. Free-form goal = v2 (LLM-assisted intake). | weighted blend |
 
 **Why merging/cutting matters:** every goal must resolve to a deterministic
@@ -168,7 +168,7 @@ No free text (rules engine can't act on it).
 4. Primary goal *(single select, the 8 goals)* → stimulus-weight vector
 5. Secondary goal *(optional, default none)* → ~70/30 weight blend — replaces free-text "create your own"
    - *If event prep:* which event + date → periodization end date
-   - *If rehab/therapy:* stop; route to trainer sign-off before generating
+   - *If rehab/therapy:* prefer the medical/rehab corner and exclude contraindicated stations
 
 **C — Background & availability**
 6. "In a typical week, how often are you active 30+ min?" *(Rarely / 1–2× / 3–4× / 5×+)* → cold-start fitness prior (concrete, unlike "rate your fitness 1–10")
@@ -177,7 +177,7 @@ No free text (rules engine can't act on it).
 9. Preferred session length *(20/30/45/60 min)* → circle duration constraint
 
 **D — Safety (PAR-Q-lite)**
-10. Checkboxes: chest pain during activity · dizziness/fainting · doctor advised against exercise → any check = **trainer sign-off gate**
+10. Checkboxes: chest pain during activity · dizziness/fainting · doctor advised against exercise → any check surfaces a **see-your-doctor notice**, and the plan stays conservative
 11. Injuries/problem areas *(back/knee/shoulder/hip/none)* → **hard station exclusions** (e.g. knee → no sled push/burpee broad jump; substitute erg/bike)
 
 **E — Optional preference**
@@ -204,8 +204,8 @@ verbatim (it's better-branded than mine; "Move Pain-Free" > "healthy back",
   vectors. Two modifier types: weight deltas (e.g. "VO₂max" shifts weight to
   cardio_intensity intervals; "Sustainable Weight Loss" shifts toward
   cardio_endurance volume) and **constraints/filters** (e.g. "Upper Body" →
-  muscle-group filter; "Return to Sport" → trainer sign-off gate — this is
-  where the rehab gating from §3b lives now).
+  muscle-group filter; "Return to Sport" → station exclusions, which is where
+  the rehab handling from §3b lives now).
 - **Ebene 3 (how do you want to train)** → volume/intensity budget: fitness
   level (beginner/intermediate/advanced), targeted intensity
   (easy/moderate/challenging), frequency (1–5×/week), duration (20/30/45/60),
@@ -391,8 +391,7 @@ Body Age and Brain Age side by side.**
   architectural seam a trainer UI plugs into later, same as the RaceConfig
   seam for the kiosk.
 - Two trainer needs that leak into v1 anyway and are cheap:
-  1. **Rehab/therapy goal requires a trainer sign-off flag** (liability).
-  2. **Plan override with reason** — a trainer field on plan adjustments keeps
+  1. **Plan override with reason** — a trainer field on plan adjustments keeps
      humans in the loop and generates labeled training data for v2 ML.
 - Question for Max/Stephan today: *who composes the physical circuit?* If the
   gym runs fixed group circles on a schedule (kiosk-driven, shared stations),
@@ -483,13 +482,12 @@ core concept. Proposal to keep the deadline honest:
    tracked/displayed, design language to emulate, where the plan view would live.
 4. Expert review of the station→stimulus matrix (§2) and confirmation of the
    new stimulus types (strength, mobility_stability, power_speed).
-5. Rehab/therapy goal: trainer sign-off flow acceptable? Who's liable?
-6. Goal list sign-off (§1), esp. merging fat-burn/weight-loss and cutting
+5. Goal list sign-off (§1), esp. merging fat-burn/weight-loss and cutting
    free-text goals to a primary+secondary picker.
-7. Trainer interface: agree it stays v2, with the two v1 hooks (§5)?
-8. Questionnaire additions: days/week, session length, injuries/contraindications
+6. Trainer interface: agree it stays v2, with the two v1 hooks (§5)?
+7. Questionnaire additions: days/week, session length, injuries/contraindications
    (PAR-Q-style), preferred training times.
-9. Success metrics for the pilot: what does Darmstadt measure? (retention,
+8. Success metrics for the pilot: what does Darmstadt measure? (retention,
    sessions/member/week, streak length, plan-adherence %)
 
 ## Sources

@@ -2,7 +2,7 @@
 
 **Project:** Adaptive Training Plan Generator, Sphery AG
 **Author:** Anthony McCrovitz (summer internship)
-**Updated:** August 3, 2026 (Stephan's Friday feedback folded in)
+**Updated:** August 10, 2026 (P1 status trued up against the code)
 **Purpose:** Capture everything from the Stephan and Max meetings, and rank it by priority for
 the MVP. The near-term MVP is the full user journey and UX experience, finished and
 demo-grade. The engine and backend come after the journey is complete. This doc is the
@@ -183,36 +183,50 @@ docs/design-reference/sphery-app-workout-hr-zones.png (from app.sphery.ch).
 
 Once the journey is finished, make it true on real data.
 
-### E1, the adaptive engine
-- [ ] Real fitness estimate from a member's ExerCube history (resting/max HR, zone shares,
-  a readable Body/Brain age).
-- [ ] Rule-based plan generation from that estimate plus the goal.
-- [ ] Generated plans span a minimum of 8 weeks (Stephan, Jul 31).
-- [ ] Adaptation: a new session updates the plan, with a reason.
-- [ ] Wire the UI to the FastAPI engine (replace the TypeScript stub).
-- [ ] Output every plan as a valid `CreateTrainingRequest` (kiosk-ready proof).
+### E1, the adaptive engine  ✅ mostly done (Aug 6-7)
+- [x] Real fitness estimate from a member's ExerCube history (resting/max HR, zone shares,
+  a readable Body/Brain age). `engine/app/estimate.py`, ranked against the 183 members
+  with 15+ workouts. Caveat: bodyScore is ~1 everywhere in the export, so movement and
+  cognitive scores still fall back to the persona seed.
+- [x] Rule-based plan generation from that estimate plus the goal. `engine/app/plangen.py`.
+- [x] Generated plans span a minimum of 8 weeks (Stephan, Jul 31).
+- [x] Adaptation: a new session updates the plan, with a reason. `engine/app/adapt.py`.
+- [x] Wire the UI to the FastAPI engine. Done via `web/lib/engine/client.ts` — the engine
+  owns the plan when `NEXT_PUBLIC_ENGINE_URL` is set, the stub stays the Vercel fallback.
+- [ ] **Output every plan as a valid `CreateTrainingRequest`.** Not really done.
+  `GET /generate-plan/{user_id}` still runs the step-1 path in `engine/app/generate.py`,
+  which copies a reference Darmstadt circle and ignores the generated plan. The real
+  session→kiosk mapping lives in the web stub (`toCreateTrainingRequest`) and needs to
+  move into the engine.
+- [ ] **Circuit resolution has two implementations.** `circuit_for()` in the engine is
+  only called by tests; every member-facing screen resolves circuits with the TypeScript
+  copy in `web/lib/stub/engine.ts`. Engine should own it, web should render it — this
+  also restores the "no analytics in web/" rule in CLAUDE.md.
 
-### E2, the eight Darmstadt circle trainings
-- [ ] **Equipment audit first.** Inventory exactly what Sphere Darmstadt has on the floor,
-  then design the circles around that real equipment, not a generic gym.
-- [ ] Define 8 predefined circle trainings, one per questionnaire goal, using that equipment
-  (the kiosk ships 6 today, we extend to 8).
-- [ ] Map goal to circle to stimulus to station, then adapt each from the member's data.
-- [ ] **Define these with the team, not solo.** Working sessions with Max, Stephan, Julie,
-  and Helen across next week to agree the plans and circles. They know the floor and the
-  coaching intent; I turn it into the mapping the engine drives.
+### E2, the eight Darmstadt circle trainings  (built, awaiting sign-off)
+- [x] **Equipment audit.** Real 17-station Darmstadt floor taken from the-sphere.fit
+  (Aug 5), including the medical corner and the full HYROX setup.
+- [x] Define 8 predefined circle trainings, one per questionnaire goal, using that equipment.
+- [x] Map goal to circle to stimulus to station, then adapt each from the member's data.
+- [x] Evidence pass over the templates → `docs/circuit-templates-evidence.md` (Aug 5).
+- [ ] **Define these with the team, not solo.** Still drafts. No written circle notes from
+  Stephan exist, so validation is a direct conversation with him.
 - [ ] Sign-off on the goal to station mapping before it drives real plans.
 
-### E3, own the backend and database
+### E3, own the backend and database  (not started — gap 1 in path-to-production)
 - [ ] Stand up my own database for user-generated data (answers, plans, estimates, feedback,
-  quests), hosted on a managed service I control.
-- [ ] Sphery source data stays read-only. One written request to Michel for a read path.
+  quests), hosted on a managed service I control. Schema designed in
+  `docs/database-schema.md` (14 tables), not built. Everything is browser state today; a
+  refresh loses it.
+- [ ] Sphery source data stays read-only. Aug 6 finding: the public kiosk API may serve as
+  the read bridge, so production may never need direct DB access.
 - [ ] Engine is the only thing that talks to both stores. App never touches a DB.
 
 ### E4, docs and handoff
-- [ ] Written model / feature / limitations summary.
-- [ ] One-command run plus README, desktop and mobile.
-- [ ] Handoff pack so Stephan can demo solo on Aug 26.
+- [x] Written model / feature / limitations summary → `docs/model-summary.md`.
+- [x] One-command run plus README (`docker compose up --build`), desktop and mobile.
+- [x] Path from demo to production, sequenced → `docs/path-to-production.md`.
+- [ ] Handoff pack so Stephan can demo solo on Aug 26 (the one-page demo script).
 
 ---
 
@@ -276,9 +290,13 @@ Captured, prioritized roughly, handed off. Not built before I leave.
 - **This week (Jul 28 to Aug 1) ✅:** intake finalized (Stephan + Max feedback), login +
   create-account + home-gym picker, demo link deployed. RSG call went well; they visit
   Darmstadt Aug 26.
-- **Aug 3 to 7:** two tracks. Finish the journey (Today refocus, 8-week plan views +
-  completion state, feedback loop, XP / emblems page, live session screen, polish) and start
-  the real backend (own database, wire UI to the engine, first real estimate). Stephan is out
-  this week: draft the Darmstadt circles from his notes, sign-off when he is back.
-- **Aug 10 to 14:** wire it all together, docs, final demo Fri Aug 14.
+- **Aug 3 to 7 ✅:** journey finished (Today refocus, 8-week plan views, XP / rank page,
+  live session screen) and the engine made real (estimate, plan generation, adaptation,
+  all ported to Python and wired to the UI). Points reworked after Max's review. Docs:
+  README, one-command run, model summary, path to production.
+- **Aug 10 to 14:** close the two engine gaps in E1 (engine owns circuit resolution and
+  the kiosk export), the J5 feedback loop, the J7 polish pass and freeze, then the final
+  demo Fri Aug 14. Circuit template sign-off with Stephan.
 - **Aug 17 to 20:** stabilize and rehearse the Aug 26 handoff so Stephan can demo solo.
+  Aug 26 slice (PWA install, real sign-in path, demo script) is in
+  `docs/path-to-production.md`.

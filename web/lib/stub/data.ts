@@ -42,38 +42,42 @@ export interface DemoMember {
 }
 
 export const DEMO_MEMBERS: DemoMember[] = [
+  // Names are ours; the training history is a real member's. Baselines below
+  // mirror what the engine actually returns for that member, so the stub and
+  // the live engine never contradict each other on screen (the sign-in screen
+  // renders the baseline before any engine call can happen).
   {
     id: 'user-1',
     name: 'Lena',
-    tagline: '2 years of ExerCube history · strong engine',
-    spheryUserId: 535, // Elite in the export: 108 sessions, 66 HR-tracked
+    tagline: 'Two years of ExerCube history · strong engine',
+    spheryUserId: 535, // Elite, 99th percentile: 108 completed, 66 HR-tracked
     baseline: {
-      workoutsAnalyzed: 143,
-      fitnessScore: 78,
+      workoutsAnalyzed: 108,
+      fitnessScore: 99,
       bodyScore: 84,
       brainScore: 76,
       hrRest: 52,
-      hrMax: 188,
-      bodyAge: 29,
-      brainAge: 27,
-      actualAge: 34,
+      hrMax: 185,
+      bodyAge: 34,
+      brainAge: 32,
+      actualAge: 42,
     },
   },
   {
     id: 'user-2',
     name: 'Marco',
-    tagline: 'Returning after a break · moderate base',
-    spheryUserId: 19, // mid-pack in the export: moderate scores, long history
+    tagline: 'Long history, still building · mid-pack engine',
+    spheryUserId: 19, // Developing, 41st percentile: 257 completed, 27 HR-tracked
     baseline: {
-      workoutsAnalyzed: 21,
-      fitnessScore: 54,
+      workoutsAnalyzed: 257,
+      fitnessScore: 41,
       bodyScore: 58,
       brainScore: 52,
       hrRest: 64,
-      hrMax: 181,
-      bodyAge: 46,
-      brainAge: 41,
-      actualAge: 41,
+      hrMax: 196,
+      bodyAge: 39,
+      brainAge: 37,
+      actualAge: 38,
     },
   },
   {

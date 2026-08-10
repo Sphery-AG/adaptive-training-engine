@@ -34,6 +34,7 @@ import type {
   Reward,
   AdaptiveUpdate,
   LeagueTier,
+  PerceivedEffort,
 } from '../types/engagement';
 import type { GymConcept, GymStation } from '../types/gym';
 import { STIMULUS_LABELS } from '../labels';
@@ -536,7 +537,55 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
  * POST /update-plan — apply one completed session and return what changed.
  * Mutates a copy of the view and hands back the AdaptiveUpdate for the toast.
  */
-export function completeSession(view: PlanView, completedSoFar: number, livePoints?: number): { view: PlanView; update: AdaptiveUpdate } {
+/**
+ * The difficulty move a single update produced, for display only.
+ *
+ * `planChanges` says "difficulty raised on 3 upcoming sessions" in prose; the
+ * adaptation screen also wants the actual numbers so it can show 6 → 7. This
+ * diffs two plan views rather than computing anything: the engine already
+ * decided, we're just reading what it did.
+ */
+export interface DifficultyShift {
+  from: number;
+  to: number;
+  sessions: number;
+}
+
+/** Everything the post-session adaptation screen renders. */
+export interface AdaptationResult {
+  update: AdaptiveUpdate;
+  shift: DifficultyShift | null;
+}
+
+export function difficultyShift(before: PlanView, after: PlanView): DifficultyShift | null {
+  const prior = new Map<string, number>();
+  for (const wk of before.plan.weeks) for (const s of wk.sessions) prior.set(s.id, s.difficulty);
+
+  let from = 0;
+  let to = 0;
+  let sessions = 0;
+  for (const wk of after.plan.weeks) {
+    for (const s of wk.sessions) {
+      const was = prior.get(s.id);
+      if (was === undefined || was === s.difficulty) continue;
+      // Every session in one update moves by the same single step, so the
+      // first pair we find describes all of them.
+      if (sessions === 0) {
+        from = was;
+        to = s.difficulty;
+      }
+      sessions += 1;
+    }
+  }
+  return sessions > 0 ? { from, to, sessions } : null;
+}
+
+export function completeSession(
+  view: PlanView,
+  completedSoFar: number,
+  livePoints?: number,
+  effort?: PerceivedEffort,
+): { view: PlanView; update: AdaptiveUpdate } {
   const e = structuredClone(view.engagement);
   const planChanges: string[] = [];
   const newlyUnlocked: Reward[] = [];
@@ -614,31 +663,78 @@ export function completeSession(view: PlanView, completedSoFar: number, livePoin
   const load = e.metrics.find((x) => x.key === 'weekly_load');
   if (load) bump('weekly_load', view.resolved[0].sessions[0]?.session.durationMinutes ?? 30, 'Added this session');
 
-  // Plan progression — on the 2nd session, nudge intensity up (the adaptive story)
+  // Plan progression, mirroring engine/app/adapt.py's perceived-effort rule so
+  // the stub tells the same story the real engine would: "easy" raises
+  // difficulty a notch, "hard" eases it, "right" holds. The change is scoped to
+  // later sessions of the same stimulus, and deload weeks are never raised.
   const next = structuredClone(view);
-  if (completedSoFar + 1 === 2) {
-    for (const wk of next.resolved) {
-      for (const rs of wk.sessions) {
-        if (rs.session.stimulusType === 'cardio_intensity' && rs.session.difficulty < 10) {
-          rs.session.difficulty += 1;
+  const delta = effort === 'easy' ? 1 : effort === 'hard' ? -1 : 0;
+  let reason =
+    effort === 'easy'
+      ? 'You rated the session easy — difficulty steps up one notch.'
+      : effort === 'hard'
+        ? 'You rated the session hard — easing the next ones a notch.'
+        : effort === 'right'
+          ? 'You rated the effort about right — the plan holds.'
+          : 'Session logged.';
+
+  if (delta !== 0) {
+    // Locate the session just completed: its stimulus and week scope the change.
+    let seen = 0;
+    let stimulus: StimulusType | null = null;
+    let weekIdx = 0;
+    for (const [wi, wk] of next.resolved.entries()) {
+      const hit = wk.sessions[completedSoFar - seen];
+      if (completedSoFar - seen < wk.sessions.length) {
+        stimulus = hit?.session.stimulusType ?? null;
+        weekIdx = wi;
+        break;
+      }
+      seen += wk.sessions.length;
+    }
+
+    const moved = new Map<string, number>();
+    if (stimulus) {
+      next.plan.weeks.forEach((wk, wi) => {
+        if (wi <= weekIdx) return;
+        if (delta > 0 && (wk.focus ?? '').includes('Deload')) return;
+        for (const s of wk.sessions) {
+          if (s.stimulusType !== stimulus) continue;
+          const to = Math.max(1, Math.min(10, s.difficulty + delta));
+          if (to !== s.difficulty) moved.set(s.id, to);
+        }
+      });
+      for (const wk of next.plan.weeks) {
+        for (const s of wk.sessions) if (moved.has(s.id)) s.difficulty = moved.get(s.id)!;
+      }
+      for (const wk of next.resolved) {
+        for (const rs of wk.sessions) {
+          if (moved.has(rs.session.id)) rs.session.difficulty = moved.get(rs.session.id)!;
         }
       }
     }
-    for (const wk of next.plan.weeks) {
-      for (const s of wk.sessions) {
-        if (s.stimulusType === 'cardio_intensity' && s.difficulty < 10) s.difficulty += 1;
-      }
+
+    if (moved.size) {
+      // Plain prose, matching the engine's own wording ("cardio endurance"),
+      // not the display label with its middle dot.
+      const label = stimulus!.replace(/_/g, ' ');
+      planChanges.push(
+        `Difficulty ${delta > 0 ? 'raised' : 'lowered'} on ${moved.size} upcoming ${label} session${moved.size === 1 ? '' : 's'}.`,
+      );
+    } else {
+      reason = 'Session logged. Nothing left in the block to adjust — the plan holds.';
     }
-    planChanges.push('HR recovery improved, so intensity sessions were bumped one level.');
   }
 
   next.engagement = e;
 
-  const summary = completedWeek
-    ? `Week complete. Streak now ${e.streak.currentWeeks} weeks. +${earned} pts.`
-    : `Session logged. +${earned} pts · body score ${e.metrics.find((m) => m.key === 'body_score')?.value}.`;
-
-  return { view: next, update: { userId: view.engagement.userId, triggeredBy: now(), planChanges, metricChanges, newlyUnlocked, summary } };
+  // `summary` is the *reason*, matching the engine's contract (adapt.py returns
+  // its `why` here). Points and streak are rendered from engagement state, so
+  // repeating them in the summary only duplicated them on screen.
+  return {
+    view: next,
+    update: { userId: view.engagement.userId, triggeredBy: now(), planChanges, metricChanges, newlyUnlocked, summary: reason },
+  };
 }
 
 // ---------------------------------------------------------------------------

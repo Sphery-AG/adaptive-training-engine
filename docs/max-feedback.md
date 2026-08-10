@@ -7,9 +7,11 @@ Thursday RSG demo link. Status: [ ] todo, [x] done, [~] queued for next week.
 - [ ] **App name**: is "Sphere" the final name of the app? (Login) — needs Stephan.
 - [ ] **Account chooser**: does it show only when multiple accounts exist on the
   device, or always? (Chooser) — product decision, relay.
-- [ ] **Plan horizon**: should we show all 4 weeks up front when the plan adapts
-  from prior training? (Plan tab) — design decision, relay. Cheap mitigation
-  below (P1).
+- [x] **Plan horizon**: should we show all 4 weeks up front when the plan adapts
+  from prior training? (Plan tab) — answered by Stephan Jul 31: never show the
+  full plan by default. Built Aug 4 — plans are 8 weeks, the Plan tab opens on
+  the current week, other weeks are one tap away. Supersedes the mitigation
+  noted at the bottom of this file.
 
 ## Copy fixes (quick)
 - [x] C1 Chooser: → "Pick up right where you left off."

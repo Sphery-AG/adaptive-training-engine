@@ -211,6 +211,14 @@ export interface MemberEngagement {
 // ---------------------------------------------------------------------------
 
 /**
+ * How the session felt, asked once on the post-session screen. Maps 1:1 onto
+ * the engine's `SessionResult.perceivedEffort` (engine/app/adapt.py), which
+ * sits second in its evidence ladder — below real heart rate, above the
+ * historical score trend.
+ */
+export type PerceivedEffort = 'easy' | 'right' | 'hard';
+
+/**
  * Emitted after new session data is processed (engine: POST /update-plan).
  * Drives the demo's money moment: complete a session → metrics move, streak
  * ticks, league updates, a quest advances, maybe a reward unlocks — each with

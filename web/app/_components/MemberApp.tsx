@@ -7,10 +7,17 @@
  * pure engine output (PlanView + engagement); the "Complete session" action is
  * the demo's adaptive money-moment (criteria 3 + 5).
  */
-import { useEffect, useState } from 'react';
-import type { PlanView, ResolvedSession } from '@/lib/stub/engine';
+import { useState } from 'react';
+import type { PlanView, ResolvedSession, AdaptationResult } from '@/lib/stub/engine';
 import { circuitFor, CIRCUIT_NAMES } from '@/lib/stub/engine';
-import type { AdaptiveUpdate, MetricKey, MetricSnapshot, Quest, Reward } from '@/lib/types/engagement';
+import type {
+  AdaptiveUpdate,
+  MetricKey,
+  MetricSnapshot,
+  PerceivedEffort,
+  Quest,
+  Reward,
+} from '@/lib/types/engagement';
 import { LEAGUE_TIERS } from '@/lib/types/engagement';
 import type { StimulusType } from '@/lib/types/plan';
 import { STIMULUS_LABELS } from '@/lib/labels';
@@ -79,22 +86,14 @@ export default function MemberApp({
   view: PlanView;
   completedCount: number;
   lastUpdate: AdaptiveUpdate | null;
-  onComplete: (livePoints: number) => void;
+  onComplete: (livePoints: number, effort?: PerceivedEffort) => Promise<AdaptationResult>;
   onRestart: () => void;
 }) {
   const [tab, setTab] = useState<Tab>('today');
   const [training, setTraining] = useState(false);
-  const [dismissed, setDismissed] = useState<AdaptiveUpdate | null>(null);
-  const toast = lastUpdate && lastUpdate !== dismissed ? lastUpdate : null;
 
   const flat = flatSessions(view);
   const trainingSession = flat[Math.min(completedCount, flat.length - 1)];
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setDismissed(toast), 5000);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   const head = HEAD[tab];
 
@@ -130,7 +129,6 @@ export default function MemberApp({
         {tab === 'circle' && <CircleTab view={view} completedCount={completedCount} />}
       </div>
 
-      {toast && <Toast toast={toast} />}
       <BottomNav tab={tab} setTab={setTab} />
 
       {training && trainingSession && (
@@ -139,11 +137,12 @@ export default function MemberApp({
           rs={trainingSession.rs}
           weekNumber={trainingSession.weekNumber}
           sessionInWeek={trainingSession.sessionInWeek}
-          onFinish={(livePoints) => {
-            onComplete(livePoints);
-            setTraining(false);
-          }}
+          onFinish={onComplete}
           onClose={() => setTraining(false)}
+          onDone={() => {
+            setTraining(false);
+            setTab('today');
+          }}
         />
       )}
     </div>
@@ -1049,21 +1048,6 @@ function LevelPill({ level }: { level: 'LOW' | 'MEDIUM' | 'HIGH' }) {
       <Icon name="bar-chart" size={12} className="text-accent" />
       {level}
     </span>
-  );
-}
-
-function Toast({ toast }: { toast: AdaptiveUpdate }) {
-  return (
-    <div className="animate-pop fixed inset-x-0 bottom-24 z-50 mx-auto w-[92%] max-w-md rounded-2xl border border-violet/40 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
-      <div className="flex items-center gap-2 text-sm font-semibold text-violet">
-        <Icon name="refresh" size={15} /> {toast.summary}
-      </div>
-      {toast.newlyUnlocked.map((r) => (
-        <div key={r.id} className="mt-1 flex items-center gap-1.5 text-xs text-zinc-300">
-          <Icon name="gift" size={13} className="text-mint" /> Unlocked: {r.label}
-        </div>
-      ))}
-    </div>
   );
 }
 

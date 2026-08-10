@@ -1,5 +1,35 @@
 # Adaptive Training Schema Handoff For Michel
 
+> **Superseded, July 21 2026. Do not send this to Michel.**
+>
+> The schema proposal in this document has been replaced. Current sources of
+> truth:
+>
+> - **`engine/db/sphery_additions.sql`** — the DDL Michel runs (12 tables,
+>   9 columns), dry-run against a copy of the live schema.
+> - **`engine/db/sphery_seed.sql`** — the gym floors.
+> - **`docs/michel-what-to-add.md`** — the reasoning behind each addition.
+> - **`docs/michel-meeting-prep.md`** — the meeting agenda.
+>
+> What changed, and why:
+>
+> | This document | Current |
+> |---|---|
+> | 5 tables, `Adaptive*` prefix | 12 tables, `TrainingPlan*` prefix |
+> | Recommends local shadow tables that do not touch production | Additions to Sphery's own database; there is no second store |
+> | Open question: main DB or separate adaptive schema | Decided: one database, Sphery's |
+> | `AdaptiveFitnessEstimates` as a table | A JSON snapshot on `TrainingPlans` |
+> | `AdaptiveTrainingPlanSessions` normalized | Sessions live in `TrainingPlans.weeks` JSON |
+> | Safety flags block automatic plan issue | Removed; injuries drive station exclusions instead |
+> | `zone1DurationSeconds`…`zone5DurationSeconds`, `hrMin` | `timeInTier1-5`, matching what `Workouts` already uses |
+> | `gymId` as a string | A real `Gyms` table with an integer foreign key |
+> | No points, rewards, quests, session logs, or gym floor | All covered |
+>
+> **Still worth reading**, and better argued here than anywhere since:
+> "Why The Current `target` Field Is Not Enough", "Why HR-Zone Tracking Is
+> Vital", "Equipment-Agnostic Design", and "Product Boundaries". Those four
+> sections are why the current asks exist.
+
 **Audience:** Michel / backend  
 **Purpose:** Explain what Anthony is building, what data is missing, and what schema/API additions would make the adaptive training plan work without duplicating the Sphery app or Nexus kiosk.
 
@@ -638,7 +668,7 @@ Recommendation: Anthony should build **Option A** now with clean SQL migrations 
 - This writeup.
 - One ER diagram screenshot or Miro recreation.
 - One concrete example flow: "Build Strength & Muscle, hypertrophy + functional strength, 3x/week, Mon/Wed/Fri, 45 minutes."
-- Draft SQL migrations for the five adaptive tables: `docs/adaptive_schema_draft.sql`.
+- Draft SQL migrations. (Superseded: `engine/db/sphery_additions.sql`.)
 - A short list of required API additions:
   - create/read questionnaire answer,
   - generate/read active plan,

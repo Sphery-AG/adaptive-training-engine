@@ -162,3 +162,129 @@ ALTER TABLE `CircleTrainingExerciseLogs`
 ALTER TABLE `CircleTrainingParticipants`
   ADD COLUMN `hrMax`           INT NULL AFTER `hrAverage`,
   ADD COLUMN `perceivedEffort` TINYINT NULL COMMENT '1 = too easy, 5 = too hard' AFTER `hrMax`;
+
+-- ===========================================================================
+-- PART 3 — The plan app's own session log and habit loop
+-- ===========================================================================
+--
+-- Deliberately separate from `Progresses` and `Achievements`. Those are
+-- Sphery's own EXP system with its own rules and currency; the plan app's
+-- points reward following a prescribed plan (one point per training minute, two
+-- for minutes inside the prescribed zone) and settle into a monthly rank.
+-- Merging the two would force one set of rules onto both. Keeping them apart
+-- leaves the option of relating them later; merging now cannot be undone.
+--
+-- Every table is prefixed `TrainingPlan` so the feature can be namespaced,
+-- migrated, or dropped as one unit.
+
+-- A completed session, whether or not it ever reached a kiosk.
+--
+-- This is the gap `CircleTrainings` does not cover: a member who trains in the
+-- app, at a gym with no kiosk, or on equipment the kiosk does not drive, still
+-- needs the session recorded and still feeds the adaptive loop.
+-- `circleTrainingId` links the two when a session did run at a kiosk, so that
+-- is one session with two views rather than two records.
+--
+-- Result columns mirror CircleTrainingParticipants so an app-run session and a
+-- kiosk-run session are the same shape.
+CREATE TABLE `TrainingPlanSessionLogs` (
+  `id`               INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`           INT NOT NULL,
+  `trainingPlanId`   INT NULL,
+  `planSessionRef`   VARCHAR(80) NULL COMMENT 'which session inside the plan',
+  `circleTrainingId` INT NULL COMMENT 'set when this ran at a kiosk',
+  `startedAt`        DATETIME NULL,
+  `completedAt`      DATETIME NULL,
+  `circuit`          JSON NULL COMMENT 'per-station result: station, minutes, seconds per zone',
+  `hrAverage`        INT NULL,
+  `hrMax`            INT NULL,
+  `calories`         INT NULL,
+  `totalTime`        INT NULL,
+  `totalScore`       INT NULL,
+  `totalRepetitions` INT NULL,
+  `perceivedEffort`  TINYINT NULL COMMENT '1 = too easy, 5 = too hard',
+  `pointsEarned`     INT NOT NULL DEFAULT 0,
+  `source`           ENUM('app','kiosk') NOT NULL DEFAULT 'app',
+  `createdAt`        DATETIME NOT NULL,
+  `updatedAt`        DATETIME NOT NULL,
+  KEY `ix_TPSessionLogs_user` (`userId`, `completedAt`),
+  KEY `ix_TPSessionLogs_plan` (`trainingPlanId`),
+  CONSTRAINT `fk_TPSessionLogs_user` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`),
+  CONSTRAINT `fk_TPSessionLogs_plan` FOREIGN KEY (`trainingPlanId`) REFERENCES `TrainingPlans` (`id`),
+  CONSTRAINT `fk_TPSessionLogs_ct`   FOREIGN KEY (`circleTrainingId`) REFERENCES `CircleTrainings` (`id`)
+) ENGINE=InnoDB;
+
+-- Append-only points. A balance is SUM(delta), never a stored counter, so a bug
+-- cannot silently corrupt a total and every award stays explainable ("+103,
+-- session completed"). The monthly rank is a query over this table rather than
+-- a column, which is why there is no rank table.
+CREATE TABLE `TrainingPlanPoints` (
+  `id`        INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`    INT NOT NULL,
+  `delta`     INT NOT NULL,
+  `reason`    VARCHAR(120) NOT NULL,
+  `ref`       VARCHAR(80) NULL COMMENT 'session, quest or emblem that caused it',
+  `createdAt` DATETIME NOT NULL,
+  `updatedAt` DATETIME NOT NULL,
+  KEY `ix_TPPoints_user` (`userId`, `createdAt`),
+  CONSTRAINT `fk_TPPoints_user` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB;
+
+-- The gym's perk catalog. The software tracks the reward; the gym hands over the
+-- smoothie. That makes this per-gym data rather than code, and it is why a
+-- franchise can run its own rewards without a release.
+CREATE TABLE `TrainingPlanRewards` (
+  `id`         INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `gymId`      INT NOT NULL,
+  `kind`       ENUM('free_session','smoothie','coaching','guest_pass','merch','custom') NOT NULL,
+  `label`      VARCHAR(160) NOT NULL,
+  `pointsCost` INT NOT NULL,
+  `active`     TINYINT(1) NOT NULL DEFAULT 1,
+  `createdAt`  DATETIME NOT NULL,
+  `updatedAt`  DATETIME NOT NULL,
+  KEY `ix_TPRewards_gym` (`gymId`, `active`),
+  CONSTRAINT `fk_TPRewards_gym` FOREIGN KEY (`gymId`) REFERENCES `Gyms` (`id`)
+) ENGINE=InnoDB;
+
+-- Claim and fulfilment. Two timestamps because the gym fulfils out of band.
+CREATE TABLE `TrainingPlanRewardClaims` (
+  `id`         INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`     INT NOT NULL,
+  `rewardId`   INT NOT NULL,
+  `status`     ENUM('claimed','redeemed') NOT NULL DEFAULT 'claimed',
+  `claimedAt`  DATETIME NOT NULL,
+  `redeemedAt` DATETIME NULL,
+  `createdAt`  DATETIME NOT NULL,
+  `updatedAt`  DATETIME NOT NULL,
+  KEY `ix_TPRewardClaims_user` (`userId`, `claimedAt`),
+  CONSTRAINT `fk_TPRewardClaims_user`   FOREIGN KEY (`userId`)   REFERENCES `Users` (`id`),
+  CONSTRAINT `fk_TPRewardClaims_reward` FOREIGN KEY (`rewardId`) REFERENCES `TrainingPlanRewards` (`id`)
+) ENGINE=InnoDB;
+
+-- Quest and emblem progress. Definitions stay in code for v1: there are three
+-- quest tiers and six emblems, and they change with the product rather than per
+-- gym. Only what a member actually earned needs a row. If quests later become
+-- per-gym data, they get a definitions table then.
+CREATE TABLE `TrainingPlanMemberQuests` (
+  `id`          INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`      INT NOT NULL,
+  `questSlug`   VARCHAR(80) NOT NULL,
+  `progress`    INT NOT NULL DEFAULT 0,
+  `target`      INT NOT NULL,
+  `completedAt` DATETIME NULL,
+  `createdAt`   DATETIME NOT NULL,
+  `updatedAt`   DATETIME NOT NULL,
+  UNIQUE KEY `uq_TPMemberQuests` (`userId`, `questSlug`),
+  CONSTRAINT `fk_TPMemberQuests_user` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `TrainingPlanMemberEmblems` (
+  `id`         INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`     INT NOT NULL,
+  `emblemSlug` VARCHAR(80) NOT NULL,
+  `earnedAt`   DATETIME NOT NULL,
+  `createdAt`  DATETIME NOT NULL,
+  `updatedAt`  DATETIME NOT NULL,
+  UNIQUE KEY `uq_TPMemberEmblems` (`userId`, `emblemSlug`),
+  CONSTRAINT `fk_TPMemberEmblems_user` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
+) ENGINE=InnoDB;

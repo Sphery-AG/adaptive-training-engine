@@ -12,7 +12,7 @@ no separate store. It reads the training data that is already there, and writes
 the plan it generates back into the same place, so the kiosk, the Sphery app,
 and the plan app are all looking at one member's one record.
 
-**Four new tables, nine new columns on four existing tables.** Nothing changes
+**Eleven new tables, nine new columns on four existing tables.** Nothing changes
 an existing column, nothing changes existing behaviour, every new column is
 nullable, and no current client breaks.
 
@@ -24,7 +24,7 @@ Checked first, so the ask stays small.
 |---|---|
 | `Users`, `HealthData` | Identity and profile. `auth/sign_in` already returns the user id. |
 | `Workouts`, `HrValues`, `HrStats` | The fitness estimate reads these. No changes. |
-| `Progresses` (`totalExp`), `Achievements` (`expAmount`) | There is already an XP system. We should extend it, not build a second one. |
+| `Progresses` (`totalExp`), `Achievements` (`expAmount`) | Sphery's own EXP. The plan app's points are a **separate currency with different rules** and stay in their own tables. See Part 3. |
 | `TrainingFeeds` | Already a unified cross-activity feed with `calories`, `avgHeartRate`, `score`, `durationSec`. This is the natural home for plan session history too. |
 | `RaceConfigs.hrTarget` | Precedent for item 2 below: HR targets already exist for ExerCube races. |
 
@@ -118,6 +118,54 @@ easy and the plan hardens, 2-4 holds, 5 means too hard and the plan eases. With
 roughly 90% of sessions having no heart-rate belt, this is the strongest signal
 the adaptive loop gets.
 
+## Part 3: the plan app's session log and habit loop
+
+### `TrainingPlanSessionLogs` — the one that is easy to miss
+
+`CircleTrainings` records a session **that ran at a kiosk**. A member who trains
+in the app, at a location with no kiosk, or on equipment the kiosk does not
+drive, has nowhere for that session to live. It still needs to be recorded and
+it still feeds the adaptive loop.
+
+`circleTrainingId` links the two when a session did run at a kiosk, so that is
+one session with two views rather than two competing records. The result columns
+mirror `CircleTrainingParticipants` exactly, so an app-run and a kiosk-run
+session are the same shape.
+
+### Points, rewards, quests, emblems
+
+**These are deliberately separate from `Progresses` and `Achievements`.** Those
+are Sphery's EXP system with its own rules and its own currency. The plan app's
+points reward *following a prescribed plan*: one point per training minute, two
+for minutes inside the prescribed zone, settling into a monthly rank. Putting
+both on one ledger would force one set of rules onto both.
+
+Keeping them apart leaves the option of relating them later. Merging them now
+cannot be undone.
+
+- `TrainingPlanPoints` — append-only. A balance is `SUM(delta)`, never a stored
+  counter, so a bug cannot silently corrupt a total and every award stays
+  explainable.
+- `TrainingPlanRewards` / `TrainingPlanRewardClaims` — the gym's perk catalog.
+  The software tracks the reward; the gym hands over the smoothie. Per-gym data
+  rather than code, so a franchise runs its own rewards without a release.
+- `TrainingPlanMemberQuests` / `TrainingPlanMemberEmblems` — progress only. The
+  definitions stay in code for v1, since three quest tiers and six emblems change
+  with the product rather than per gym.
+
+Every table is prefixed `TrainingPlan` so the whole feature can be namespaced,
+migrated, or dropped as one unit.
+
+### What needs no table at all
+
+Worth stating, because it keeps the ask smaller than it looks. All of these are
+queries over the tables above:
+
+- **Monthly rank and points balance** — `SUM(delta)` over `TrainingPlanPoints`.
+- **Streak and consistency** — `completedAt` dates in `TrainingPlanSessionLogs`.
+- **Body and brain trends** over week, month, and year — computed from session
+  history and the existing `Workouts` data. No metric snapshot table.
+
 ## The two things that need a decision, not code
 
 1. **Should `perceivedEffort` live in Sphery at all?** If you would rather not
@@ -133,17 +181,25 @@ the adaptive loop gets.
 
 ## Summary
 
-| # | Table | Change |
-|---|---|---|
-| 1 | `Gyms` | new |
-| 2 | `GymStations` | new |
-| 3 | `TrainingPlans` | new |
-| 4 | `TrainingPlanChanges` | new |
-| 5 | `TrainingPlanQuestionnaires` | new |
-| 6 | `CircleTrainings` | `+ trainingPlanId, planSessionRef` |
-| 7 | `CircleTrainingExercises` | `+ hrTargetZone, sets` |
-| 8 | `CircleTrainingExerciseLogs` | `+ hrMax, timeInTier1-5` |
-| 9 | `CircleTrainingParticipants` | `+ hrMax, perceivedEffort` |
+**Eleven new tables, nine new columns on four existing tables.**
+
+| Table | Change |
+|---|---|
+| `Gyms` | new — no canonical gym exists today |
+| `GymStations` | new — the floor, in stimulus vocabulary |
+| `TrainingPlans` | new |
+| `TrainingPlanChanges` | new — every adaptation with its reason |
+| `TrainingPlanQuestionnaires` | new |
+| `TrainingPlanSessionLogs` | new — sessions that never reach a kiosk |
+| `TrainingPlanPoints` | new — append-only ledger |
+| `TrainingPlanRewards` | new — per-gym perk catalog |
+| `TrainingPlanRewardClaims` | new |
+| `TrainingPlanMemberQuests` | new — progress only |
+| `TrainingPlanMemberEmblems` | new — earned only |
+| `CircleTrainings` | `+ trainingPlanId, planSessionRef` |
+| `CircleTrainingExercises` | `+ hrTargetZone, sets` |
+| `CircleTrainingExerciseLogs` | `+ hrMax, timeInTier1-5` |
+| `CircleTrainingParticipants` | `+ hrMax, perceivedEffort` |
 
 Written in the conventions already used in `spherych_devapp` (PascalCase plural
 tables, camelCase columns, `createdAt`/`updatedAt` on every row) so it drops

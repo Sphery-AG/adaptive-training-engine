@@ -20,11 +20,10 @@ The full member journey runs end to end, locally, against the July 2026 export.
   live dev API.
 - **One command runs the whole system** on a fresh machine. 27 tests pass.
 
-Six weeks of work, and the hard part (the estimate and the rules) is done.
 
 ## Designed, not built
 
-- **Production database.** 14 tables, written Aug 5 against the real export,
+- **Production database.** 14 tables, written against the real export,
   covering members, plans, plan changes, session logs, feedback, points,
   quests, and rewards. `docs/database-schema.md`.
 - **Real sign-in.** One call to the kiosk API (`auth/sign_in`). Verified

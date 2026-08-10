@@ -7,7 +7,11 @@ how hard they train, how they score, how their heart responds and recovers.
 
 Design notes grounded in the real export (profiled Jul 2026), not assumptions:
 - `Workouts.score` is the performance metric with real variance (avg ~197k,
-  max ~1.4M). `bodyScore` is degenerate in this dump (~1 for almost every row)
+  max ~1.4M). `bodyScore` and `brainScore` are 0-1 ratios, not 0-100 scores
+  (14,654 of 14,667 completed workouts sit at or below 2). `brainScore` carries
+  real signal inside that range: user 535 moves 0.67 -> 0.93 across 108
+  sessions. `bodyScore` has a strong ceiling effect (0.96-0.99 for the same
+  member), so it is weak as a movement-quality signal on its own
   so we never use it.
 - `Workouts.hrAverage` is only populated on ~10% of workouts (~2,009 rows), so
   every HR feature is nullable and we record how many HR workouts backed it.

@@ -318,20 +318,3 @@ CREATE TABLE `TrainingPlanMembers` (
   CONSTRAINT `fk_TPMembers_user` FOREIGN KEY (`userId`)    REFERENCES `Users` (`id`),
   CONSTRAINT `fk_TPMembers_gym`  FOREIGN KEY (`homeGymId`) REFERENCES `Gyms` (`id`)
 ) ENGINE=InnoDB;
-
--- The safety gate.
---
--- When a member flags a medical condition or a recent injury, their plan is
--- held for trainer sign-off rather than auto-issued. The app already computes
--- the flag (`hasMedicalFlags`) and the plan contract already promises the
--- behaviour; there was nowhere to record it.
---
--- `reviewedByUserId` points at Users because `role` already distinguishes
--- coaches, so a reviewer is an existing account rather than a new concept.
-ALTER TABLE `TrainingPlans`
-  MODIFY COLUMN `status`
-    ENUM('pending_review','active','superseded','completed') NOT NULL DEFAULT 'active',
-  ADD COLUMN `reviewedByUserId` INT NULL AFTER `status`,
-  ADD COLUMN `reviewedAt`       DATETIME NULL AFTER `reviewedByUserId`,
-  ADD CONSTRAINT `fk_TrainingPlans_reviewer`
-    FOREIGN KEY (`reviewedByUserId`) REFERENCES `Users` (`id`);

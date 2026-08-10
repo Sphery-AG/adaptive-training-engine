@@ -12,7 +12,7 @@ no separate store. It reads the training data that is already there, and writes
 the plan it generates back into the same place, so the kiosk, the Sphery app,
 and the plan app are all looking at one member's one record.
 
-**Twelve new tables, and columns added to five existing tables.** Nothing changes
+**Twelve new tables, nine new columns on four existing tables.** Nothing changes
 an existing column, nothing changes existing behaviour, every new column is
 nullable, and no current client breaks.
 
@@ -183,20 +183,24 @@ Today it is a hardcoded constant in the front end.
 months of habit. It cannot be derived from session history, because the point is
 that nothing happened.
 
-### The safety gate on `TrainingPlans`
+## Account creation: the one genuinely new ask
 
-When a member flags a medical condition or a recent injury, their plan should be
-**held for trainer sign-off rather than auto-issued**. The app already computes
-that flag and the plan contract already promises the behaviour, but there was
-nowhere to record it. `status` gains `pending_review`, plus `reviewedByUserId`
-and `reviewedAt`.
+New members should be able to **create a Sphery account from the plan app**.
+That settles the identity question: every table here keys off `Users.id`, and a
+new member gets a real Sphery account rather than a second identity that would
+have to be reconciled later.
 
-`reviewedByUserId` points at `Users` because `role` already distinguishes
-coaches, so a reviewer is an existing account rather than a new concept.
+The gap is that the kiosk API only ever authenticates. `auth/sign_in` and
+`auth/qr_exercube` both assume the account already exists; nothing in the kiosk's
+network layer registers one. `Users` clearly supports it (`email`, `username`,
+`password`, `verified`, `verificationCode`), so registration exists somewhere,
+just not on a surface the plan app can reach.
 
-This one is worth flagging to whoever owns product: it is a duty-of-care
-behaviour that is currently promised in the type contract and implemented
-nowhere.
+**What we need:** a registration endpoint the plan app can call, or the details
+of the existing one if the Sphery app already has it. Including whatever email
+verification flow comes with it.
+
+This is the only ask on this page that is an endpoint rather than a column.
 
 ## The two things that need a decision, not code
 
@@ -213,7 +217,7 @@ nowhere.
 
 ## Summary
 
-**Twelve new tables, and columns added to five existing tables.**
+**Twelve new tables, nine new columns on four existing tables.**
 
 | Table | Change |
 |---|---|
@@ -233,7 +237,6 @@ nowhere.
 | `CircleTrainingExercises` | `+ hrTargetZone, sets` |
 | `CircleTrainingExerciseLogs` | `+ hrMax, timeInTier1-5` |
 | `CircleTrainingParticipants` | `+ hrMax, perceivedEffort` |
-| `TrainingPlans` | `+ pending_review status, reviewedByUserId, reviewedAt` |
 
 Written in the conventions already used in `spherych_devapp` (PascalCase plural
 tables, camelCase columns, `createdAt`/`updatedAt` on every row) so it drops

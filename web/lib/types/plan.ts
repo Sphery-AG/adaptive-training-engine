@@ -295,9 +295,9 @@ export interface QuestionnaireAnswers {
   /** Branched injury detail when an injury is flagged. */
   injury?: InjuryDetail;
   /**
-   * Safety gate (whiteboard Ebene 3, "Move Pain-Free"/medical): if the member
-   * flags a medical condition or recent injury, the plan is held for trainer
-   * sign-off rather than auto-issued.
+   * True when the member reported a medical condition or a recent injury.
+   * Carried so plan generation can take it into account; nothing gates or
+   * holds a plan on it.
    */
   hasMedicalFlags?: boolean;
 }

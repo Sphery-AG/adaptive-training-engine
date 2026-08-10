@@ -77,3 +77,15 @@ zero network calls, has no server code, and ships no secrets in the bundle.
 - npm audit (web/), .venv/bin/pip list (engine/), pip-audit absent
 - greps for pickle/yaml.load/eval/exec/subprocess, NEXT_PUBLIC, fetch,
   dangerouslySetInnerHTML, middleware/server actions/next-image
+
+## Addendum, Aug 10
+
+Two things changed that this review's findings should not be read against
+without noting.
+
+- `docs/adaptive_schema_draft.sql` was deleted, superseded by
+  `engine/db/sphery_additions.sql`.
+- `.gitignore` previously excluded `*.sql` to keep DB dumps out, which silently
+  excluded our own migrations too. It now allows `engine/db/*.sql`, so more
+  tracked `.sql` files exist than when this review ran. All of them are DDL we
+  author and none contain member data. The rule keeping dumps out is unchanged.

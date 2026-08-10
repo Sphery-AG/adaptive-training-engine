@@ -1,94 +1,98 @@
-# Michel meeting: what to show, what to ask
+# Michel meeting: agenda
 
-**Prep for the database and API session, week of Aug 10.**
-Companion to `docs/database-schema.md` (the full proposal) and
-`docs/kiosk-api.md` (the API transcription).
+**Prep for the database session, week of Aug 10.**
+Bring: `docs/michel-what-to-add.md` (the reasoning) and
+`engine/db/sphery_additions.sql` (the SQL he runs).
 
 Michel owns the Sphery database and is a contractor, so his time is the scarce
-thing. The aim is to arrive with the homework done, confirm four things, and
-leave with one schema request filed. Most of what used to be on this list got
-answered by reading the API on Aug 6.
+thing. Arrive with the homework done, get four decisions, leave with a date.
 
-## Open with what I built and how it touches his data
-
-Two minutes, so he knows what he is being asked about.
+## Open with what this is, in two minutes
 
 - An adaptive planning layer between the Sphery app and the NEXUS kiosk. It
   estimates a member's fitness from their real training history, generates an
-  8-week block of circle trainings on their gym's actual floor, and re-tunes
-  the plan as they train.
-- **It has never written to Sphery's database and is not asking to.** Every
-  query is a read, parameterized, against a static July 2026 export running in
-  local Docker. The tables read are `Users`, `HealthData`, `Workouts`,
-  `HrStats`, `HrValues`, `RaceConfigs`. Nothing else.
-- The app has its own database for everything it creates: plans, session logs,
-  points, questionnaire answers. Sphery data stays read-only, always.
+  8-week block of circle trainings on their gym's actual floor, and re-tunes the
+  plan as they train.
+- **It runs on his database.** No second store, nothing self-hosted. The plan
+  the app generates is written back next to the training data it came from, so
+  the kiosk, the Sphery app, and the plan app all read one member's one record.
+- Working today against the July 2026 export: real fitness estimates for the 183
+  members with 15+ workouts, real plans on the real Darmstadt floor, real
+  adaptation. The schema additions were applied to a copy of his live schema to
+  confirm they run.
 
 ## What I already worked out, so we do not spend the meeting on it
 
-Say these as findings, not questions. They shrink the agenda.
+Say these as findings rather than questions. They shrink the agenda.
 
-- **The v1 API already exposes what the adaptive loop needs.** Circle trainings
-  and their results (per-exercise times, scores, calories, hrAverage) are
-  readable through public GETs. So the ask is not "give us database access".
-- **Identity is the Sphery user id.** `auth/sign_in` returns a token carrying
-  it, verified with my own account (id 738). The kiosk QR login resolves to the
-  same identity, so app sign-in and kiosk sign-in land on one key.
-- **Schema V2.6 carries our features over.** The per-member HR series and pause
-  logs with `hr60sRecovery` are the same signals the engine already derives
-  from `HrValues` and `HrStats`. No redesign needed when v2 lands.
-- **Known-dead columns, worked around already.** `hrRestingPulse` and `hrMax`
+- **Identity is solved.** `auth/sign_in` returns a token carrying the Sphery
+  user id, verified with my own account (id 738). The kiosk QR login resolves to
+  the same id. Every new table keys off `Users.id`.
+- **Nothing existing gets altered.** Twelve new tables, nine nullable columns on
+  four existing tables. No current client breaks.
+- **I checked what already exists before asking for anything.** `Progresses` and
+  `Achievements` are Sphery's EXP system, `TrainingFeeds` is already a unified
+  activity feed, and `RaceConfigs.hrTarget` is precedent for putting an HR target
+  on circle-training exercises.
+- **Known-dead columns, already worked around.** `hrRestingPulse` and `hrMax`
   are always NULL, so the engine estimates resting HR from the lowest sustained
   `HrValues` and max HR from observed workout maxima with Tanaka as the
-  cold-start prior. The `age` column is unused, so age comes from `dob`.
-  `bodyScore` is roughly 1 everywhere in the export, so it is not trusted as a
-  movement-quality signal. Worth confirming these are known and expected rather
-  than a broken export.
+  cold-start prior. `age` is unused, so age comes from `dob`. `bodyScore` and
+  `brainScore` are 0-1 ratios rather than 0-100 scores. Worth one line
+  confirming these are expected rather than a broken export.
 
-## The one real schema ask
+## The four decisions
 
-**`CreateTrainingRequest` exercises carry no HR target or zone.** Confirmed
-against both the live v1 API and the v2 proposal frames: neither has the field.
+### 1. Database access for the plan engine
+Everything lives in his database, so the engine needs a connection.
 
-Our circuits prescribe a target zone per leg, because that is what makes a plan
-a plan rather than a list of stations. Without somewhere to put it, a generated
-circle training loses its intensity prescription the moment it reaches the
-kiosk.
+Ask for a user with **write access scoped to the twelve new tables** and **read
+access to the six it reads** (`Users`, `HealthData`, `Workouts`, `HrStats`,
+`HrValues`, `RaceConfigs`). Nothing else, and no writes to any existing table.
+Dev first (`devapp`), production later.
 
-Ask for either a field on the exercise (`hrTargetZone`, or min/max bpm), or an
-agreed convention we can encode. Either works. This is the only thing that
-requires a change on his side, so lead with it and do not bury it.
+If direct access is not on the table, the fallback is API endpoints for the
+twelve new tables, which is more work for him rather than less.
 
-## Four things to confirm
+### 2. Migration format and who applies it
+The schema uses Sequelize (`SequelizeMeta`), so he will likely want migration
+files rather than raw SQL. My file is plain DDL that runs as-is, and I can
+convert it to Sequelize migrations if that fits his flow better.
 
-1. **Bless the API as the sanctioned bridge.** Is reading member training data
-   through the public v1 API the supported path for a companion app? What is
-   the production base URL, and is the public-read policy intentional and
-   expected to persist?
-2. **Identity.** Is the Sphery user id the long-term key to map our members
-   onto? And how do gym-chain tenants fit, given the Gold's conversation?
-3. **`CircleTrainingExerciseLogs`.** When does it become the production log for
-   circle trainings, and is the schema stable enough to design our
-   `session_logs` import against? The v2 frames suggest V2.6 and in progress.
-4. **Per-station HR.** Circle exercise logs carry only `hrAverage` today, so
-   time-in-zone per station does not exist. Is that coming with V2.6? Our live
-   session screen and the adaptive loop both get better the moment it does.
+Also worth settling: does he apply it, or can I open a PR against their repo?
 
-## The GDPR question, and who owns it
+### 3. Account creation
+New members should be able to create a Sphery account from the plan app. The
+kiosk API only ever authenticates: `auth/sign_in` and `auth/qr_exercube` both
+assume the account exists, and nothing in the kiosk's network layer registers
+one. `Users` clearly supports it (`email`, `username`, `password`, `verified`,
+`verificationCode`), so registration lives somewhere the plan app cannot reach.
 
-Raise it, but do not expect Michel to settle it alone. Where is a database
-holding HR-derived data about members allowed to live, and does this need a
-data processing agreement? Our proposal reduces the exposure a lot: members
-authorize with their own credentials, data is read per-request through the API,
-and our database stores only what the app itself creates. Worth asking who owns
-this decision, since it currently gates hosting.
+**Ask for a registration endpoint, or the details of the existing one**,
+including the email verification flow. This is the only ask that is an endpoint
+rather than a column.
+
+### 4. When
+The additions are small and additive. Ask what a realistic date looks like and
+whether dev can move ahead of production.
+
+## Also raise, but do not expect resolved
+
+- **GDPR.** The data now lives entirely in Sphery's database rather than
+  anywhere I control, which makes this simpler than it was. Still needs a
+  position on the plan app writing member data, and it needs a named owner.
+- **Per-station HR.** Circle exercise logs carry only `hrAverage`, so
+  time-in-zone per station does not exist. Is that coming with V2.6? Covered by
+  the additions if he takes them.
+- **HR belts.** Roughly 90% of workouts have no HR data because the belt is
+  opt-in. This is the single biggest limit on what the engine can say, and it is
+  an operations decision rather than an engineering one.
 
 ## What I want to walk out with
 
-- The hrTarget request filed, with a rough sense of when.
-- A yes or no on the API as the sanctioned bridge, plus the production URL.
-- Confirmation that `sphery_user_id` is the right long-term key.
-- A named owner for the GDPR and hosting decision.
+1. A yes on the twelve tables and nine columns, and a date.
+2. A connection string, or agreement on the API alternative.
+3. The registration endpoint, or a pointer to the existing one.
+4. A named owner for the GDPR question.
 
-Everything else is nice to have. If the meeting runs short, these four are the
-ones that unblock the remaining work.
+If the meeting runs short, these four are the ones that unblock the rest.

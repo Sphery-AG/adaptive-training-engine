@@ -23,7 +23,7 @@ Checked first, so the ask stays small.
 | Already there | We use it as-is |
 |---|---|
 | `Users`, `HealthData` | Identity and profile. `auth/sign_in` already returns the user id. |
-| `Workouts`, `HrValues`, `HrStats` | The fitness estimate reads these. No changes. |
+| `Workouts`, `HrValues`, `HrStats` | The fitness estimate reads these. No changes. `Workouts` already carries per-movement counts (`correctTouches`/`totalTouches`, punches, jumps, squats, lunges, burpees) and `timeInTier1-5`. |
 | `Progresses` (`totalExp`), `Achievements` (`expAmount`) | Sphery's own EXP. The plan app's points are a **separate currency with different rules** and stay in their own tables. See Part 3. |
 | `TrainingFeeds` | Already a unified cross-activity feed (`calories`, `avgHeartRate`, `score`, `durationSec`). Plan sessions should appear here too so a member's history stays in one place. The plan app still needs its own per-station detail record, which is `TrainingPlanSessionLogs` in Part 3. |
 | `RaceConfigs.hrTarget` | Precedent for item 2 below: HR targets already exist for ExerCube races. |
@@ -96,8 +96,22 @@ just a list of stations.
 `RaceConfigs.hrTarget` already does exactly this for ExerCube races. This
 extends the same idea to circle trainings.
 
-`sets` is optional and only matters if prescriptions need "3 sets of 10". The
-model has no set concept today, so this is a decision rather than a gap.
+`sets` is optional and only matters if prescriptions need "3 sets of 10".
+**There is no set concept anywhere in the schema today**, in the prescription or
+the log, so this is a decision rather than a gap.
+
+What the export shows about how work is currently recorded, since it shaped
+these asks:
+
+- Prescriptions skew heavily to time: `duration` 1,533, `score` 344,
+  `repetitions` 116. `target` is free text (`1000m`, `50x`, `100`, and one
+  literal `-`).
+- **All three measurables are logged regardless of style.** Where
+  `style = duration`, `repetitions` is still filled 927 times. `style` names the
+  target, not what gets measured.
+- **Reps are recorded least reliably on rep-style exercises**: filled on 68 of
+  130 logs (52%), below the 55% for duration-style. Worth a look; it may be a
+  kiosk bug rather than a schema question.
 
 ### 3. `CircleTrainingExerciseLogs.hrMax` + `timeInTier1-5`
 

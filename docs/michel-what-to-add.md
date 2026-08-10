@@ -12,7 +12,7 @@ no separate store. It reads the training data that is already there, and writes
 the plan it generates back into the same place, so the kiosk, the Sphery app,
 and the plan app are all looking at one member's one record.
 
-**Eleven new tables, nine new columns on four existing tables.** Nothing changes
+**Twelve new tables, and columns added to five existing tables.** Nothing changes
 an existing column, nothing changes existing behaviour, every new column is
 nullable, and no current client breaks.
 
@@ -166,6 +166,38 @@ queries over the tables above:
 - **Body and brain trends** over week, month, and year — computed from session
   history and the existing `Workouts` data. No metric snapshot table.
 
+## Part 4: member state and the safety gate
+
+### `TrainingPlanMembers`
+
+Plan-app state that belongs to a member rather than to a plan. A separate table
+rather than columns on `Users`, so the feature stays in its own namespace and
+`Users` is never altered. Its existence also answers "is this person using the
+plan app", which nothing else can.
+
+`homeGymId` matters more than it looks. The app shows a member their gym's floor
+before any plan exists, and it is what makes the multi-location story work.
+Today it is a hardcoded constant in the front end.
+
+`streakFreezes` absorbs one missed week so a single slip does not wipe out
+months of habit. It cannot be derived from session history, because the point is
+that nothing happened.
+
+### The safety gate on `TrainingPlans`
+
+When a member flags a medical condition or a recent injury, their plan should be
+**held for trainer sign-off rather than auto-issued**. The app already computes
+that flag and the plan contract already promises the behaviour, but there was
+nowhere to record it. `status` gains `pending_review`, plus `reviewedByUserId`
+and `reviewedAt`.
+
+`reviewedByUserId` points at `Users` because `role` already distinguishes
+coaches, so a reviewer is an existing account rather than a new concept.
+
+This one is worth flagging to whoever owns product: it is a duty-of-care
+behaviour that is currently promised in the type contract and implemented
+nowhere.
+
 ## The two things that need a decision, not code
 
 1. **Should `perceivedEffort` live in Sphery at all?** If you would rather not
@@ -181,7 +213,7 @@ queries over the tables above:
 
 ## Summary
 
-**Eleven new tables, nine new columns on four existing tables.**
+**Twelve new tables, and columns added to five existing tables.**
 
 | Table | Change |
 |---|---|
@@ -196,10 +228,12 @@ queries over the tables above:
 | `TrainingPlanRewardClaims` | new |
 | `TrainingPlanMemberQuests` | new — progress only |
 | `TrainingPlanMemberEmblems` | new — earned only |
+| `TrainingPlanMembers` | new — home gym, streak freezes |
 | `CircleTrainings` | `+ trainingPlanId, planSessionRef` |
 | `CircleTrainingExercises` | `+ hrTargetZone, sets` |
 | `CircleTrainingExerciseLogs` | `+ hrMax, timeInTier1-5` |
 | `CircleTrainingParticipants` | `+ hrMax, perceivedEffort` |
+| `TrainingPlans` | `+ pending_review status, reviewedByUserId, reviewedAt` |
 
 Written in the conventions already used in `spherych_devapp` (PascalCase plural
 tables, camelCase columns, `createdAt`/`updatedAt` on every row) so it drops

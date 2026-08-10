@@ -288,3 +288,50 @@ CREATE TABLE `TrainingPlanMemberEmblems` (
   UNIQUE KEY `uq_TPMemberEmblems` (`userId`, `emblemSlug`),
   CONSTRAINT `fk_TPMemberEmblems_user` FOREIGN KEY (`userId`) REFERENCES `Users` (`id`)
 ) ENGINE=InnoDB;
+
+-- ===========================================================================
+-- PART 4 — Member state and the safety gate
+-- ===========================================================================
+
+-- Plan-app state that belongs to a member rather than to a plan.
+--
+-- A separate table rather than columns on `Users`, so the whole feature stays
+-- in its own namespace and `Users` is never altered. Its existence also answers
+-- "is this person using the plan app", which nothing else can.
+--
+-- `homeGymId` matters more than it looks: the app shows a member their gym's
+-- floor before any plan exists, and it is what makes the multi-location story
+-- work. Today it is a hardcoded constant in the front end.
+--
+-- `streakFreezes` is consumable state that absorbs one missed week so a single
+-- slip does not wipe out months of habit. It cannot be derived from session
+-- history, because the whole point is that nothing happened.
+CREATE TABLE `TrainingPlanMembers` (
+  `id`            INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `userId`        INT NOT NULL,
+  `homeGymId`     INT NULL,
+  `streakFreezes` TINYINT NOT NULL DEFAULT 1,
+  `joinedAt`      DATETIME NOT NULL,
+  `createdAt`     DATETIME NOT NULL,
+  `updatedAt`     DATETIME NOT NULL,
+  UNIQUE KEY `uq_TPMembers_user` (`userId`),
+  CONSTRAINT `fk_TPMembers_user` FOREIGN KEY (`userId`)    REFERENCES `Users` (`id`),
+  CONSTRAINT `fk_TPMembers_gym`  FOREIGN KEY (`homeGymId`) REFERENCES `Gyms` (`id`)
+) ENGINE=InnoDB;
+
+-- The safety gate.
+--
+-- When a member flags a medical condition or a recent injury, their plan is
+-- held for trainer sign-off rather than auto-issued. The app already computes
+-- the flag (`hasMedicalFlags`) and the plan contract already promises the
+-- behaviour; there was nowhere to record it.
+--
+-- `reviewedByUserId` points at Users because `role` already distinguishes
+-- coaches, so a reviewer is an existing account rather than a new concept.
+ALTER TABLE `TrainingPlans`
+  MODIFY COLUMN `status`
+    ENUM('pending_review','active','superseded','completed') NOT NULL DEFAULT 'active',
+  ADD COLUMN `reviewedByUserId` INT NULL AFTER `status`,
+  ADD COLUMN `reviewedAt`       DATETIME NULL AFTER `reviewedByUserId`,
+  ADD CONSTRAINT `fk_TrainingPlans_reviewer`
+    FOREIGN KEY (`reviewedByUserId`) REFERENCES `Users` (`id`);

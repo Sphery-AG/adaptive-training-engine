@@ -9,7 +9,9 @@
  * and gold frames on a dotted paper ground are a printed object, and pulling
  * them onto the app's dark orbit palette would make it stop reading as a card.
  * That departure is intentional and worth recording in DESIGN.md rather than
- * leaving as drift.
+ * leaving as drift. The one colour with no token to reach for is the paper
+ * dot (#8A93A0): DESIGN.md carries no light-surface neutrals, because until
+ * now nothing in the app was light.
  *
  * The card is a view of the catalogue, not a second copy of it: every element
  * on it already exists as data on the exercise.
@@ -111,7 +113,7 @@ export default function ExerciseCard({
           {/* ---- name + rarity ---- */}
           <div className="mt-2 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h3 className={`font-display text-[26px] leading-[1.05] tracking-tight ${skin.title}`}>
+              <h3 className={`font-display text-[1.5rem] leading-[1.05] tracking-tight ${skin.title}`}>
                 {card.name.toUpperCase()}
               </h3>
               <div className="mt-1.5 h-[3px] w-14 rounded-full bg-[linear-gradient(90deg,var(--orbit-cyan),var(--orbit-fuchsia))]" />

@@ -28,6 +28,7 @@ import type { PlanSummary } from '@/lib/plan-summary';
 import { Icon, type IconName } from './icons';
 import PlanSwitcher from './PlanSwitcher';
 import TrainingProgressChart from './TrainingProgressChart';
+import CardsTab from './CardsTab';
 import { RingGauge } from './RingGauge';
 import { Sparkline } from './Sparkline';
 import LiveSession from './LiveSession';
@@ -49,12 +50,12 @@ function flatSessions(view: PlanView) {
   );
 }
 
-type Tab = 'today' | 'plan' | 'progress' | 'circle';
+type Tab = 'today' | 'plan' | 'cards' | 'circle';
 
 const TABS: Array<{ id: Tab; label: string; icon: IconName }> = [
   { id: 'today', label: 'Today', icon: 'sparkle' },
   { id: 'plan', label: 'Plan', icon: 'orbit' },
-  { id: 'progress', label: 'Progress', icon: 'pulse' },
+  { id: 'cards', label: 'Cards', icon: 'trophy' },
   { id: 'circle', label: 'Circle', icon: 'users' },
 ];
 
@@ -187,7 +188,7 @@ export default function MemberApp({
             onAddPlan={onAddPlan}
           />
         )}
-        {tab === 'progress' && <ProgressTab view={view} />}
+        {tab === 'cards' && <CardsTab view={view} completedCount={completedCount} />}
         {tab === 'circle' && <CircleTab view={view} completedCount={completedCount} />}
       </div>
 
@@ -214,7 +215,7 @@ export default function MemberApp({
 const HEAD: Record<Tab, { eyebrow: string; title: (m: DemoMember, weeks: number) => string }> = {
   today: { eyebrow: 'Adaptive plan · live', title: (m) => `Hi, ${m.name}` },
   plan: { eyebrow: 'Adaptive protocol', title: (_m, weeks) => `${weeks}-Week Plan` },
-  progress: { eyebrow: 'Directionally true', title: () => 'Progress' },
+  cards: { eyebrow: 'Collect as you train', title: () => 'Your Cards' },
   circle: { eyebrow: 'Habit loop', title: () => 'Your Circle' },
 };
 
@@ -463,6 +464,29 @@ function PlanTab({
 
       <p className="text-sm leading-relaxed text-dim">{plan.rationale}</p>
 
+      {/* Adherence — am I doing the plan? These came off the old Progress tab:
+        * they are about following the prescription, so they belong beside it
+        * rather than on a dashboard of their own. */}
+      <div className="grid grid-cols-3 gap-3">
+        <Adherence
+          label="Sessions"
+          value={`${completedCount}/${totalSessions}`}
+          note="of the block"
+        />
+        <Adherence
+          label="This week"
+          value={`${Math.round(metric(view.engagement.metrics, 'weekly_load')?.value ?? 0)}`}
+          unit="min"
+          note="trained so far"
+        />
+        <Adherence
+          label="HR recovery"
+          value={`${Math.round(metric(view.engagement.metrics, 'hr_recovery')?.value ?? 0)}`}
+          unit="bpm"
+          note="after effort"
+        />
+      </div>
+
       {/* Block progress: percent, week strip, where you are */}
       <Card>
         <div className="flex items-center justify-between">
@@ -703,164 +727,26 @@ function SessionRow({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Progress
-// ---------------------------------------------------------------------------
-
-function ProgressTab({ view }: { view: PlanView }) {
-  const e = view.engagement;
-
+function Adherence({ label, value, unit, note }: { label: string; value: string; unit?: string; note: string }) {
   return (
-    <div className="space-y-5">
-      {/* Body + Brain scores, Sphery's own vocabulary, each explained in a line */}
-      <div className="grid grid-cols-2 gap-4">
-        <ScoreRing
-          m={metric(e.metrics, 'body_score')}
-          color="var(--orbit-cyan)"
-          tone="text-accent"
-          blurb="How well you move: the share of exercises performed correctly."
-        />
-        <ScoreRing
-          m={metric(e.metrics, 'brain_score')}
-          color="var(--orbit-violet)"
-          tone="text-violet"
-          blurb="How sharp you stay under load: the share of reactions timed right."
-        />
-      </div>
-
-      {/* Metric grid (Body Age / Brain Age / Weekly Load / HR Recovery) */}
-      <div className="grid grid-cols-2 gap-4">
-        <MetricCard m={metric(e.metrics, 'body_age')} accent="var(--orbit-cyan)" tone="text-accent" />
-        <MetricCard m={metric(e.metrics, 'brain_age')} accent="var(--orbit-violet)" tone="text-violet" />
-        <MetricCard m={metric(e.metrics, 'weekly_load')} accent="var(--orbit-cyan)" tone="text-accent" />
-        <MetricCard m={metric(e.metrics, 'hr_recovery')} accent="var(--orbit-cyan)" tone="text-accent" />
-      </div>
-
-      <p className="px-2 text-center text-xs leading-relaxed text-faint">
-        Body Age &amp; Brain Age are motivational, directionally-true metrics from your real data, not medical claims.
+    <div className="rounded-2xl border border-border bg-card px-3 py-2.5">
+      <p className="eyebrow text-dim">{label}</p>
+      <p className="mt-1 text-xl leading-none text-hi tabular">
+        {value}
+        {unit && <span className="ml-0.5 text-xs text-faint">{unit}</span>}
       </p>
+      <p className="mt-1 text-[11px] leading-tight text-faint">{note}</p>
     </div>
   );
 }
 
-function ScoreRing({ m, color, tone, blurb }: { m?: MetricSnapshot; color: string; tone: string; blurb: string }) {
-  if (!m) return null;
-  const good = deltaIsGood(m);
-  return (
-    <div className="grid place-items-center rounded-[26px] border border-border bg-card px-3 py-5 text-center">
-      <p className="eyebrow text-dim">{m.label}</p>
-      <div className="mt-2">
-        <RingGauge
-          fraction={m.value / 100}
-          size={122}
-          stroke={8}
-          color={color}
-          label={m.label}
-          valueText={`${Math.round(m.value)} out of 100`}
-        >
-          <div>
-            <div className={`text-4xl leading-none tabular ${tone}`}>{Math.round(m.value)}</div>
-            <div className="eyebrow mt-1 text-faint">/ 100</div>
-          </div>
-        </RingGauge>
-      </div>
-      {/* The delta slot is always reserved. Body Score has one and Brain Score
-       * often doesn't, and with the card centering its content that single extra
-       * row pushed the two identical rings 11px out of line. */}
-      <div className="mt-1.5 flex h-5 items-center justify-center">
-        {m.delta !== undefined && m.delta !== 0 && (
-          <span className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular ${good ? 'text-mint' : 'text-amber'}`}>
-            <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
-            {Math.abs(m.delta)}
-          </span>
-        )}
-      </div>
-      <p className="mt-2 text-xs leading-snug text-faint">{blurb}</p>
-    </div>
-  );
-}
-
-// What each Progress metric means + how it's derived, shown on the flip side.
-const METRIC_INFO: Record<string, string> = {
-  body_age: 'How old your body performs, not your real age. Estimated from your resting heart rate, recovery speed, and training intensity in real sessions. Below your age means it is working.',
-  brain_age: 'How sharp your reactions are under load. From your dual-task precision and reaction speed, benchmarked to age norms. Lower means you react younger.',
-  weekly_load: 'Training minutes logged this week. Resets weekly and feeds your push-versus-recover balance.',
-  hr_recovery: 'How many beats your heart rate drops in the first minute after hard effort. Faster recovery means a fitter heart, and it is one of the strongest longevity signals.',
-};
-
-function MetricCard({ m, accent, tone }: { m?: MetricSnapshot; accent: string; tone: string }) {
-  const [flipped, setFlipped] = useState(false);
-  // Matches the loaded card's height so a missing metric doesn't collapse its
-  // row in the two-column grid.
-  if (!m) {
-    return (
-      <div className="grid h-[176px] place-items-center rounded-2xl border border-border bg-card p-4">
-        <p className="text-xs text-faint">Not enough data yet</p>
-      </div>
-    );
-  }
-  const good = deltaIsGood(m);
-  const info = METRIC_INFO[m.key];
-  const face = 'absolute inset-0 rounded-2xl border border-border bg-card p-4 [backface-visibility:hidden]';
-
-  return (
-    <div className="[perspective:1200px]">
-      <div
-        className="relative h-[176px] transition-transform duration-500"
-        style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'none' }}
-      >
-        {/* Front. backface-visibility only hides it visually, so the hidden face
-         * is also removed from the tab order and the accessibility tree. */}
-        <div className={face} aria-hidden={flipped} inert={flipped}>
-          {info && (
-            <button
-              type="button"
-              onClick={() => setFlipped(true)}
-              aria-label={`What is ${m.label}?`}
-              className="absolute right-0.5 top-0.5 grid h-11 w-11 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <Icon name="info" size={15} />
-            </button>
-          )}
-          <p className="eyebrow text-dim">{m.label}</p>
-          <div className="mt-1 flex items-baseline gap-1">
-            <span className={`text-3xl tabular ${tone}`}>{formatMetric(m.value, m.unit)}</span>
-            <span className="text-xs text-faint">{m.unit}</span>
-          </div>
-          {m.delta !== undefined && m.delta !== 0 && (
-            <div className={`mt-0.5 inline-flex items-center gap-0.5 text-xs font-semibold tabular ${good ? 'text-mint' : 'text-amber'}`}>
-              <Icon name={m.delta > 0 ? 'arrow-up' : 'arrow-down'} size={12} />
-              {formatMetric(Math.abs(m.delta), m.unit)} {m.unit}
-            </div>
-          )}
-          <div className="mt-2">
-            <Sparkline direction={trendOf(m)} color={accent} width={110} height={26} />
-          </div>
-          {m.caption && <p className="mt-2 text-xs leading-tight text-faint">{m.caption}</p>}
-        </div>
-
-        {/* Back */}
-        <div
-          className={`${face} flex flex-col`}
-          style={{ transform: 'rotateY(180deg)' }}
-          aria-hidden={!flipped}
-          inert={!flipped}
-        >
-          <button
-            type="button"
-            onClick={() => setFlipped(false)}
-            aria-label="Close"
-            className="absolute right-0.5 top-0.5 grid h-11 w-11 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
-          >
-            <Icon name="close" size={15} />
-          </button>
-          <p className={`eyebrow ${tone}`}>{m.label}</p>
-          <p className="mt-1.5 overflow-y-auto text-xs leading-snug text-dim">{info}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ---------------------------------------------------------------------------
+// Progress became Cards (see CardsTab). Body Score, Brain Score, Body Age and
+// Brain Age were dropped with it: a score out of 100 is a number nobody can act
+// on. What survived moved to where it means something — adherence onto Plan,
+// and HR recovery onto the post-session screen, attached to the session that
+// caused it.
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Circle

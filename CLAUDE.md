@@ -10,7 +10,12 @@ into a plan; plans re-adapt as new session data arrives.
   Talks to engine via HTTP. NO analytics/generation logic here.
 - `engine/` — Python + FastAPI. ALL analytics, ML, plan generation.
   Endpoints: /estimate, /generate-plan, /update-plan
-- Local MySQL (Docker) holds the Sphery DB export. Engine reads it directly.
+- Local MySQL (Docker) holds the Sphery DB export. Engine reads it directly,
+  read-only, and never writes to it.
+- The plan app has its OWN database: PostgreSQL 16, `engine/db/schema.sql`
+  (target host Supabase). Michel's call, Aug 11: separate store, identity
+  linked by SSO. Never join across the two — the bridge is an id, not a
+  foreign key. `engine/db/verify_schema.sql` must pass after any schema change.
 - Everything runs via docker-compose.
 
 ## Design principles
@@ -46,14 +51,29 @@ workspaces — start it once from the root clone, never per workspace.
   timeInTier1-5, per-exercise counts), HrValues (HR time-series per workout),
   HrStats (round + pause HR → HR recovery), TimelineMarkers (per-event
   physical/cognitive precision), RaceConfigs (difficulty, hrTarget, duration),
-  CircleTrainingExerciseLogs (new activity type — v2, do not build against)
+  CircleTrainingExerciseLogs (circle trainings)
+- Circle Trainings V2: Michel shared Data Schema V2.6 + endpoints on Aug 11
+  (docs/kiosk-api.md). It IS the integration target now — the earlier "do not
+  build against v2" note is retired. Two facts drive our schema: every
+  participant is a group member (no solo path, even for one person), and every
+  exercise log carries roundIndex + splitIndex. V2 still does NOT send
+  per-zone durations, which is why circle sessions can only earn flat
+  completion points — that is the live ask for Michel.
 - HealthData: dob/weight/height ~99% filled. The `age` column is unused — always
   compute age from dob. gender ~28% filled — optional input only.
 - hrRestingPulse and hrMax are ALWAYS NULL — never read them. The engine
   estimates resting HR from lowest sustained HrValues per user, and hrMax from
   observed workout maxima with Tanaka (208 − 0.7 × age) as cold-start prior.
 - DB connection (local dev): mysql://root:devpassword@localhost:3306/spherych_devapp
-- DB dumps NEVER get committed (.gitignore covers *.sql, *.db)
+- DB dumps NEVER get committed (.gitignore covers *.sql, *.db). The files in
+  `engine/db/` are schema and seed, not dumps, and are force-added.
+
+## Out of scope v1, decided rather than forgotten
+- Auth: Supabase Auth owns credentials. `accounts.auth_user_id` is the join;
+  there is deliberately no password hash, session or reset table.
+- Notifications: nothing sends anything. When built, `integration_events` is
+  the carrier and `consents` holds the opt-in.
+- Competition classification (men/women/mixed): kiosk/event concern, not ours.
 ## Coding guidelines (Karpathy-inspired)
 
 Adapted from github.com/multica-ai/andrej-karpathy-skills. Bias toward

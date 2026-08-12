@@ -189,8 +189,27 @@ screen where three accents compete has already failed.
 **The Zone Ramp Exception.** Heart-rate zone bars use the universal training ramp
 (`#475569` → `#4ade80` → `#fde047` → `#fb923c` → `#fb7185`, zone 1 to 5), not the
 orbit accents. Athletes read this ramp everywhere; overriding it with brand color
-would cost comprehension for nothing. This is the only sanctioned palette outside
-the orbit, and it applies to zone visualization alone.
+would cost comprehension for nothing. It applies to zone visualization alone.
+
+**The Printed Card Exception.** The collectible exercise cards
+(`ExerciseCard.tsx`, and the miniatures in `CardsTab.tsx`) are not dark-mode UI.
+They are a printed object: a metal frame, a paper ground, a foil ribbon, and a
+gem. Rarity is carried the way card games carry it, because that is the language
+a collector already reads:
+
+- **Brass** `#B8912F` on `#FBFAF6` paper — Common, 20 pts, grey gem
+- **Silver** `#A9B2BF` on `#FAFBFD` — Rare, 30 pts, blue gem, foil sheen
+- **Gold** `#C79A2C` on `#FDFBF3` — Legendary, 50 pts, gold gem, rainbow foil
+
+Body and Brain keep their band colors from the source design (`#E1273E`,
+`#7B3FE4`) rather than taking cyan and violet. The card was built on the orbit
+palette once and the result was correct and lifeless: a collectible has to look
+like a thing you own, not like the chrome around it. That contrast IS the
+design, and the boundary is the card's own edge — everything outside it stays
+Sphere Loop.
+
+These are the two sanctioned palettes outside the orbit. Both are scoped to one
+job, and neither is a license to reach for an off-system color anywhere else.
 
 ## Typography
 

@@ -1,0 +1,18 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "*",
+        "files": [
+          "web/app/_components/CardsTab.tsx",
+          "web/app/_components/ExerciseCard.tsx"
+        ],
+        "createdAt": "2026-08-12T14:26:28.729Z",
+        "reason": "The Printed Card Exception in DESIGN.md: the collectible card is a printed object, not dark-mode UI. User confirmed after rejecting the on-palette version."
+      }
+    ]
+  }
+}

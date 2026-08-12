@@ -211,12 +211,13 @@ export interface MemberEngagement {
 // ---------------------------------------------------------------------------
 
 /**
- * How the session felt, asked once on the post-session screen. Maps 1:1 onto
- * the engine's `SessionResult.perceivedEffort` (engine/app/adapt.py), which
- * sits second in its evidence ladder — below real heart rate, above the
- * historical score trend.
+ * How the session felt, asked once on the post-session screen. This is the
+ * engine's `SessionResult.perceivedEffort` (engine/app/adapt.py) verbatim:
+ * 1 = too easy, 5 = too hard, and it sits second in the evidence ladder,
+ * below real heart rate and above the historical score trend. Only the ends
+ * move a plan there, so 2-4 hold.
  */
-export type PerceivedEffort = 'easy' | 'right' | 'hard';
+export type PerceivedEffort = 1 | 2 | 3 | 4 | 5;
 
 /**
  * Emitted after new session data is processed (engine: POST /update-plan).

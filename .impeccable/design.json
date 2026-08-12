@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-10T00:00:00.000Z",
+  "generatedAt": "2026-08-10T15:04:14.000Z",
   "title": "Design System: Sphere Loop",
   "extensions": {
     "colorMeta": {
@@ -11,12 +11,12 @@
         "tonalRamp": [
           "oklch(0.15 0.14 210)",
           "oklch(0.26 0.14 210)",
-          "oklch(0.37 0.14 210)",
-          "oklch(0.48 0.14 210)",
-          "oklch(0.59 0.14 210)",
-          "oklch(0.70 0.14 210)",
-          "oklch(0.82 0.14 210)",
-          "oklch(0.93 0.14 210)"
+          "oklch(0.38 0.14 210)",
+          "oklch(0.49 0.14 210)",
+          "oklch(0.61 0.14 210)",
+          "oklch(0.72 0.14 210)",
+          "oklch(0.84 0.14 210)",
+          "oklch(0.95 0.14 210)"
         ]
       },
       "deep-electric-violet": {
@@ -26,10 +26,10 @@
         "tonalRamp": [
           "oklch(0.15 0.22 295)",
           "oklch(0.26 0.22 295)",
-          "oklch(0.37 0.22 295)",
-          "oklch(0.48 0.22 295)",
-          "oklch(0.62 0.22 295)",
-          "oklch(0.73 0.22 295)",
+          "oklch(0.38 0.22 295)",
+          "oklch(0.49 0.22 295)",
+          "oklch(0.61 0.22 295)",
+          "oklch(0.72 0.22 295)",
           "oklch(0.84 0.22 295)",
           "oklch(0.95 0.22 295)"
         ]
@@ -41,12 +41,12 @@
         "tonalRamp": [
           "oklch(0.15 0.28 330)",
           "oklch(0.26 0.28 330)",
-          "oklch(0.37 0.28 330)",
-          "oklch(0.48 0.28 330)",
-          "oklch(0.59 0.28 330)",
-          "oklch(0.68 0.28 330)",
-          "oklch(0.82 0.28 330)",
-          "oklch(0.93 0.28 330)"
+          "oklch(0.38 0.28 330)",
+          "oklch(0.49 0.28 330)",
+          "oklch(0.61 0.28 330)",
+          "oklch(0.72 0.28 330)",
+          "oklch(0.84 0.28 330)",
+          "oklch(0.95 0.28 330)"
         ]
       },
       "fresh-mint": {
@@ -56,12 +56,12 @@
         "tonalRamp": [
           "oklch(0.15 0.17 165)",
           "oklch(0.26 0.17 165)",
-          "oklch(0.37 0.17 165)",
-          "oklch(0.48 0.17 165)",
-          "oklch(0.59 0.17 165)",
-          "oklch(0.70 0.17 165)",
-          "oklch(0.79 0.17 165)",
-          "oklch(0.93 0.17 165)"
+          "oklch(0.38 0.17 165)",
+          "oklch(0.49 0.17 165)",
+          "oklch(0.61 0.17 165)",
+          "oklch(0.72 0.17 165)",
+          "oklch(0.84 0.17 165)",
+          "oklch(0.95 0.17 165)"
         ]
       },
       "warm-amber": {
@@ -71,12 +71,12 @@
         "tonalRamp": [
           "oklch(0.15 0.16 85)",
           "oklch(0.26 0.16 85)",
-          "oklch(0.37 0.16 85)",
-          "oklch(0.48 0.16 85)",
-          "oklch(0.59 0.16 85)",
-          "oklch(0.70 0.16 85)",
-          "oklch(0.83 0.16 85)",
-          "oklch(0.94 0.16 85)"
+          "oklch(0.38 0.16 85)",
+          "oklch(0.49 0.16 85)",
+          "oklch(0.61 0.16 85)",
+          "oklch(0.72 0.16 85)",
+          "oklch(0.84 0.16 85)",
+          "oklch(0.95 0.16 85)"
         ]
       },
       "void": {
@@ -84,14 +84,113 @@
         "displayName": "Void",
         "canonical": "oklch(0.1 0.02 260)",
         "tonalRamp": [
-          "oklch(0.10 0.02 260)",
-          "oklch(0.12 0.03 265)",
-          "oklch(0.20 0.03 260)",
-          "oklch(0.32 0.03 258)",
-          "oklch(0.45 0.03 258)",
-          "oklch(0.55 0.03 258)",
-          "oklch(0.72 0.03 255)",
-          "oklch(0.97 0.01 250)"
+          "oklch(0.15 0.02 260)",
+          "oklch(0.26 0.02 260)",
+          "oklch(0.38 0.02 260)",
+          "oklch(0.49 0.02 260)",
+          "oklch(0.61 0.02 260)",
+          "oklch(0.72 0.02 260)",
+          "oklch(0.84 0.02 260)",
+          "oklch(0.95 0.02 260)"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Canvas",
+        "canonical": "oklch(0.12 0.03 265)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 265)",
+          "oklch(0.26 0.03 265)",
+          "oklch(0.38 0.03 265)",
+          "oklch(0.49 0.03 265)",
+          "oklch(0.61 0.03 265)",
+          "oklch(0.72 0.03 265)",
+          "oklch(0.84 0.03 265)",
+          "oklch(0.95 0.03 265)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "oklch(0.2 0.03 260 / 45%)",
+        "note": "Translucent by design so the cyan bloom reads through every card. No tonal ramp: the alpha is the token."
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Surface",
+        "canonical": "oklch(0.15 0.03 265 / 90%)",
+        "note": "Near-opaque lift for the fixed bottom navigation and sticky footers. No tonal ramp."
+      },
+      "hair": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(1 0 0 / 10%)",
+        "note": "The only border in the system at rest. No tonal ramp: white at alpha, not a hue."
+      },
+      "hair-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "oklch(1 0 0 / 22%)",
+        "note": "Hover state and unselected controls. No tonal ramp."
+      },
+      "text-hi": {
+        "role": "neutral",
+        "displayName": "High Text",
+        "canonical": "oklch(0.97 0.01 250)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 258)",
+          "oklch(0.26 0.03 258)",
+          "oklch(0.38 0.03 258)",
+          "oklch(0.49 0.03 258)",
+          "oklch(0.61 0.03 258)",
+          "oklch(0.72 0.03 258)",
+          "oklch(0.84 0.03 258)",
+          "oklch(0.95 0.03 258)"
+        ]
+      },
+      "text-mid": {
+        "role": "neutral",
+        "displayName": "Mid Text",
+        "canonical": "oklch(0.86 0.02 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 258)",
+          "oklch(0.26 0.03 258)",
+          "oklch(0.38 0.03 258)",
+          "oklch(0.49 0.03 258)",
+          "oklch(0.61 0.03 258)",
+          "oklch(0.72 0.03 258)",
+          "oklch(0.84 0.03 258)",
+          "oklch(0.95 0.03 258)"
+        ]
+      },
+      "text-lo": {
+        "role": "neutral",
+        "displayName": "Low Text",
+        "canonical": "oklch(0.72 0.03 255)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 258)",
+          "oklch(0.26 0.03 258)",
+          "oklch(0.38 0.03 258)",
+          "oklch(0.49 0.03 258)",
+          "oklch(0.61 0.03 258)",
+          "oklch(0.72 0.03 258)",
+          "oklch(0.84 0.03 258)",
+          "oklch(0.95 0.03 258)"
+        ]
+      },
+      "text-faint": {
+        "role": "neutral",
+        "displayName": "Faint Text",
+        "canonical": "oklch(0.55 0.03 258)",
+        "tonalRamp": [
+          "oklch(0.15 0.03 258)",
+          "oklch(0.26 0.03 258)",
+          "oklch(0.38 0.03 258)",
+          "oklch(0.49 0.03 258)",
+          "oklch(0.61 0.03 258)",
+          "oklch(0.72 0.03 258)",
+          "oklch(0.84 0.03 258)",
+          "oklch(0.95 0.03 258)"
         ]
       }
     },
@@ -100,9 +199,26 @@
         "displayName": "Display",
         "purpose": "Screen titles and hero metrics in Bebas Neue. One weight only; never synthesized."
       },
-      "headline": { "displayName": "Headline", "purpose": "Section headings inside a screen." },
-      "title": { "displayName": "Title", "purpose": "Card titles and control labels, in Space Grotesk." },
-      "body": { "displayName": "Body", "purpose": "Reading copy, rationale strings, explanations." },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings inside a screen."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles and control labels, in Space Grotesk."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading copy, rationale strings, explanations."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Supporting copy under a number or control. Metric blurbs, session metadata, helper text."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "The dense tier: units, zone times, percentages, the secondary half of a stat row. Never reading copy."
+      },
       "label": {
         "displayName": "Eyebrow",
         "purpose": "10px uppercase at 0.2em tracking. Names a region rather than speaking in it."
@@ -148,8 +264,38 @@
       }
     ],
     "breakpoints": [
-      { "name": "app-column", "value": "448px" },
-      { "name": "reading-column", "value": "576px" }
+      {
+        "name": "app-column",
+        "value": "448px"
+      },
+      {
+        "name": "reading-column",
+        "value": "576px"
+      }
+    ],
+    "paletteExceptions": [
+      {
+        "name": "Heart-rate zone ramp",
+        "values": [
+          "#475569",
+          "#4ade80",
+          "#fde047",
+          "#fb923c",
+          "#fb7185"
+        ],
+        "purpose": "Zones 1 to 5. The universal training ramp athletes already read; overriding it with orbit accents would cost comprehension. Applies to zone visualization alone."
+      },
+      {
+        "name": "League tier metals",
+        "values": [
+          "#d08a4b",
+          "#cdd5e0",
+          "#f6c945",
+          "#a7e8df",
+          "#b9e0ff"
+        ],
+        "purpose": "Bronze, silver, gold, platinum, diamond, each with a darker trim. Sits outside the orbit palette because a medal has to look like metal to read as one."
+      }
     ]
   },
   "components": [
@@ -189,7 +335,7 @@
       "name": "Segmented Control",
       "kind": "input",
       "refersTo": "select-row-checked",
-      "description": "Three-way single select for bounded scales like activity level.",
+      "description": "Single-select across three or fewer peer options (fitness level). The checked face uses the cyan tint, not a fill.",
       "html": "<div class=\"ds-segmented\" role=\"radiogroup\"><label><input type=\"radio\" name=\"lvl\"><span>Low</span></label><label><input type=\"radio\" name=\"lvl\" checked><span>Medium</span></label><label><input type=\"radio\" name=\"lvl\"><span>High</span></label></div>",
       "css": ".ds-segmented { display: grid; grid-auto-flow: column; gap: 0; padding: 4px; border-radius: 16px; border: 1px solid oklch(1 0 0 / 10%); background: oklch(0.2 0.03 260 / 45%); } .ds-segmented label { cursor: pointer; text-align: center; } .ds-segmented input { position: absolute; width: 1px; height: 1px; opacity: 0; } .ds-segmented span { display: block; padding: 12px 0; border-radius: 12px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 1rem; font-weight: 500; color: oklch(0.86 0.02 255); transition: background 0.2s, color 0.2s; } .ds-segmented input:checked + span { background: oklch(0.82 0.14 210 / 30%); color: #fff; } .ds-segmented input:focus-visible + span { outline: 2px solid oklch(0.82 0.14 210); outline-offset: 2px; }"
     },
@@ -204,7 +350,6 @@
     {
       "name": "Ring Gauge",
       "kind": "custom",
-      "refersTo": "card",
       "description": "The signature form. Circular progress sweeping clockwise from top, glowing in its own accent, with a number and label at center.",
       "html": "<div class=\"ds-ring\"><svg width=\"180\" height=\"180\" viewBox=\"0 0 180 180\"><circle cx=\"90\" cy=\"90\" r=\"85\" fill=\"none\" stroke=\"oklch(1 0 0 / 10%)\" stroke-width=\"10\"></circle><circle class=\"ds-ring-fill\" cx=\"90\" cy=\"90\" r=\"85\" fill=\"none\" stroke=\"oklch(0.82 0.14 210)\" stroke-width=\"10\" stroke-linecap=\"round\" stroke-dasharray=\"400 534\" transform=\"rotate(-90 90 90)\"></circle></svg><div class=\"ds-ring-center\"><span class=\"ds-ring-value\">74</span><span class=\"ds-ring-label\">Fitness</span></div></div>",
       "css": ".ds-ring { position: relative; display: grid; place-items: center; width: 180px; height: 180px; } .ds-ring-fill { filter: drop-shadow(0 0 9px oklch(0.82 0.14 210)); transition: stroke-dasharray 0.9s cubic-bezier(0.22, 1, 0.36, 1); } .ds-ring-center { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; text-align: center; } .ds-ring-value { display: block; font-family: 'Bebas Neue', system-ui, sans-serif; font-size: 3rem; font-weight: 400; line-height: 1; color: oklch(0.97 0.01 250); font-variant-numeric: tabular-nums; } .ds-ring-label { display: block; margin-top: 4px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(0.55 0.03 258); }"
@@ -212,10 +357,23 @@
     {
       "name": "Heart-Rate Zone Bar",
       "kind": "custom",
-      "refersTo": "card",
       "description": "Time in zone, using the universal training ramp rather than the orbit accents. The one sanctioned palette exception.",
       "html": "<div class=\"ds-zones\"><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z4</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z4\" style=\"width:62%\"></span></span><span class=\"ds-zone-time\">8:12</span></div><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z3</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z3\" style=\"width:38%\"></span></span><span class=\"ds-zone-time\">5:04</span></div><div class=\"ds-zone-row\"><span class=\"ds-zone-name\">Z2</span><span class=\"ds-zone-track\"><span class=\"ds-zone-fill z2\" style=\"width:20%\"></span></span><span class=\"ds-zone-time\">2:40</span></div></div>",
       "css": ".ds-zones { display: flex; flex-direction: column; gap: 10px; } .ds-zone-row { display: flex; align-items: center; gap: 10px; } .ds-zone-name { width: 24px; font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: oklch(0.55 0.03 258); } .ds-zone-track { flex: 1; height: 10px; border-radius: 9999px; background: oklch(1 0 0 / 10%); overflow: hidden; } .ds-zone-fill { display: block; height: 100%; border-radius: 9999px; } .ds-zone-fill.z4 { background: linear-gradient(90deg,#fb923c,#f97316); box-shadow: 0 0 9px rgba(249,115,22,0.55); } .ds-zone-fill.z3 { background: linear-gradient(90deg,#fde047,#facc15); box-shadow: 0 0 9px rgba(250,204,21,0.55); } .ds-zone-fill.z2 { background: linear-gradient(90deg,#4ade80,#34d399); box-shadow: 0 0 8px rgba(52,211,153,0.5); } .ds-zone-time { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 0.75rem; color: oklch(0.86 0.02 255); font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Minutes Slider",
+      "kind": "input",
+      "description": "Continuous numeric input for weekly training volume. Accent-filled to the value, plain white-at-10% after it.",
+      "html": "<div class=\"ds-slider\"><div class=\"ds-slider-head\"><span class=\"ds-slider-label\">Current weekly training</span><span class=\"ds-slider-value\">180 <span>min / week</span></span></div><input class=\"ds-slider-input\" type=\"range\" min=\"0\" max=\"720\" step=\"30\" value=\"180\" aria-label=\"Current weekly training minutes\" style=\"background: linear-gradient(90deg, oklch(0.82 0.14 210) 25%, oklch(1 0 0 / 10%) 25%)\"><div class=\"ds-slider-foot\"><span>0 · Not training yet</span><span>720 · Almost daily</span></div></div>",
+      "css": ".ds-slider { font-family: 'Space Grotesk', system-ui, sans-serif; } .ds-slider-head { display: flex; align-items: baseline; justify-content: space-between; } .ds-slider-label { font-size: 0.875rem; color: oklch(0.55 0.03 258); } .ds-slider-value { font-size: 1.125rem; font-weight: 600; color: oklch(0.97 0.01 250); font-variant-numeric: tabular-nums; } .ds-slider-value span { font-size: 0.875rem; font-weight: 400; color: oklch(0.55 0.03 258); } .ds-slider-input { margin-top: 12px; width: 100%; height: 8px; border-radius: 9999px; appearance: none; outline: none; cursor: pointer; } .ds-slider-input::-webkit-slider-thumb { appearance: none; width: 20px; height: 20px; border-radius: 9999px; background: oklch(0.82 0.14 210); box-shadow: 0 0 10px oklch(0.82 0.14 210 / 30%); } .ds-slider-input::-moz-range-thumb { width: 20px; height: 20px; border: 0; border-radius: 9999px; background: oklch(0.82 0.14 210); } .ds-slider-input:focus-visible { outline: 2px solid oklch(0.82 0.14 210); outline-offset: 2px; } .ds-slider-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; color: oklch(0.55 0.03 258); }"
+    },
+    {
+      "name": "Rank Medal",
+      "kind": "custom",
+      "description": "League tier emblem: twin ribbons and a gradient coin with a star, in metal colors per tier. Locked tiers render grayscale at 35% opacity.",
+      "html": "<div class=\"ds-medals\"><svg class=\"ds-medal\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" aria-hidden=\"true\"><defs><linearGradient id=\"ds-medal-face-gold\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"></stop><stop offset=\"0.35\" stop-color=\"#f6c945\"></stop><stop offset=\"1\" stop-color=\"#b8891c\"></stop></linearGradient><linearGradient id=\"ds-medal-ribbon-gold\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f6c945\"></stop><stop offset=\"1\" stop-color=\"#b8891c\"></stop></linearGradient></defs><path d=\"M25 0h14l5 28-14 8-10-30z\" fill=\"url(#ds-medal-ribbon-gold)\"></path><path d=\"M55 0H41l-5 28 14 8 10-30z\" fill=\"url(#ds-medal-ribbon-gold)\" opacity=\"0.72\"></path><path d=\"M25 0h14l-3.5 7h-8z\" fill=\"#b8891c\" opacity=\"0.55\"></path><path d=\"M55 0H41l3.5 7h8z\" fill=\"#b8891c\" opacity=\"0.55\"></path><circle cx=\"40\" cy=\"52\" r=\"26\" fill=\"url(#ds-medal-face-gold)\" stroke=\"#b8891c\" stroke-width=\"2.5\"></circle><circle cx=\"40\" cy=\"52\" r=\"19.5\" fill=\"none\" stroke=\"#b8891c\" stroke-width=\"1.6\" opacity=\"0.6\"></circle><circle cx=\"40\" cy=\"52\" r=\"22.5\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"1\" opacity=\"0.35\"></circle><path d=\"M40 39l3.9 7.9 8.7 1.3-6.3 6.1 1.5 8.7-7.8-4.1-7.8 4.1 1.5-8.7-6.3-6.1 8.7-1.3z\" fill=\"#b8891c\" stroke=\"#ffffff\" stroke-width=\"0.8\" stroke-opacity=\"0.5\"></path></svg><svg class=\"ds-medal is-locked\" width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" aria-hidden=\"true\"><defs><linearGradient id=\"ds-medal-face-platinum\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\" stop-opacity=\"0.9\"></stop><stop offset=\"0.35\" stop-color=\"#a7e8df\"></stop><stop offset=\"1\" stop-color=\"#5aa39b\"></stop></linearGradient><linearGradient id=\"ds-medal-ribbon-platinum\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#a7e8df\"></stop><stop offset=\"1\" stop-color=\"#5aa39b\"></stop></linearGradient></defs><path d=\"M25 0h14l5 28-14 8-10-30z\" fill=\"url(#ds-medal-ribbon-platinum)\"></path><path d=\"M55 0H41l-5 28 14 8 10-30z\" fill=\"url(#ds-medal-ribbon-platinum)\" opacity=\"0.72\"></path><circle cx=\"40\" cy=\"52\" r=\"26\" fill=\"url(#ds-medal-face-platinum)\" stroke=\"#5aa39b\" stroke-width=\"2.5\"></circle><circle cx=\"40\" cy=\"52\" r=\"19.5\" fill=\"none\" stroke=\"#5aa39b\" stroke-width=\"1.6\" opacity=\"0.6\"></circle><path d=\"M40 39l3.9 7.9 8.7 1.3-6.3 6.1 1.5 8.7-7.8-4.1-7.8 4.1 1.5-8.7-6.3-6.1 8.7-1.3z\" fill=\"#5aa39b\" stroke=\"#ffffff\" stroke-width=\"0.8\" stroke-opacity=\"0.5\"></path></svg></div>",
+      "css": ".ds-medals { display: flex; align-items: center; gap: 20px; } .ds-medal { filter: drop-shadow(0 0 20px #f6c94566); } .ds-medal.is-locked { filter: grayscale(1); opacity: 0.35; }"
     }
   ],
   "narrative": {
@@ -264,6 +422,11 @@
         "name": "The Earned Light Rule",
         "body": "Glow marks live, earned, or selected. A disabled button, a locked medal, and a resting card do not glow. If everything glows, nothing reads as achieved.",
         "section": "elevation"
+      },
+      {
+        "name": "The Four Steps Below Body Rule",
+        "body": "Under 1rem there are exactly four sizes: caption (14px), micro (12px), label (10px), and nothing else. The app currently also ships 11px, 13px, and 15px in about 38 places; those are drift, and they converge onto the nearest sanctioned step rather than earning tokens of their own. A sub-body ramp with six steps is not a scale.",
+        "section": "typography"
       }
     ],
     "dos": [

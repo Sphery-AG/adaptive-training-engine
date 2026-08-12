@@ -12,6 +12,8 @@ export function RingGauge({
   color = 'var(--orbit-cyan)',
   trackColor = 'var(--hair)',
   glow = true,
+  label,
+  valueText,
   children,
 }: {
   fraction: number;
@@ -20,15 +22,35 @@ export function RingGauge({
   color?: string;
   trackColor?: string;
   glow?: boolean;
+  /** Accessible name, e.g. "Body Score". Without it the ring stays decorative. */
+  label?: string;
+  /** Spoken value, e.g. "74 out of 100". Falls back to a percentage. */
+  valueText?: string;
   children?: ReactNode;
 }) {
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(1, Number.isFinite(fraction) ? fraction : 0));
   const dash = circumference * clamped;
+  const pct = Math.round(clamped * 100);
+
+  // The visual is built from an SVG plus composed children, so neither carries a
+  // value a screen reader can read. When the caller names the ring we expose it
+  // as a real progressbar; unnamed rings stay decorative rather than announcing
+  // a bare number with no subject.
+  const semantics = label
+    ? ({
+        role: 'progressbar' as const,
+        'aria-label': label,
+        'aria-valuemin': 0,
+        'aria-valuemax': 100,
+        'aria-valuenow': pct,
+        'aria-valuetext': valueText ?? `${pct}%`,
+      })
+    : {};
 
   return (
-    <div className="relative grid place-items-center" style={{ width: size, height: size }}>
+    <div className="relative grid place-items-center" style={{ width: size, height: size }} {...semantics}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={trackColor} strokeWidth={stroke} />
         <circle
@@ -46,7 +68,11 @@ export function RingGauge({
           }}
         />
       </svg>
-      <div className="absolute inset-0 grid place-items-center px-6 text-center">{children}</div>
+      {/* When the ring is a labeled progressbar its value is already spoken, so
+       * the composed center must not announce the same number a second time. */}
+      <div className="absolute inset-0 grid place-items-center px-6 text-center" aria-hidden={label ? true : undefined}>
+        {children}
+      </div>
     </div>
   );
 }

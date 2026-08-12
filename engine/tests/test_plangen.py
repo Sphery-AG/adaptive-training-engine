@@ -84,6 +84,30 @@ def test_cold_start_estimate_from_activity():
     assert est["workoutsAnalyzed"] == 0
 
 
+def test_current_intensity_refines_cold_start(darmstadt):
+    """Same activity level, different typical intensity → different plan.
+
+    Each step of the 1-5 scale is worth 6 points of cold-start fitness score,
+    and 3 (moderate) is the same as saying nothing. The score, not the rounded
+    difficulty, is what this pins: _base_difficulty rounds half to even, so the
+    step it lands on is 1 or 2 depending where the activity level sits.
+    """
+    _, mid, _, _ = _plan(darmstadt, activity="moderate", intensity=3)
+    _, none_given, _, _ = _plan(darmstadt, activity="moderate")
+    _, maximal, _, _ = _plan(darmstadt, activity="moderate", intensity=5)
+    _, very_light, _, _ = _plan(darmstadt, activity="moderate", intensity=1)
+
+    assert mid["fitnessScore"] == none_given["fitnessScore"] == 54
+    assert maximal["fitnessScore"] == 66
+    assert very_light["fitnessScore"] == 42
+    # It has to actually reach the plan, in the right direction.
+    assert (
+        _base_difficulty(very_light["fitnessScore"])
+        < _base_difficulty(mid["fitnessScore"])
+        < _base_difficulty(maximal["fitnessScore"])
+    )
+
+
 def test_focus_bias_leads_rotation(darmstadt):
     # vo_max implies cardio_intensity: it must lead the week even though the
     # goal's default rotation starts with cardio_endurance.
@@ -93,7 +117,7 @@ def test_focus_bias_leads_rotation(darmstadt):
 
 def test_plan_rationale_carries_evidence(darmstadt):
     out = generate_plan(request_for(darmstadt, activity="moderate"))
-    assert "cold start, questionnaire only" in out["plan"]["rationale"]
+    assert "based on the setup questionnaire" in out["plan"]["rationale"]
     assert "The Sphere Darmstadt" in out["plan"]["rationale"]
     # Every session explains itself.
     for w in out["plan"]["weeks"]:
@@ -153,6 +177,47 @@ def test_no_station_back_to_back_in_work_block(darmstadt):
         work = legs[1:-1]
         for a, b in zip(work, work[1:]):
             assert a["stationId"] != b["stationId"], f"{goal}: {a['stationName']} twice in a row"
+
+
+def test_bookend_station_stays_out_of_the_work_block(darmstadt):
+    """You warm up and cool down on one station; the work block uses others.
+
+    Berlin used to open, repeat, and close on the same erg because the bookend
+    was chosen after the work legs and nothing reserved it.
+    """
+    for goal in ["improve_fitness_endurance", "lose_weight_burn_fat", "build_strength_muscle"]:
+        req, session = _first_session(darmstadt, goal=goal)
+        legs = circuit_for(goal, req.gym, session)
+        assert legs[0]["stationId"] == legs[-1]["stationId"], "bookends should match each other"
+        work_ids = [l["stationId"] for l in legs[1:-1]]
+        assert legs[0]["stationId"] not in work_ids, f"{goal}: bookend reused in the work block"
+        # A floor this size can give every work leg its own station.
+        assert len(set(work_ids)) == len(work_ids), f"{goal}: repeat in the work block"
+
+
+def test_mid_size_floor_spreads_repeats_instead_of_hammering_one_station(berlin):
+    """When stations must repeat, reuse the one used longest ago.
+
+    Ranking alone sent every repeat to the single top-ranked station, so this
+    floor ran the same Run on three of five work legs.
+    """
+    req, session = _first_session(berlin, goal="improve_fitness_endurance")
+    work = [l["stationId"] for l in circuit_for("improve_fitness_endurance", req.gym, session)[1:-1]]
+    most_used = max(work.count(sid) for sid in set(work))
+    assert most_used <= 2, f"one station took {most_used} of {len(work)} legs: {work}"
+
+
+def test_tiny_floor_keeps_the_bookend_available_to_the_work_block(hotel_gym):
+    """A gym that cannot spare a station must not have one held back.
+
+    Reserving the bookend unconditionally cost this floor its bike and pushed
+    the treadmill onto 4 of 5 work legs.
+    """
+    req, session = _first_session(hotel_gym, goal="improve_fitness_endurance")
+    legs = circuit_for("improve_fitness_endurance", req.gym, session)
+    work = [l["stationId"] for l in legs[1:-1]]
+    most_used = max(work.count(sid) for sid in set(work))
+    assert most_used <= 3, f"one station took {most_used} of {len(work)} legs: {work}"
 
 
 def test_leg_zones_never_exceed_session_zone(darmstadt):

@@ -63,6 +63,15 @@ const ACTIVITY_BASE: Record<QuestionnaireAnswers['activityLevel'], number> = {
   very_active: 76,
 };
 
+/**
+ * Points per step of typical training intensity away from 3 (moderate).
+ * Mirrors INTENSITY_STEP in engine/app/plangen.py: activity level says how
+ * much the member trains, intensity says how hard, and the ends of the scale
+ * move the cold-start score a full 12 points, one whole band on
+ * baseDifficulty's 12-point scale.
+ */
+const INTENSITY_STEP = 6;
+
 /** Tanaka cold-start prior for max HR. */
 const tanaka = (age: number) => Math.round(208 - 0.7 * age);
 
@@ -84,8 +93,11 @@ export function estimate(member: DemoMember, answers: QuestionnaireAnswers): Est
       actualAge: b.actualAge,
     };
   }
-  // Cold start: questionnaire only.
-  const fitnessScore = ACTIVITY_BASE[answers.activityLevel];
+  // Cold start: questionnaire only. Real history above outranks this
+  // entirely, typical intensity included.
+  const fitnessScore =
+    ACTIVITY_BASE[answers.activityLevel] +
+    (answers.currentIntensity ? (answers.currentIntensity - 3) * INTENSITY_STEP : 0);
   const age = answers.age;
   return {
     source: 'questionnaire_only',
@@ -239,7 +251,7 @@ function buildWeeks(gym: GymConcept, answers: QuestionnaireAnswers, est: Estimat
         rationale: substituted
           ? `${gym.name} has no dedicated ${STIMULUS_LABELS[stimulus]} station, so we substituted ${station.name} to keep the stimulus close.`
           : isRetest && i === perWeek - 1
-            ? `Retest session on the ${station.name}. We re-measure your fitness here and build your next block from it.`
+            ? `Retest session on the ${station.name}. We re-measure your fitness here and build your next plan from it.`
             : `${STIMULUS_LABELS[stimulus]} on the ${station.name}, zone ${zone}. ${isDeload ? 'Eased off this week so the training sinks in.' : `Difficulty ${weekDiff} matches your fitness estimate.`}`,
       };
       sessions.push(session);
@@ -344,18 +356,50 @@ export function circuitFor(view: PlanView, rs: ResolvedSession): CircuitStation[
     return p !== -1 ? p : preferred.length + (st.isSpheryEquipment ? 0 : 1);
   };
 
+  // The bookend station is chosen first and reserved, so the work block can
+  // never hand out the station you already warm up and cool down on (a small
+  // floor used to open, repeat, and close on the same erg). It takes the
+  // *least* preferred cardio station on purpose: a warmup does not need the
+  // flagship, and reserving the ExerCube for five minutes of easy spinning
+  // would be a waste of the best equipment in the room.
+  const warmCandidates = gym.stations
+    .filter((st) => st.stimulusTypes.includes('cardio_endurance'))
+    .sort((a, b) => rank(a) - rank(b));
+  const warmStation: GymStation | undefined = warmCandidates[warmCandidates.length - 1];
+
+  // Only reserve the bookend when the floor can spare it. A gym with barely
+  // more stations than the work block needs is better off reusing it than
+  // losing a station the work legs still need: holding back the bike on a
+  // 4-station hotel floor pushed the treadmill onto 4 of 5 legs.
+  const reserved =
+    warmStation && gym.stations.length > workCount && warmCandidates.length > 1
+      ? warmStation.id
+      : null;
+
   const used = new Set<string>();
+  // When a leg has to reuse a station, reuse the one used longest ago. Picking
+  // by rank instead piles every repeat onto the single top-ranked station: a
+  // 9-station floor ran the same treadmill on three of five work legs.
+  const lastUsed = new Map<string, number>();
+  let tick = 0;
   let prev: GymStation | undefined;
   const pick = (stim: StimulusType): GymStation => {
     const matching = gym.stations
       .filter((st) => st.stimulusTypes.includes(stim))
       .sort((a, b) => rank(a) - rank(b));
-    const pool = matching.length ? matching : gym.stations;
+    const base = matching.length ? matching : gym.stations;
+    // Keep the bookend station out of the work block, unless it is the only
+    // thing that can deliver this stimulus.
+    const spared = base.filter((c) => c.id !== reserved);
+    const pool = spared.length ? spared : base;
     const station =
       pool.find((c) => !used.has(c.id) && c.id !== prev?.id) ??
-      pool.find((c) => c.id !== prev?.id) ??
+      pool
+        .filter((c) => c.id !== prev?.id)
+        .sort((a, b) => (lastUsed.get(a.id) ?? -1) - (lastUsed.get(b.id) ?? -1))[0] ??
       pool[0];
     used.add(station.id);
+    lastUsed.set(station.id, tick++);
     prev = station;
     return station;
   };
@@ -374,21 +418,14 @@ export function circuitFor(view: PlanView, rs: ResolvedSession): CircuitStation[
     workLegs.push({ station, minutes: per + extra, targetZone: legZone });
   }
 
-  // Warm up on a station the work block doesn't already use (and never the
-  // first work station), so the circuit reads varied, not repetitive.
-  const warmCandidates = gym.stations
-    .filter((st) => st.stimulusTypes.includes('cardio_endurance'))
-    .sort((a, b) => rank(a) - rank(b));
-  const warmStation =
-    warmCandidates.find((st) => !used.has(st.id)) ??
-    warmCandidates.find((st) => st.id !== workLegs[0].station.id) ??
-    warmCandidates[0] ??
-    workLegs[0].station;
+  // A gym with no endurance station at all still needs bookends; fall back to
+  // the first work station rather than dropping them.
+  const bookendStation = warmStation ?? workLegs[0].station;
 
   return [
-    { station: warmStation, minutes: bookend, targetZone: ease },
+    { station: bookendStation, minutes: bookend, targetZone: ease },
     ...workLegs,
-    { station: warmStation, minutes: bookend, targetZone: 1 },
+    { station: bookendStation, minutes: bookend, targetZone: 1 },
   ];
 }
 
@@ -484,6 +521,18 @@ function engagementFor(member: DemoMember, gym: GymConcept, answers: Questionnai
   };
 }
 
+/** Fixed monthly point target that advances the rank (approved Aug 4). */
+export const MONTHLY_TARGET = 1000;
+
+/**
+ * Display-only monthly points for the stub: this week's points plus a credit
+ * for the weeks already banked this month. The real engine will sum the
+ * points ledger by calendar month.
+ */
+export function monthlyPointsFor(e: MemberEngagement): number {
+  return Math.min(1400, e.league.pointsThisWeek + e.streak.currentWeeks * 40);
+}
+
 // ---------------------------------------------------------------------------
 // Public API — mirrors the real engine endpoints
 // ---------------------------------------------------------------------------
@@ -519,6 +568,10 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
     .filter((f) => (answers.focus ?? []).includes(f.id))
     .map((f) => f.label);
   const focusPhrase = focusLabels.length ? `, focused on ${focusLabels.join(' & ')}` : '';
+  const evidence =
+    est.source === 'session_history' && est.workoutsAnalyzed > 0
+      ? `${est.workoutsAnalyzed} training ${est.workoutsAnalyzed === 1 ? 'session' : 'sessions'}`
+      : 'the setup questionnaire';
 
   const plan: Plan = {
     id: `plan-${member.id}-${Date.now()}`,
@@ -526,7 +579,10 @@ export function generatePlan(member: DemoMember, gym: GymConcept, answers: Quest
     goal: answers.goal,
     createdAt: now(),
     fitnessEstimate: est,
-    rationale: `An ${weeks.length}-week block, ${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)} from a fitness estimate of ${est.fitnessScore}/100 (${est.source === 'session_history' ? `${est.workoutsAnalyzed} workouts analyzed` : 'cold start, questionnaire only'}).`,
+    // Member-facing, so it avoids the model's vocabulary: no "block", no "cold
+    // start", no "workouts analyzed". Must stay word-for-word identical to
+    // engine/app/plangen.py, which builds the same string for the same plan.
+    rationale: `An ${weeks.length}-week plan, ${perWeek}×/week for ${member.name === 'Guest' ? 'you' : member.name} at ${gym.name}, built for ${goal.title}${focusPhrase}. Starting difficulty ${baseDifficulty(est.fitnessScore)}, based on ${evidence} (fitness estimate ${est.fitnessScore}/100).`,
     weeks,
   };
 
@@ -664,18 +720,18 @@ export function completeSession(
   if (load) bump('weekly_load', view.resolved[0].sessions[0]?.session.durationMinutes ?? 30, 'Added this session');
 
   // Plan progression, mirroring engine/app/adapt.py's perceived-effort rule so
-  // the stub tells the same story the real engine would: "easy" raises
-  // difficulty a notch, "hard" eases it, "right" holds. The change is scoped to
-  // later sessions of the same stimulus, and deload weeks are never raised.
+  // the stub tells the same story the real engine would: a 1 (too easy) raises
+  // difficulty a notch, a 5 (too hard) eases it, 2-4 hold. The change is scoped
+  // to later sessions of the same stimulus, and deload weeks are never raised.
   const next = structuredClone(view);
-  const delta = effort === 'easy' ? 1 : effort === 'hard' ? -1 : 0;
+  const delta = effort === 1 ? 1 : effort === 5 ? -1 : 0;
   let reason =
-    effort === 'easy'
-      ? 'You rated the session easy — difficulty steps up one notch.'
-      : effort === 'hard'
-        ? 'You rated the session hard — easing the next ones a notch.'
-        : effort === 'right'
-          ? 'You rated the effort about right — the plan holds.'
+    effort === 1
+      ? 'You rated this one too easy, so difficulty steps up one notch on the sessions ahead.'
+      : effort === 5
+        ? 'You rated this one too hard, so the next ones ease off a notch to keep you training.'
+        : effort
+          ? `You rated the effort ${effort} out of 5, which is the range the plan is built for. It holds.`
           : 'Session logged.';
 
   if (delta !== 0) {
@@ -722,7 +778,7 @@ export function completeSession(
         `Difficulty ${delta > 0 ? 'raised' : 'lowered'} on ${moved.size} upcoming ${label} session${moved.size === 1 ? '' : 's'}.`,
       );
     } else {
-      reason = 'Session logged. Nothing left in the block to adjust — the plan holds.';
+      reason = 'Session logged. Nothing left in the plan to adjust, so the plan holds.';
     }
   }
 

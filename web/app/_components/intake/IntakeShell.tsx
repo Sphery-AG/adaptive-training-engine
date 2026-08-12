@@ -104,7 +104,7 @@ export function IntakeShell({
           <h1
             ref={headingRef}
             tabIndex={-1}
-            className="mt-2 text-[28px] font-bold leading-tight tracking-tight outline-none sm:text-[32px]"
+            className="mt-2 text-[28px] leading-tight outline-none sm:text-[32px]"
           >
             {title}
           </h1>

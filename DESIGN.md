@@ -40,6 +40,16 @@ typography:
     fontSize: "1rem"
     fontWeight: 400
     lineHeight: 1.6
+  caption:
+    fontFamily: "Space Grotesk, system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 400
+    lineHeight: 1.5
+  micro:
+    fontFamily: "Space Grotesk, system-ui, sans-serif"
+    fontSize: "12px"
+    fontWeight: 400
+    lineHeight: 1.4
   label:
     fontFamily: "Space Grotesk, system-ui, sans-serif"
     fontSize: "10px"
@@ -200,10 +210,20 @@ clinical. The pairing is the whole personality in two faces.
 - **Headline** (400, 1.5rem, 1.1): Section headings inside a screen.
 - **Title** (600, 1rem, 1.3): Card titles and control labels, in Space Grotesk.
 - **Body** (400, 1rem, 1.6): Reading copy, rationale strings, explanations.
+- **Caption** (400, 14px, 1.5): Supporting copy that sits under a number or a
+  control. Metric blurbs, session metadata, helper text.
+- **Micro** (400, 12px, 1.4): The dense tier. Units beside a value, zone times,
+  percentages, and the secondary half of a stat row. Never reading copy.
 - **Label** (600, 10px, 0.2em, uppercase): The `.eyebrow` class. Category markers,
   nav labels, and anything that names a region rather than speaking in it.
 
 ### Named Rules
+
+**The Four Steps Below Body Rule.** Under 1rem there are exactly four sizes:
+caption (14px), micro (12px), label (10px), and nothing else. The app currently
+also ships 11px, 13px, and 15px in about 38 places; those are drift, and they
+converge onto the nearest sanctioned step rather than earning tokens of their
+own. A sub-body ramp with six steps is not a scale.
 
 **The One Weight Rule.** Bebas Neue has a single weight. Never apply
 `font-weight` above 400 to display type, and never let the browser synthesize it.

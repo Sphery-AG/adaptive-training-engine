@@ -40,6 +40,26 @@ def darmstadt() -> GymIn:
 
 
 @pytest.fixture
+def berlin() -> GymIn:
+    """A mid-size HYROX floor: enough stations to vary, few enough to strain it."""
+    return GymIn(
+        id="hyrox-berlin",
+        name="HYROX Box Berlin",
+        stations=[
+            _st("run", "Run", ["cardio_endurance", "cardio_intensity", "power_speed"]),
+            _st("ski-erg", "Ski Erg", ["cardio_endurance", "cardio_intensity"]),
+            _st("row-erg", "Row Erg", ["cardio_endurance", "cardio_intensity"]),
+            _st("sled-push", "Sled Push", ["strength", "power_speed"]),
+            _st("sled-pull", "Sled Pull", ["strength"]),
+            _st("sandbag", "Sandbag Lunges", ["strength"]),
+            _st("wall-balls", "Wall Balls", ["strength", "cardio_intensity"]),
+            _st("burpees", "Burpee Broad Jump", ["power_speed", "cardio_intensity"]),
+            _st("farmers", "Farmers Carry", ["strength"]),
+        ],
+    )
+
+
+@pytest.fixture
 def hotel_gym() -> GymIn:
     """A bare gym that cannot deliver cognitive_motor: forces substitution."""
     return GymIn(
@@ -61,6 +81,7 @@ def request_for(
     activity: str = "active",
     per_week: int = 3,
     minutes: int = 45,
+    intensity: int | None = None,
     sphery_user_id: int | None = None,
 ) -> GeneratePlanRequest:
     return GeneratePlanRequest(
@@ -73,6 +94,7 @@ def request_for(
             activityLevel=activity,
             sessionsPerWeek=per_week,
             sessionLengthMinutes=minutes,
+            currentIntensity=intensity,
         ),
         gym=gym,
     )

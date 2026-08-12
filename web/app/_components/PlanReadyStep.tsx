@@ -51,6 +51,8 @@ export default function PlanReadyStep({
   const chosen = WEEKDAYS.filter((d) => answers.availableDays?.includes(d.id)).map((d) => d.id);
   const trainingDays: WeekdayId[] = chosen.length ? chosen : DEFAULT_DAYS[perWeek] ?? DEFAULT_DAYS[3];
   const pointsAvailable = engagement.wallet.pointsBalance + PLAN_BONUS;
+  const { source, workoutsAnalyzed } = plan.fitnessEstimate;
+  const fromHistory = source === 'session_history' && workoutsAnalyzed > 0;
 
   // Days the member does their other sports (passively marked on the strip, so
   // the whole active week is visible without competing with the plan's days).
@@ -63,7 +65,7 @@ export default function PlanReadyStep({
       {/* Hero */}
       <div
         className="relative overflow-hidden rounded-[28px] border border-[var(--accent-soft2)] px-6 py-9 text-center"
-        style={{ background: 'var(--gradient-accent2, radial-gradient(120% 120% at 50% 0%, rgba(0,209,255,0.16), transparent 70%))' }}
+        style={{ background: 'var(--gradient-hero)' }}
       >
         <div
           className="mx-auto grid h-16 w-16 place-items-center rounded-2xl text-[var(--accent-contrast)]"
@@ -71,9 +73,23 @@ export default function PlanReadyStep({
         >
           <Icon name="trend" size={30} />
         </div>
-        <h1 className="mt-5 text-3xl font-bold tracking-tight">Your plan is ready</h1>
+        <h1 className="mt-5 text-3xl">Your plan is ready</h1>
         <p className="mt-2 text-base text-dim">
-          {GOAL_LABELS[plan.goal]} · {perWeek}× / week
+          {GOAL_LABELS[plan.goal]} · <span className="whitespace-nowrap">{perWeek}× / week</span>
+        </p>
+        {/* Provenance. Where the plan came from is the reason to trust it over a
+         * generic app, and it used to appear only as a 12px line on a tab the
+         * member has no reason to open. Cyan when it was read from real training
+         * history, amber when the estimate is still thin. */}
+        <p
+          className={`mt-3 inline-flex items-center gap-2 text-sm ${
+            fromHistory ? 'text-accent' : 'text-amber'
+          }`}
+        >
+          <Icon name={fromHistory ? 'pulse' : 'info'} size={15} />
+          {fromHistory
+            ? `Built from your last ${workoutsAnalyzed} training ${workoutsAnalyzed === 1 ? 'session' : 'sessions'}.`
+            : 'Built from what you told us. It sharpens after your first session.'}
         </p>
       </div>
 
@@ -109,7 +125,7 @@ export default function PlanReadyStep({
         })}
       </div>
       {hasOtherDays && (
-        <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-faint">
+        <div className="mt-2 flex items-center justify-center gap-4 text-xs text-faint">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-sm bg-accent" /> Training day
           </span>
@@ -134,8 +150,11 @@ export default function PlanReadyStep({
                 <div className="font-semibold">
                   {dayLabel} · {STIMULUS_LABELS[s.stimulusType]}
                 </div>
-                <div className="mt-0.5 text-[13px] text-dim">
-                  {s.durationMinutes} min · zone {s.hrTarget.zone}/5 · {rs.stationName}
+                {/* Each fact keeps its unit on the same line; at 390px these used
+                 * to break between the number and "min", and orphan "7/10". */}
+                <div className="mt-0.5 text-sm text-dim">
+                  <span className="whitespace-nowrap">{s.durationMinutes} min</span> ·{' '}
+                  <span className="whitespace-nowrap">zone {s.hrTarget.zone}/5</span> · {rs.stationName}
                   {rs.stationIsSphery && <span className="ml-1.5 rounded bg-[var(--accent-soft2)] px-1.5 py-0.5 text-[10px] font-semibold text-accent">Sphery</span>}
                 </div>
               </div>
@@ -155,7 +174,7 @@ export default function PlanReadyStep({
         </span>
         <div className="flex-1">
           <div className="font-semibold">+{PLAN_BONUS} pts earned for this plan</div>
-          <div className="text-[13px] text-dim">{pointsAvailable} pts available · View my rewards</div>
+          <div className="text-sm text-dim">{pointsAvailable} pts available · View my rewards</div>
         </div>
         <Icon name="chevron-left" size={18} className="rotate-180 text-faint" />
       </button>

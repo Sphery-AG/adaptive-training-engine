@@ -137,7 +137,7 @@ const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => {
                       setFlipped(g.slug);
                     }}
                     aria-label={`What is ${g.title}?`}
-                    className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+                    className="absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
                   >
                     <Icon name="info" size={15} />
                   </button>
@@ -160,12 +160,12 @@ const GoalScreen: FC<ScreenProps> = ({ state, dispatch }) => {
                   type="button"
                   onClick={() => setFlipped(null)}
                   aria-label="Close"
-                  className="absolute right-2.5 top-2.5 grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+                  className="absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
                 >
                   <Icon name="close" size={15} />
                 </button>
                 <span className="eyebrow pr-7 text-accent">{g.title}</span>
-                <p className="mt-1.5 overflow-y-auto text-[12.5px] leading-snug text-dim">{g.blurb}</p>
+                <p className="mt-1.5 overflow-y-auto text-xs leading-snug text-dim">{g.blurb}</p>
               </div>
             </div>
           </div>
@@ -238,7 +238,14 @@ const DraftNumberInput = ({
         setDraft(e.target.value);
         if (e.target.value !== '') onChange(Number(e.target.value));
       }}
-      onBlur={() => setDraft(null)}
+      onBlur={() => {
+        // `min`/`max` alone only style the field as invalid; the value still
+        // reaches the engine. Age in particular feeds the Tanaka max-HR prior
+        // behind every bpm range in the app, so it gets clamped on the way out.
+        setDraft(null);
+        const bounded = Math.min(max ?? Infinity, Math.max(min ?? -Infinity, value));
+        if (Number.isFinite(bounded) && bounded !== value) onChange(bounded);
+      }}
       className={className}
     />
   );
@@ -248,11 +255,15 @@ const NumberField = ({
   label,
   value,
   unit,
+  min,
+  max,
   onChange,
 }: {
   label: string;
   value: number;
   unit: string;
+  min: number;
+  max: number;
   onChange: (n: number) => void;
 }) => (
   <label className="rounded-2xl border border-border bg-card px-3.5 py-3">
@@ -261,6 +272,9 @@ const NumberField = ({
       <DraftNumberInput
         value={value}
         onChange={onChange}
+        min={min}
+        max={max}
+        ariaLabel={`${label} in ${unit}`}
         className="w-full min-w-0 bg-transparent text-xl font-semibold outline-none"
       />
       <span className="text-xs text-faint">{unit}</span>
@@ -273,9 +287,9 @@ const StatusScreen: FC<ScreenProps> = ({ state, dispatch }) => (
     <div>
       <FieldLabel>About you</FieldLabel>
       <div className="grid grid-cols-3 gap-2.5">
-        <NumberField label="Age" value={state.age} unit="yrs" onChange={(n) => dispatch({ type: 'setProfile', patch: { age: n } })} />
-        <NumberField label="Weight" value={state.weightKg} unit="kg" onChange={(n) => dispatch({ type: 'setProfile', patch: { weightKg: n } })} />
-        <NumberField label="Height" value={state.heightCm} unit="cm" onChange={(n) => dispatch({ type: 'setProfile', patch: { heightCm: n } })} />
+        <NumberField label="Age" value={state.age} unit="yrs" min={14} max={100} onChange={(n) => dispatch({ type: 'setProfile', patch: { age: n } })} />
+        <NumberField label="Weight" value={state.weightKg} unit="kg" min={30} max={250} onChange={(n) => dispatch({ type: 'setProfile', patch: { weightKg: n } })} />
+        <NumberField label="Height" value={state.heightCm} unit="cm" min={100} max={230} onChange={(n) => dispatch({ type: 'setProfile', patch: { heightCm: n } })} />
       </div>
     </div>
 
@@ -310,7 +324,7 @@ const StatusScreen: FC<ScreenProps> = ({ state, dispatch }) => (
 
         <div>
           <FieldLabel>Break it into sports (optional)</FieldLabel>
-          <p className="mb-3 text-[13px] text-dim">
+          <p className="mb-3 text-sm text-dim">
             Tell us what those {state.trainingMinutesPerWeek} minutes are spent on. This is optional and helps us balance your recovery.
           </p>
           <ActivitiesScreen state={state} dispatch={dispatch} />
@@ -388,7 +402,7 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
             </span>
             <div className="min-w-0 flex-1">
               <div className="font-semibold">{a.name}</div>
-              <div className="text-[13px] text-dim">
+              <div className="text-sm text-dim">
                 {a.minutesPerSession} min{dayLabels ? ` · ${dayLabels}` : ''} · {INTENSITY_WORD[a.intensity]}
               </div>
             </div>

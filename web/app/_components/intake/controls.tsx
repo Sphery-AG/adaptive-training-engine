@@ -36,8 +36,15 @@ export function CheckRow({
 }) {
   const [flipped, setFlipped] = useState(false);
 
+  // When this row flips, the front is only hidden visually. Without these the
+  // hidden face still announces and still collects a tab stop, so a screen
+  // reader hears every option twice.
   const front = (
-    <label className={`block cursor-pointer ${info ? 'absolute inset-0 [backface-visibility:hidden]' : ''}`}>
+    <label
+      className={`block cursor-pointer ${info ? 'absolute inset-0 [backface-visibility:hidden]' : ''}`}
+      aria-hidden={info ? flipped : undefined}
+      inert={info ? flipped : false}
+    >
       <input
         type="checkbox"
         name={name}
@@ -58,7 +65,7 @@ export function CheckRow({
                 setFlipped(true);
               }}
               aria-label="What does this mean?"
-              className="grid h-6 w-6 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+              className="grid h-11 w-11 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
             >
               <Icon name="info" size={15} />
             </button>
@@ -87,13 +94,15 @@ export function CheckRow({
         <div
           className="absolute inset-0 flex h-full items-center gap-3 rounded-2xl border border-border bg-card px-4 [backface-visibility:hidden]"
           style={{ transform: 'rotateY(180deg)' }}
+          aria-hidden={!flipped}
+          inert={!flipped}
         >
-          <p className="flex-1 text-[12.5px] leading-snug text-dim">{info}</p>
+          <p className="flex-1 text-xs leading-snug text-dim">{info}</p>
           <button
             type="button"
             onClick={() => setFlipped(false)}
             aria-label="Close"
-            className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
           >
             <Icon name="close" size={16} />
           </button>
@@ -124,7 +133,7 @@ export function RadioRow({
       <input type="radio" name={name} value={value} checked={checked} onChange={onChange} className="peer sr-only" />
       <div className={`${CARD_BASE} px-4 py-3.5`}>
         <div className="font-semibold">{title}</div>
-        <div className="mt-0.5 text-[13px] leading-snug text-dim">{desc}</div>
+        <div className="mt-0.5 text-sm leading-snug text-dim">{desc}</div>
       </div>
     </label>
   );
@@ -239,7 +248,7 @@ export function MinutesSlider({
 /** Small info callout (health disclaimer). */
 export function InfoNote({ children }: { children: ReactNode }) {
   return (
-    <div className="flex gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3.5 text-[13px] leading-relaxed text-dim">
+    <div className="flex gap-3 rounded-2xl border border-border bg-card/60 px-4 py-3.5 text-sm leading-relaxed text-dim">
       <span className="mt-0.5 shrink-0 text-faint">
         <Icon name="info" size={17} />
       </span>

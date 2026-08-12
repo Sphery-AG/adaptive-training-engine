@@ -33,10 +33,13 @@ export default function QuestionnaireStep({
   member,
   onSubmit,
   onBack,
+  busy = false,
 }: {
   member: DemoMember;
   onSubmit: (answers: QuestionnaireAnswers) => void;
   onBack: () => void;
+  /** Plan generation is in flight: hold the CTA and say so. */
+  busy?: boolean;
 }) {
   const [state, dispatch] = useReducer(reducer, { age: member.baseline?.actualAge }, initialState);
   const def = SCREENS[state.screen];
@@ -57,8 +60,8 @@ export default function QuestionnaireStep({
       subtitle={def.subtitle?.(state)}
       required={def.required?.(state)}
       onBack={() => (state.history.length > 0 ? dispatch({ type: 'back' }) : onBack())}
-      ctaLabel={ctaLabel(state)}
-      ctaEnabled={canAdvance(state)}
+      ctaLabel={busy ? 'Building your plan' : ctaLabel(state)}
+      ctaEnabled={canAdvance(state) && !busy}
       onCta={() =>
         isLastScreen(state) ? onSubmit(toQuestionnaireAnswers(state)) : dispatch({ type: 'advance' })
       }

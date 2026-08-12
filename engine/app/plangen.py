@@ -26,6 +26,7 @@ the web's types exactly.
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from math import floor
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -70,6 +71,9 @@ class AnswersIn(BaseModel):
     activity_level: str = Field(default="moderate", alias="activityLevel")
     sessions_per_week: int = Field(default=3, alias="sessionsPerWeek")
     session_length_minutes: int = Field(default=30, alias="sessionLengthMinutes")
+    # How hard the member already trains, 1 (very light) to 5 (maximal).
+    # Refines the cold-start estimate only. See INTENSITY_STEP.
+    current_intensity: Optional[int] = Field(default=None, alias="currentIntensity", ge=1, le=5)
 
 
 class GeneratePlanRequest(BaseModel):
@@ -228,6 +232,13 @@ FOCUS_STIMULUS: dict[str, StimulusType] = {
 
 ACTIVITY_BASE = {"sedentary": 30, "light": 42, "moderate": 54, "active": 66, "very_active": 76}
 
+# Activity level says how much the member trains; typical intensity says how
+# hard. Points per step away from 3 (moderate), so the ends of the scale move
+# the cold-start score a full 12 points: one whole band on _base_difficulty's
+# 12-point scale. Anything smaller would round away and never reach the plan,
+# and this is a 0.3-confidence prior either way.
+INTENSITY_STEP = 6
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -260,7 +271,11 @@ def planning_estimate(req: GeneratePlanRequest) -> dict:
                 "level": real.level,
                 "rationale": real.rationale,
             }
+    # Cold start: no history, so the questionnaire is all there is. Real
+    # session history above outranks this entirely, intensity included.
     score = ACTIVITY_BASE.get(a.activity_level, 54)
+    if a.current_intensity is not None:
+        score += (a.current_intensity - 3) * INTENSITY_STEP
     return {
         "source": "questionnaire_only",
         "fitnessScore": score,
@@ -295,7 +310,12 @@ def _resolve_station(gym: GymIn, stimulus: StimulusType) -> tuple[StationIn, boo
 
 
 def _base_difficulty(fitness_score: int) -> int:
-    return min(8, max(1, round(fitness_score / 12)))
+    # Round half up, matching Math.round in web/lib/stub/engine.ts. Python's
+    # round() goes half to even, and every activity level except very_active
+    # divides by 12 to an exact half, so the two put the same member on
+    # different starting difficulties (54 -> 4 here, 5 there) while printing
+    # the same rationale.
+    return min(8, max(1, floor(fitness_score / 12 + 0.5)))
 
 
 def _focus_stimuli(focus_ids: list[str]) -> list[StimulusType]:
@@ -365,7 +385,7 @@ def build_weeks(req: GeneratePlanRequest, est: dict) -> tuple[list[dict], list[d
             elif is_retest and i == per_week - 1:
                 rationale = (
                     f"Retest session on the {station.name}. We re-measure your fitness "
-                    "here and build your next block from it."
+                    "here and build your next plan from it."
                 )
             else:
                 tail = (
@@ -430,20 +450,58 @@ def circuit_for(goal: str, gym: GymIn, session: dict) -> list[dict]:
             return preferred.index(st.id)
         return len(preferred) + (0 if st.is_sphery else 1)
 
+    # The bookend station is chosen first and reserved, so the work block can
+    # never hand out the station you already warm up and cool down on (a small
+    # floor used to open, repeat, and close on the same erg). It takes the
+    # *least* preferred cardio station on purpose: a warmup does not need the
+    # flagship, and reserving the ExerCube for five minutes of easy spinning
+    # would be a waste of the best equipment in the room.
+    warm_candidates = sorted(
+        (st for st in gym.stations if "cardio_endurance" in st.stimulus_types), key=rank
+    )
+    warm = warm_candidates[-1] if warm_candidates else None
+
+    # Only reserve the bookend when the floor can spare it. A gym with barely
+    # more stations than the work block needs is better off reusing it than
+    # losing a station the work legs still need: holding back the bike on a
+    # 4-station hotel floor pushed the treadmill onto 4 of 5 legs.
+    reserved = (
+        warm.id
+        if warm is not None and len(gym.stations) > work_count and len(warm_candidates) > 1
+        else None
+    )
+
     used: set[str] = set()
+    # When a leg has to reuse a station, reuse the one used longest ago. Picking
+    # by rank instead piles every repeat onto the single top-ranked station: a
+    # 9-station floor ran the same treadmill on three of five work legs.
+    last_used: dict[str, int] = {}
+    tick = 0
     prev: Optional[StationIn] = None
 
     def pick(stim: StimulusType) -> StationIn:
-        nonlocal prev
+        nonlocal prev, tick
         matching = sorted(
             (st for st in gym.stations if stim in st.stimulus_types), key=rank
         )
-        pool = matching if matching else gym.stations
+        base = matching if matching else gym.stations
+        # Keep the bookend station out of the work block, unless it is the only
+        # thing that can deliver this stimulus.
+        spared = [c for c in base if c.id != reserved]
+        pool = spared if spared else base
+        prev_id = prev.id if prev else None
         station = next(
-            (c for c in pool if c.id not in used and c.id != (prev.id if prev else None)),
+            (c for c in pool if c.id not in used and c.id != prev_id),
             None,
-        ) or next((c for c in pool if c.id != (prev.id if prev else None)), pool[0])
+        )
+        if station is None:
+            others = sorted(
+                (c for c in pool if c.id != prev_id), key=lambda c: last_used.get(c.id, -1)
+            )
+            station = others[0] if others else pool[0]
         used.add(station.id)
+        last_used[station.id] = tick
+        tick += 1
         prev = station
         return station
 
@@ -467,14 +525,8 @@ def circuit_for(goal: str, gym: GymIn, session: dict) -> list[dict]:
             }
         )
 
-    warm_candidates = sorted(
-        (st for st in gym.stations if "cardio_endurance" in st.stimulus_types), key=rank
-    )
-    warm = (
-        next((st for st in warm_candidates if st.id not in used), None)
-        or next((st for st in warm_candidates if st.id != work_legs[0]["stationId"]), None)
-        or (warm_candidates[0] if warm_candidates else None)
-    )
+    # A gym with no endurance station at all still needs bookends; fall back to
+    # the first work station rather than dropping them.
     warm_name = warm.name if warm else work_legs[0]["stationName"]
     warm_id = warm.id if warm else work_legs[0]["stationId"]
     warm_sphery = warm.is_sphery if warm else work_legs[0]["isSphery"]
@@ -501,16 +553,20 @@ def generate_plan(req: GeneratePlanRequest) -> dict:
     # marketing labels for display elsewhere.
     focus_labels = [f.replace("_", " ").title() for f in a.focus]
     focus_phrase = f", focused on {' & '.join(focus_labels)}" if focus_labels else ""
+    analyzed = est["workoutsAnalyzed"]
     evidence = (
-        f"{est['workoutsAnalyzed']} workouts analyzed"
-        if est["source"] == "session_history"
-        else "cold start, questionnaire only"
+        f"{analyzed} training {'session' if analyzed == 1 else 'sessions'}"
+        if est["source"] == "session_history" and analyzed > 0
+        else "the setup questionnaire"
     )
+    # Member-facing, so it avoids the model's vocabulary: no "block", no "cold
+    # start", no "workouts analyzed". Must stay word-for-word identical to
+    # web/lib/stub/engine.ts, which builds the same string for the same plan.
     rationale = (
-        f"An {len(weeks)}-week block, {a.sessions_per_week}×/week for {req.member_name} "
+        f"An {len(weeks)}-week plan, {a.sessions_per_week}×/week for {req.member_name} "
         f"at {req.gym.name}, built for {goal_title}{focus_phrase}. Starting difficulty "
-        f"{_base_difficulty(est['fitnessScore'])} from a fitness estimate of "
-        f"{est['fitnessScore']}/100 ({evidence})."
+        f"{_base_difficulty(est['fitnessScore'])}, based on {evidence} "
+        f"(fitness estimate {est['fitnessScore']}/100)."
     )
 
     plan = {

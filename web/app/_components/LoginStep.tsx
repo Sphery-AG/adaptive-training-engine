@@ -108,7 +108,7 @@ export default function LoginStep({
   }
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] w-full max-w-sm flex-col justify-center px-6 py-10">
+    <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col justify-center px-6 py-10">
       {phase === 'idle' && (
         <div className="animate-screen-in">
           <div className="flex flex-col items-center text-center">

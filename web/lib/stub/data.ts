@@ -11,6 +11,7 @@
 
 import type { GymConcept } from '../types/gym';
 import type { Reward } from '../types/engagement';
+import type { QuestionnaireAnswers } from '../types/plan';
 
 /** A selectable demo identity. `null` history = guest / cold start. */
 export interface DemoMember {
@@ -39,6 +40,17 @@ export interface DemoMember {
     /** Real chronological age, so we can show "body age vs. actual". */
     actualAge: number;
   } | null;
+  /**
+   * The setup a returning member already has on file. Demo stand-in for the
+   * row that would live in the members table: someone who has trained here for
+   * two years does not re-answer the questionnaire on their way in, they walk
+   * in with a plan already running. `null` sends the member through intake.
+   *
+   * Lena and Marco share a goal on purpose. Same goal, different histories,
+   * different plans is acceptance criterion 2, and switching between them is
+   * the fastest way to show it.
+   */
+  currentPlan: QuestionnaireAnswers | null;
 }
 
 export const DEMO_MEMBERS: DemoMember[] = [
@@ -62,6 +74,20 @@ export const DEMO_MEMBERS: DemoMember[] = [
       brainAge: 32,
       actualAge: 42,
     },
+    currentPlan: {
+      age: 42,
+      weightKg: 64,
+      heightCm: 170,
+      goal: 'improve_fitness_endurance',
+      activityLevel: 'very_active',
+      fitnessLevel: 'high',
+      sessionsPerWeek: 3,
+      sessionLengthMinutes: 45,
+      currentTrainingMinutesPerWeek: 240,
+      currentIntensity: 4,
+      availableDays: ['mon', 'wed', 'fri'],
+      hasMedicalFlags: false,
+    },
   },
   {
     id: 'user-2',
@@ -79,12 +105,27 @@ export const DEMO_MEMBERS: DemoMember[] = [
       brainAge: 37,
       actualAge: 38,
     },
+    currentPlan: {
+      age: 38,
+      weightKg: 82,
+      heightCm: 181,
+      goal: 'improve_fitness_endurance',
+      activityLevel: 'moderate',
+      fitnessLevel: 'medium',
+      sessionsPerWeek: 3,
+      sessionLengthMinutes: 45,
+      currentTrainingMinutesPerWeek: 120,
+      currentIntensity: 3,
+      availableDays: ['tue', 'thu', 'sat'],
+      hasMedicalFlags: false,
+    },
   },
   {
     id: 'guest',
     name: 'Guest',
     tagline: 'No account yet · plan built from the questionnaire',
     baseline: null,
+    currentPlan: null,
   },
 ];
 

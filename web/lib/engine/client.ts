@@ -62,7 +62,7 @@ export async function fetchEngineEstimate(spheryUserId: number): Promise<EngineE
 export async function fetchEnginePlan(
   member: DemoMember,
   gym: { id: string; name: string; stations: unknown[] },
-  answers: { age: number; goal: string; focus?: string[]; activityLevel: string; sessionsPerWeek?: number; sessionLengthMinutes?: number },
+  answers: { age: number; goal: string; focus?: string[]; activityLevel: string; sessionsPerWeek?: number; sessionLengthMinutes?: number; currentIntensity?: 1 | 2 | 3 | 4 | 5 },
 ): Promise<{ plan: unknown; resolved: unknown[] } | null> {
   const base = engineUrl();
   if (!base) return null;
@@ -80,6 +80,9 @@ export async function fetchEnginePlan(
           activityLevel: answers.activityLevel,
           sessionsPerWeek: answers.sessionsPerWeek ?? 3,
           sessionLengthMinutes: answers.sessionLengthMinutes ?? 30,
+          // Optional: the intake only sets it when the member filled in the
+          // volume slider or listed sports. Omitted means "no signal", not 3.
+          currentIntensity: answers.currentIntensity,
         },
         gym: { id: gym.id, name: gym.name, stations: gym.stations },
       }),

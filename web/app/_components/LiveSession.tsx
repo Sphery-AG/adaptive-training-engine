@@ -26,12 +26,14 @@ import { Icon } from './icons';
 const BASE_PT_PER_MIN = 1;
 const TARGET_BONUS_PER_MIN = 1;
 
-const ZONE_BAR: Record<HrZone, { bg: string; glow: string }> = {
-  5: { bg: 'linear-gradient(90deg,#fb7185,#ec4899)', glow: '0 0 9px rgba(236,72,153,0.6)' },
-  4: { bg: 'linear-gradient(90deg,#fb923c,#f97316)', glow: '0 0 9px rgba(249,115,22,0.55)' },
-  3: { bg: 'linear-gradient(90deg,#fde047,#facc15)', glow: '0 0 9px rgba(250,204,21,0.55)' },
-  2: { bg: 'linear-gradient(90deg,#4ade80,#34d399)', glow: '0 0 8px rgba(52,211,153,0.5)' },
-  1: { bg: 'linear-gradient(90deg,#475569,#34d399)', glow: 'none' },
+// `dot` is the empty-row stub: the row's own ramp color, dimmed. It used to be
+// hardcoded mint for every zone, so an empty zone 5 row showed green.
+const ZONE_BAR: Record<HrZone, { bg: string; glow: string; dot: string }> = {
+  5: { bg: 'linear-gradient(90deg,#fb7185,#ec4899)', glow: '0 0 9px rgba(236,72,153,0.6)', dot: 'rgba(251,113,133,0.35)' },
+  4: { bg: 'linear-gradient(90deg,#fb923c,#f97316)', glow: '0 0 9px rgba(249,115,22,0.55)', dot: 'rgba(251,146,60,0.35)' },
+  3: { bg: 'linear-gradient(90deg,#fde047,#facc15)', glow: '0 0 9px rgba(250,204,21,0.55)', dot: 'rgba(253,224,71,0.35)' },
+  2: { bg: 'linear-gradient(90deg,#4ade80,#34d399)', glow: '0 0 8px rgba(52,211,153,0.5)', dot: 'rgba(74,222,128,0.35)' },
+  1: { bg: 'linear-gradient(90deg,#475569,#34d399)', glow: 'none', dot: 'rgba(71,85,105,0.55)' },
 };
 
 function fmt(totalSeconds: number): string {
@@ -52,10 +54,13 @@ type Stage = 'preview' | 'live' | 'summary' | 'effort' | 'adapting' | 'adapted';
 /** How long the recalculating beat holds, even if the engine answers sooner. */
 const ADAPTING_MS = 1200;
 
+/** 1 = too easy, 5 = too hard, matching the engine's scale exactly. */
 const EFFORT_CHOICES: { id: PerceivedEffort; label: string; hint: string }[] = [
-  { id: 'easy', label: 'Easy', hint: 'I had more in the tank' },
-  { id: 'right', label: 'Right', hint: 'Hard, but I held it' },
-  { id: 'hard', label: 'Brutal', hint: 'I was hanging on' },
+  { id: 1, label: 'Too easy', hint: 'I had plenty left' },
+  { id: 2, label: 'Comfortable', hint: 'I could have pushed harder' },
+  { id: 3, label: 'Right', hint: 'Hard, but I held it' },
+  { id: 4, label: 'Tough', hint: 'I was close to my limit' },
+  { id: 5, label: 'Too hard', hint: 'I was hanging on' },
 ];
 
 export default function LiveSession({
@@ -84,6 +89,19 @@ export default function LiveSession({
 
   const [stage, setStage] = useState<Stage>('preview');
   const [effort, setEffort] = useState<PerceivedEffort | null>(null);
+
+  // A full-screen overlay has to be dismissible from the keyboard. Escape is
+  // deliberately inert once the session is running: a stray keypress mid-circuit
+  // would throw away the work, and the running stages have their own controls.
+  useEffect(() => {
+    if (stage !== 'preview') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [stage, onClose]);
+
   const [result, setResult] = useState<AdaptationResult | null>(null);
   const [failed, setFailed] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -185,7 +203,19 @@ export default function LiveSession({
   const elapsed = doneSec + stationSec;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--background)]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[var(--background)]" role="dialog" aria-modal="true" aria-label="Live session">
+      {/* The session is otherwise silent: heart rate, zone and the countdown all
+       * update visually every second with nothing announced, and the target-zone
+       * signal is a border color. This text changes only when the station or the
+       * in-target state changes, so it announces the two things that matter
+       * without narrating every tick. */}
+      <p className="sr-only" aria-live="polite">
+        {stage === 'live'
+          ? `Station ${idx + 1} of ${circuit.length}, ${circuit[idx].station.name}. ${
+              inTarget ? 'In target zone' : `Outside target zone ${circuit[idx].targetZone}`
+            }.`
+          : ''}
+      </p>
       <div className="mx-auto flex min-h-full w-full max-w-md flex-col px-5 pt-8 pb-8">
         {stage === 'preview' && (
           <Preview
@@ -254,7 +284,7 @@ export default function LiveSession({
                 ) : (
                   <div key={i} className={`flex items-center gap-3 py-2.5 ${i < idx ? 'opacity-60' : ''}`}>
                     <span
-                      className={`relative z-10 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border text-[11px] font-semibold ${
+                      className={`relative z-10 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border text-xs font-semibold ${
                         i < idx ? 'border-mint/40 bg-mint/15 text-mint' : 'border-border bg-white/[0.04] text-faint'
                       }`}
                     >
@@ -276,8 +306,8 @@ export default function LiveSession({
             <button
               type="button"
               onClick={completeStation}
-              className="mt-3 w-full rounded-full py-4 text-base font-bold text-black"
-              style={{ background: 'linear-gradient(90deg,#7dd3fc,#e879f9)', boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
+              className="mt-3 w-full rounded-full py-4 text-base font-semibold"
+              style={{ background: 'var(--gradient-accent)', color: 'var(--accent-contrast)', boxShadow: 'var(--shadow-glow)' }}
             >
               {idx + 1 < circuit.length ? 'Complete station' : 'Finish session'}
             </button>
@@ -359,7 +389,7 @@ export default function LiveSession({
 }
 
 /**
- * "How did that feel?" — one tap, three answers, asked once while the session
+ * "How did that feel?" — one tap on a 1-5 scale, asked once while the session
  * is still in the member's body. This is the only member-supplied evidence the
  * adaptive loop gets, so it comes before the recalculation, not after it.
  */
@@ -383,7 +413,7 @@ function EffortStep({ points, onChoose }: { points: number; onChoose: (e?: Perce
           >
             <span>
               <span className="block text-lg font-semibold">{c.label}</span>
-              <span className="mt-0.5 block text-[13px] leading-snug text-dim">{c.hint}</span>
+              <span className="mt-0.5 block text-sm leading-snug text-dim">{c.hint}</span>
             </span>
             <Icon name="chevron-left" size={18} className="shrink-0 rotate-180 text-faint" />
           </button>
@@ -419,7 +449,7 @@ function AdaptingStep() {
         </RingGauge>
         <p className="mt-6 text-2xl">Recalculating your plan</p>
         <p className="mt-2 max-w-[17rem] text-center text-sm leading-relaxed text-dim">
-          Reading this session against the rest of your block.
+          Reading this session against the rest of your plan.
         </p>
       </div>
       <div className="flex-1" />
@@ -478,7 +508,7 @@ function AdaptedStep({
       <h2 className="mt-1 text-4xl leading-[0.95]">
         {changed ? 'Your next sessions changed' : 'Your plan is holding'}
       </h2>
-      <p className="mt-3 text-[15px] leading-relaxed text-dim">{update.summary}</p>
+      <p className="mt-3 text-base leading-relaxed text-dim">{update.summary}</p>
 
       {shift && (
         <div className="mt-6 rounded-[26px] border border-violet/30 bg-card p-5">
@@ -517,7 +547,7 @@ function AdaptedStep({
                 <li key={m.key} className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="flex-1">
                     <span className="font-medium">{m.label}</span>
-                    {m.caption && <span className="mt-0.5 block text-[12.5px] leading-snug text-faint">{m.caption}</span>}
+                    {m.caption && <span className="mt-0.5 block text-xs leading-snug text-faint">{m.caption}</span>}
                   </span>
                   <span className={`shrink-0 font-semibold tabular ${better ? 'text-mint' : 'text-amber'}`}>
                     {d > 0 ? '+' : ''}
@@ -604,7 +634,7 @@ function Preview({
         <ul className="mt-3 space-y-3">
           {circuit.map((leg, i) => (
             <li key={i} className="flex items-center gap-3">
-              <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border border-border bg-white/[0.04] text-[11px] font-semibold text-faint">
+              <span className="grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border border-border bg-white/[0.04] text-xs font-semibold text-faint">
                 {i + 1}
               </span>
               <span className="flex flex-1 items-baseline justify-between gap-2">
@@ -625,8 +655,8 @@ function Preview({
       <button
         type="button"
         onClick={onStart}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-bold text-black"
-        style={{ background: 'linear-gradient(90deg,#7dd3fc,#e879f9)', boxShadow: '0 0 30px -6px var(--orbit-cyan)' }}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-full py-4 text-base font-semibold"
+        style={{ background: 'var(--gradient-accent)', color: 'var(--accent-contrast)', boxShadow: 'var(--shadow-glow)' }}
       >
         <Icon name="play" size={18} /> Start session
       </button>
@@ -679,7 +709,7 @@ function ZonesBlock({
                   style={
                     sec > 0
                       ? { width: `${Math.max(5, (sec / max) * 100)}%`, background: ZONE_BAR[z].bg, boxShadow: ZONE_BAR[z].glow }
-                      : { width: 7, background: 'rgba(52,211,153,0.35)' }
+                      : { width: 7, background: ZONE_BAR[z].dot }
                   }
                 />
               </span>

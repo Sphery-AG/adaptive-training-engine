@@ -65,27 +65,36 @@ export interface IntakeState {
 
 export interface IntakeSeed {
   age?: number;
+  /**
+   * A returning member's saved answers. The intake is the same five screens
+   * for everybody — the welcome screen belongs after it, not instead of it —
+   * but somebody who has trained here for two years should be confirming what
+   * is on file, not answering from scratch.
+   */
+  saved?: QuestionnaireAnswers | null;
 }
 
 export function initialState(seed: IntakeSeed = {}): IntakeState {
+  const s = seed.saved ?? null;
+  const flagged = s ? Boolean(s.injury?.bodyPart) || (s.healthConditions?.length ?? 0) > 0 : null;
   return {
     screen: 'goal',
     history: [],
     returnToReview: false,
-    goal: null,
-    focus: [],
-    age: seed.age ?? 35,
-    weightKg: 75,
-    heightCm: 175,
-    fitnessLevel: null,
-    trainingMinutesPerWeek: 0,
-    trainingIntensity: 3,
-    availableDays: [],
-    sessionLengthMinutes: 45,
-    otherActivities: [],
-    hasInjury: null,
-    healthConditions: [],
-    injury: {},
+    goal: s?.goal ?? null,
+    focus: s?.focus ?? [],
+    age: s?.age ?? seed.age ?? 35,
+    weightKg: s?.weightKg ?? 75,
+    heightCm: s?.heightCm ?? 175,
+    fitnessLevel: s?.fitnessLevel ?? null,
+    trainingMinutesPerWeek: s?.currentTrainingMinutesPerWeek ?? 0,
+    trainingIntensity: s?.currentIntensity ?? 3,
+    availableDays: s?.availableDays ?? [],
+    sessionLengthMinutes: s?.sessionLengthMinutes ?? 45,
+    otherActivities: s?.otherActivities ?? [],
+    hasInjury: flagged,
+    healthConditions: s?.healthConditions ?? [],
+    injury: s?.injury ?? {},
   };
 }
 

@@ -1,72 +1,55 @@
 'use client';
 
 /**
- * A collectible exercise card, built to Stephan's design (Aug 2026).
+ * A collectible exercise card, on the Sphere Loop system.
  *
- * ON THE DESIGN SYSTEM: the type sits on DESIGN.md's four steps below body
- * (caption 14, micro 12, label 10) — a card is dense, but density is not a
- * reason to invent half-steps. The COLOURS deliberately do not: brass, silver
- * and gold frames on a dotted paper ground are a printed object, and pulling
- * them onto the app's dark orbit palette would make it stop reading as a card.
- * That departure is intentional and worth recording in DESIGN.md rather than
- * leaving as drift. The one colour with no token to reach for is the paper
- * dot (#8A93A0): DESIGN.md carries no light-surface neutrals, because until
- * now nothing in the app was light.
+ * Stephan's design set the information architecture and it is kept whole: the
+ * family ladder, rarity and points, category, intensity, the Body and Brain
+ * bands, the series number. What changed is the world it lives in. His comp is
+ * a printed object — paper ground, brass and silver frames, a red Body band —
+ * and dropping that into a near-black orbital app made the card read as an
+ * asset pasted onto the screen rather than part of it.
  *
- * The card is a view of the catalogue, not a second copy of it: every element
- * on it already exists as data on the exercise.
+ * Three rules from DESIGN.md decided the translation:
  *
- *   ladder strip      FAMILY_LADDERS — the rungs this family actually offers,
- *                     with the card's own level highlighted. Thirteen families
- *                     hold a single rung, so the strip must render at length 1.
- *   rarity + points   a presentation of `level`. Foundation = Common (20),
- *                     Progress = Rare (30), Mastery = Legendary (50).
- *   category pills    the exercise's body regions, primary then secondary.
- *   intensity dots    1-5, from the sheet's intensity range.
- *   body / brain      the Body and Brain quality tags. These are THE vocabulary
- *                     the whole product reasons in, so they earn a band each.
+ *   The Fixed Orbit Rule. Each accent owns one meaning, so Body is cyan
+ *   (physical) and Brain is violet (cognitive) — the same colors those two
+ *   qualities carry everywhere else in the app. Points are fuchsia because the
+ *   habit loop owns points. Nothing here picks a color for variety.
  *
- * Artwork is the one thing that is not data yet. Until photography exists per
- * exercise the frame renders a placeholder that still carries the family
- * ribbon, so the card reads as a card rather than as a broken image.
+ *   Rarity is not in that list, so it cannot own a hue. It is an EARNED state,
+ *   and glow is reserved for live, earned or selected — so rarity escalates as
+ *   light rather than as metal: Common is hairline only, Rare takes a cyan
+ *   edge, Legendary blooms fuchsia. The rarest card is the only one that glows
+ *   hard, which is also what makes it worth screenshotting.
+ *
+ *   Depth comes from light, never shadow. No drop shadow, no metal gradient.
+ *
+ * The catalogue does all the work: every element here is a column on the
+ * exercise. Artwork is the one thing that is not data yet.
  */
-import type { CardLevel, CardRarity, ExerciseCard as Card } from '@/lib/stub/cards';
+import type { CardRarity, ExerciseCard as Card } from '@/lib/stub/cards';
 import { FAMILY_LADDERS } from '@/lib/stub/cards';
 import { Icon, type IconName } from './icons';
 
-const LADDER: CardLevel[] = ['foundation', 'progress', 'mastery'];
-
-/** Frame, gem and title treatment per rarity — the three looks in the design. */
-const SKIN: Record<CardRarity, {
-  frame: string; inner: string; gem: string; rarity: string; title: string; label: string;
-}> = {
-  common: {
-    frame: 'bg-[linear-gradient(150deg,#E8C877,#B8912F_38%,#F2DFA0_62%,#A9822A)]',
-    inner: 'bg-[#FBFAF6]',
-    gem: 'bg-[radial-gradient(circle_at_32%_28%,#FFFFFF,#C9CDD4_55%,#8B9099)]',
-    rarity: 'text-[#6B7280]',
-    title: 'text-[#14202C]',
-    label: 'Common',
-  },
+/** Rarity as earned light: ring, glow, and the one accent it may use. */
+const RARITY: Record<CardRarity, { label: string; ring: string; glow: string; ink: string }> = {
+  common: { label: 'Common', ring: 'ring-1 ring-border', glow: '', ink: 'text-faint' },
   rare: {
-    frame: 'bg-[linear-gradient(150deg,#E4E8EE,#A9B2BF_40%,#F4F7FA_62%,#98A2B1)]',
-    inner: 'bg-[#FAFBFD]',
-    gem: 'bg-[radial-gradient(circle_at_32%_28%,#FFFFFF,#5FB6E8_52%,#1E6FA8)]',
-    rarity: 'text-[#2F7FBF]',
-    title: 'text-[#14202C]',
     label: 'Rare',
+    ring: 'ring-1 ring-cyan/45',
+    glow: 'shadow-[0_0_28px_-6px_var(--orbit-cyan)]',
+    ink: 'text-cyan',
   },
   legendary: {
-    frame: 'bg-[linear-gradient(150deg,#F6DE9B,#C79A2C_36%,#FFF3C9_58%,#B0801E)]',
-    inner: 'bg-[#FDFBF3]',
-    gem: 'bg-[radial-gradient(circle_at_32%_28%,#FFFFFF,#F2CE62_52%,#B98D18)]',
-    rarity: 'text-[#9A7212]',
-    title: 'text-[#7A5A10]',
     label: 'Legendary',
+    ring: 'ring-1 ring-fuchsia/60',
+    glow: 'shadow-[0_0_44px_-8px_var(--orbit-fuchsia)]',
+    ink: 'text-fuchsia',
   },
 };
 
-/** Body and Brain tag glyphs, by the sheet's own wording. */
+/** Body and Brain glyphs, keyed by the catalogue's own wording. */
 const TAG_ICON: Record<string, IconName> = {
   Strength: 'dumbbell', Endurance: 'pulse', Coordination: 'target',
   Speed: 'zap', Mobility: 'mobility',
@@ -77,141 +60,123 @@ const TAG_ICON: Record<string, IconName> = {
 export default function ExerciseCard({
   card, locked = false, total,
 }: { card: Card; locked?: boolean; total: number }) {
-  const skin = SKIN[card.rarity];
+  const r = RARITY[card.rarity];
   const rungs = FAMILY_LADDERS[card.family] ?? [card.level];
 
   return (
-    <div className={`rounded-[20px] p-[6px] shadow-[0_18px_50px_-14px_rgba(0,0,0,.75)] ${skin.frame}`}>
-      <div className={`relative overflow-hidden rounded-[15px] ${skin.inner} ${locked ? 'grayscale' : ''}`}>
-        {/* dotted ground, straight from the design */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[.18]"
-          style={{ backgroundImage: 'radial-gradient(#8A93A0 1px, transparent 1px)', backgroundSize: '13px 13px' }}
-        />
+    <article
+      className={`relative overflow-hidden rounded-[26px] bg-card p-5 ${r.ring} ${
+        locked ? 'opacity-55 saturate-0' : r.glow
+      }`}
+    >
+      {/* ---- where this card sits in its family ---- */}
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {rungs.map((rung, i) => (
+          <li key={rung} className="flex items-center gap-2">
+            {i > 0 && <span aria-hidden className="text-[10px] text-faint">/</span>}
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                rung === card.level ? r.ink : 'text-faint'
+              }`}
+            >
+              {rung}
+            </span>
+          </li>
+        ))}
+      </ol>
 
-        <div className="relative px-4 pb-3.5 pt-3.5">
-          {/* ---- the family ladder ---- */}
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            {rungs.map((r, i) => (
-              <span key={r} className="flex items-center gap-1.5">
-                {i > 0 && <span aria-hidden className="text-[12px] text-[#9AA2AE]">&rarr;</span>}
-                <span
-                  className={`rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[.14em] ${
-                    r === card.level
-                      ? card.rarity === 'legendary'
-                        ? 'bg-[#E8C766] text-[#4A3608]'
-                        : 'bg-[#1A2430] text-white'
-                      : 'text-[#9AA2AE]'
-                  }`}
-                >
-                  {r}
-                </span>
-              </span>
-            ))}
-          </div>
-
-          {/* ---- name + rarity ---- */}
-          <div className="mt-2 flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className={`font-display text-[1.5rem] leading-[1.05] tracking-tight ${skin.title}`}>
-                {card.name.toUpperCase()}
-              </h3>
-              <div className="mt-1.5 h-[3px] w-14 rounded-full bg-[linear-gradient(90deg,var(--orbit-cyan),var(--orbit-fuchsia))]" />
-            </div>
-            <div className="flex flex-none items-center gap-2">
-              <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#8A93A0]">Rarity</p>
-                <p className={`text-[14px] font-bold uppercase leading-tight ${skin.rarity}`}>{skin.label}</p>
-                <p className="text-[14px] font-bold leading-tight text-[#D6249F]">{card.points} PTS</p>
-              </div>
-              <span className={`h-8 w-8 flex-none rounded-full ring-1 ring-black/10 ${skin.gem}`} />
-            </div>
-          </div>
-
-          {/* ---- category + intensity ---- */}
-          <dl className="mt-2.5 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <dt className="w-[68px] flex-none text-[10px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Category</dt>
-              <dd className="flex flex-wrap gap-1.5">
-                {card.regions.map((r) => (
-                  <span key={r} className="rounded-full bg-[#EDF1F6] px-2.5 py-[3px] text-[12px] font-semibold text-[#26313D]">{r}</span>
-                ))}
-              </dd>
-            </div>
-            <div className="flex items-center gap-2">
-              <dt className="w-[68px] flex-none text-[10px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Intensity</dt>
-              <dd className="flex gap-1.5" aria-label={`Intensity ${card.intensity} of 5`}>
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <span key={i} className={`h-[9px] w-[9px] rounded-full ${i <= card.intensity ? 'bg-[#E625A6]' : 'border border-[#C3C9D2]'}`} />
-                ))}
-              </dd>
-            </div>
-          </dl>
-
-          {/* ---- artwork ---- */}
-          <div className="relative mt-2.5 aspect-[4/3] overflow-hidden rounded-[11px] bg-[linear-gradient(155deg,#28323F,#0E141C)] ring-1 ring-black/15">
-            <div className="absolute inset-0 grid place-items-center">
-              <Icon name="dumbbell" size={42} className="text-white/12" />
-            </div>
-            <p className="absolute bottom-2.5 left-0 right-0 text-center text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">
-              {card.equipment}
-            </p>
-            {/* family ribbon */}
-            <div className="absolute -left-[54px] top-[30px] w-[200px] -rotate-45 overflow-hidden bg-[linear-gradient(90deg,#D9B84E,#F0DA9A)] py-[5px] text-center shadow">
-              <span className="block truncate px-6 text-[10px] font-bold uppercase tracking-[.1em] text-[#4A3608]">
-                {card.family.length > 15 ? card.family : `${card.family} Family`}
-              </span>
-            </div>
-            {locked && (
-              <div className="absolute inset-0 grid place-items-center bg-black/55 backdrop-blur-[2px]">
-                <Icon name="lock" size={26} className="text-white/80" />
-              </div>
-            )}
-          </div>
-
-          {/* ---- body + brain ---- */}
-          {card.body.length > 0 && <TagBand kind="body" tags={card.body} />}
-          {card.brain.length > 0 && <TagBand kind="brain" tags={card.brain} />}
-
-          {/* Stephan's cards carry a written line here. Until that copy exists
-            * for all 105, state what is true from the sheet instead of
-            * inventing a quote per card. */}
-          <p className="mt-2.5 text-center text-[12px] italic leading-snug text-[#6B7280]">
-            {card.movement} &middot; {card.modality} &middot; {card.impact} impact
-          </p>
-
-          {/* ---- footer ---- */}
-          <div className="mt-3 flex items-center justify-between border-t border-dashed border-[#D3D9E1] pt-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[.13em] text-[#9AA2AE]">
-              Movement Series · No. {String(card.no).padStart(3, '0')}/{total}
-            </p>
-            <Icon
-              name="sparkle"
-              size={12}
-              className={card.rarity === 'legendary' ? 'text-[#C79A2C]' : card.rarity === 'rare' ? 'text-[#2F7FBF]' : 'text-[#B8912F]'}
-            />
-          </div>
+      {/* ---- name, and what it is worth ---- */}
+      <div className="mt-3 flex items-start justify-between gap-4">
+        <h3 className="font-display text-[1.5rem] leading-none tracking-[0.015em]">
+          {card.name.toUpperCase()}
+        </h3>
+        {/* Rarity is subordinate to the name: two display-size items side by
+          * side is not a hierarchy. It reads as a spec value, in its accent. */}
+        <div className="flex-none text-right">
+          <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${r.ink}`}>{r.label}</p>
+          <p className="mt-1.5 font-mono text-[14px] tabular-nums text-fuchsia">{card.points} pts</p>
         </div>
       </div>
-    </div>
+
+      {/* ---- the spec ---- */}
+      <dl className="mt-4 space-y-2.5">
+        <div className="flex items-baseline gap-3">
+          <dt className="w-[72px] flex-none text-[10px] font-semibold uppercase tracking-[0.2em] text-faint">
+            Category
+          </dt>
+          <dd className="flex flex-wrap gap-1.5">
+            {card.regions.map((region) => (
+              <span key={region} className="rounded-full border border-border px-2.5 py-0.5 text-[12px] text-dim">
+                {region}
+              </span>
+            ))}
+          </dd>
+        </div>
+        <div className="flex items-center gap-3">
+          <dt className="w-[72px] flex-none text-[10px] font-semibold uppercase tracking-[0.2em] text-faint">
+            Intensity
+          </dt>
+          <dd className="flex gap-1.5" aria-label={`Intensity ${card.intensity} of 5`}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <span key={i} className={`h-1.5 w-6 rounded-full ${i <= card.intensity ? 'bg-cyan' : 'bg-border'}`} />
+            ))}
+          </dd>
+        </div>
+      </dl>
+
+      {/* ---- artwork ---- */}
+      <figure className="relative mt-4 aspect-[4/3] overflow-hidden rounded-[18px] border border-border bg-background">
+        <div className="absolute inset-0 grid place-items-center">
+          <Icon name="dumbbell" size={40} className="text-faint opacity-25" />
+        </div>
+        <figcaption className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 px-3 py-2.5">
+          <span className="truncate rounded-full border border-border bg-card px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-dim">
+            {card.family}
+          </span>
+          <span className="flex-none text-[12px] text-faint">{card.equipment}</span>
+        </figcaption>
+        {locked && (
+          <div className="absolute inset-0 grid place-items-center bg-background/70">
+            <Icon name="lock" size={24} className="text-faint" />
+          </div>
+        )}
+      </figure>
+
+      {/* ---- what it trains. Cyan is physical, violet is cognitive. ---- */}
+      <div className="mt-4 space-y-2.5">
+        {card.body.length > 0 && <Qualities kind="body" tags={card.body} />}
+        {card.brain.length > 0 && <Qualities kind="brain" tags={card.brain} />}
+      </div>
+
+      {/* ---- provenance ---- */}
+      <div className="mt-4 flex items-baseline justify-between gap-3 border-t border-border pt-3">
+        <p className="text-[12px] text-faint">
+          {card.movement} · {card.modality} · {card.impact} impact
+        </p>
+        <p className="flex-none font-mono text-[10px] tabular-nums uppercase tracking-[0.2em] text-faint">
+          {String(card.no).padStart(3, '0')}/{total}
+        </p>
+      </div>
+    </article>
   );
 }
 
-function TagBand({ kind, tags }: { kind: 'body' | 'brain'; tags: string[] }) {
-  const body = kind === 'body';
+function Qualities({ kind, tags }: { kind: 'body' | 'brain'; tags: string[] }) {
+  const ink = kind === 'body' ? 'text-cyan' : 'text-violet';
   return (
-    <div className={`relative mt-2.5 rounded-[11px] px-2.5 pb-2 pt-3.5 ${body ? 'bg-[#FDEEF0] ring-1 ring-[#F3C9CF]' : 'bg-[#F1EDFE] ring-1 ring-[#D8CDF7]'}`}>
-      <span className={`absolute -top-[9px] left-2.5 rounded-full px-2 py-[2px] text-[10px] font-bold uppercase tracking-[.14em] text-white ${body ? 'bg-[#E1273E]' : 'bg-[#7B3FE4]'}`}>
-        {kind}
-      </span>
-      <div className="flex flex-wrap gap-1.5">
+    <div className="flex items-baseline gap-3">
+      <p className={`w-[72px] flex-none text-[10px] font-semibold uppercase tracking-[0.2em] ${ink}`}>{kind}</p>
+      <ul className="flex flex-wrap gap-1.5">
         {tags.map((t) => (
-          <span key={t} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-[3px] text-[12px] font-semibold text-[#26313D] shadow-sm">
-            <Icon name={TAG_ICON[t] ?? 'sparkle'} size={11} className={body ? 'text-[#E1273E]' : 'text-[#7B3FE4]'} />
+          <li
+            key={t}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-[12px] text-dim"
+          >
+            <Icon name={TAG_ICON[t] ?? 'sparkle'} size={11} className={ink} />
             {t}
-          </span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

@@ -31,17 +31,25 @@ function ctaLabel(s: IntakeState): string {
 
 export default function QuestionnaireStep({
   member,
+  saved = null,
   onSubmit,
   onBack,
   busy = false,
 }: {
   member: DemoMember;
+  /** A returning member's answers on file — prefills the five screens so they
+   *  confirm rather than re-answer. Null for anyone new. */
+  saved?: QuestionnaireAnswers | null;
   onSubmit: (answers: QuestionnaireAnswers) => void;
   onBack: () => void;
   /** Plan generation is in flight: hold the CTA and say so. */
   busy?: boolean;
 }) {
-  const [state, dispatch] = useReducer(reducer, { age: member.baseline?.actualAge }, initialState);
+  const [state, dispatch] = useReducer(
+    reducer,
+    { age: member.baseline?.actualAge, saved },
+    initialState,
+  );
   const def = SCREENS[state.screen];
   const Body = def.Body;
 

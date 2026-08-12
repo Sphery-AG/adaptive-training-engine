@@ -134,15 +134,12 @@ export default function Home() {
   function start(m: DemoMember, g: GymConcept) {
     setMember(m);
     setGym(g);
-    // A returning member already has a setup on file, so signing in drops them
-    // straight at the gym welcome rather than re-asking what they want. Only a
-    // member without one (guest) goes through intake.
-    if (m.currentPlan) {
-      void generateFor(m, g, m.currentPlan, 'add', 'gymWelcome');
-    } else {
-      setIntakeMode('add');
-      setStep('questionnaire');
-    }
+    // One route for everybody: questionnaire, plan, gym welcome, today. The
+    // welcome screen is a step in arriving, not a shortcut past the intake.
+    // A returning member's answers are already on file, so their five screens
+    // come prefilled and the pass is a confirmation rather than an interview.
+    setIntakeMode('add');
+    setStep('questionnaire');
   }
 
   async function submit(a: QuestionnaireAnswers) {
@@ -217,6 +214,7 @@ export default function Home() {
     return (
       <QuestionnaireStep
         member={member}
+        saved={intakeMode === 'add' && !active ? member.currentPlan : null}
         onSubmit={submit}
         onBack={() => setStep(active ? 'gymWelcome' : 'welcome')}
         busy={generating}

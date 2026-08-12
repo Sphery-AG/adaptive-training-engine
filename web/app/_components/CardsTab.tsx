@@ -23,10 +23,12 @@ import type { PlanView } from '@/lib/stub/engine';
 import ExerciseCard from './ExerciseCard';
 import { Icon } from './icons';
 
+/** Same escalation as the card: Common is neutral, Rare takes cyan, Legendary
+ *  fuchsia. Rarity is an earned state, so it reads as light, not as metal. */
 const RARITY_TONE: Record<CardRarity, { dot: string; text: string; ring: string }> = {
-  common: { dot: 'bg-[#B8912F]', text: 'text-[#C9A24A]', ring: 'ring-[#B8912F]/40' },
-  rare: { dot: 'bg-[#7FC4EE]', text: 'text-[#7FC4EE]', ring: 'ring-[#7FC4EE]/40' },
-  legendary: { dot: 'bg-[#E8C766]', text: 'text-[#E8C766]', ring: 'ring-[#E8C766]/50' },
+  common: { dot: 'bg-faint', text: 'text-dim', ring: 'ring-border' },
+  rare: { dot: 'bg-cyan', text: 'text-cyan', ring: 'ring-cyan/40' },
+  legendary: { dot: 'bg-fuchsia', text: 'text-fuchsia', ring: 'ring-fuchsia/50' },
 };
 
 const LEVEL_LABEL: Record<CardLevel, string> = {
@@ -80,7 +82,7 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
   return (
     <div className="space-y-5">
       {/* ---- what you have ---- */}
-      <section className="rounded-[26px] border border-border bg-card p-5">
+      <section>
         <div className="flex items-end justify-between">
           <div>
             <p className="eyebrow text-dim">Collection</p>
@@ -95,26 +97,24 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
           </div>
         </div>
 
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-void">
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-border">
           <div
             className="h-full rounded-full bg-[linear-gradient(90deg,var(--orbit-cyan),var(--orbit-fuchsia))]"
             style={{ width: `${(have / TOTAL_CARDS) * 100}%` }}
           />
         </div>
 
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
           {(['common', 'rare', 'legendary'] as CardRarity[]).map((r) => {
             const t = byRarity(r);
             return (
-              <div key={r} className="rounded-2xl border border-border bg-void px-3 py-2.5">
-                <div className="flex items-center gap-1.5">
-                  <span className={`h-2 w-2 rounded-full ${RARITY_TONE[r].dot}`} />
-                  <span className="text-[11px] font-semibold capitalize text-dim">{r}</span>
-                </div>
-                <p className={`mt-1 text-lg leading-none tabular ${RARITY_TONE[r].text}`}>
-                  {t.have}<span className="text-xs text-faint"> / {t.all}</span>
-                </p>
-              </div>
+              <p key={r} className="flex items-center gap-2 text-[12px]">
+                <span className={`h-1.5 w-1.5 rounded-full ${RARITY_TONE[r].dot}`} />
+                <span className="capitalize text-faint">{r}</span>
+                <span className={`font-mono tabular-nums ${RARITY_TONE[r].text}`}>
+                  {t.have}/{t.all}
+                </span>
+              </p>
             );
           })}
         </div>
@@ -125,10 +125,12 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
       </section>
 
       {/* ---- the sets ---- */}
-      <section className="space-y-3">
-        <h2 className="eyebrow px-1 text-dim">Sets · by exercise family</h2>
+      <section className="space-y-3.5">
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-faint">
+          Sets · by exercise family
+        </h2>
         {families.map(({ family, cards, have: h }) => (
-          <div key={family} className="rounded-2xl border border-border bg-card p-3.5">
+          <div key={family} className="border-t border-border pt-3.5">
             <div className="flex items-center justify-between gap-3">
               <p className="truncate text-sm font-semibold">{family}</p>
               <span className={`flex-none text-xs tabular ${h === cards.length ? 'text-mint' : 'text-faint'}`}>
@@ -145,7 +147,7 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
                       type="button"
                       onClick={() => setOpen(c)}
                       className={`flex w-full flex-col gap-1 rounded-xl px-2.5 py-2 text-left ring-1 transition-colors ${
-                        got ? `bg-void ${RARITY_TONE[c.rarity].ring}` : 'bg-void/40 ring-border'
+                        got ? `bg-card ${RARITY_TONE[c.rarity].ring}` : 'ring-border'
                       }`}
                     >
                       <span className="flex items-center gap-1">
@@ -155,7 +157,7 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
                         </span>
                         {!got && <Icon name="lock" size={9} className="ml-auto flex-none text-faint" />}
                       </span>
-                      <span className={`truncate text-xs ${got ? 'text-hi' : 'text-faint'}`}>{c.name}</span>
+                      <span className={`truncate text-[12px] ${got ? '' : 'text-faint'}`}>{c.name}</span>
                     </button>
                   </li>
                 );

@@ -265,8 +265,8 @@ function TodayTab({
       {member.baseline && (
         <TrainingProgressChart
           member={member}
-          bodyScore={metric(e.metrics, 'body_score')?.value ?? 60}
-          brainScore={metric(e.metrics, 'brain_score')?.value ?? 55}
+          bodyScore={metric(e.metrics, 'body_trend')?.value ?? 60}
+          brainScore={metric(e.metrics, 'brain_trend')?.value ?? 55}
         />
       )}
 

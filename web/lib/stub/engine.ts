@@ -452,10 +452,8 @@ function tierFor(fitnessScore: number): LeagueTier {
 function metricsFor(est: Estimate, weeklyLoadMinutes = 0): MetricSnapshot[] {
   const fromHistory = est.source === 'session_history';
   return [
-    { key: 'body_score', label: 'Body Score', value: est.bodyScore, unit: '/100', polarity: 'higher_is_better', caption: fromHistory ? `From ${est.workoutsAnalyzed} workouts` : 'Estimated from your questionnaire', measuredAt: now() },
-    { key: 'brain_score', label: 'Brain Score', value: est.brainScore, unit: '/100', polarity: 'higher_is_better', caption: fromHistory ? 'From your reaction timing' : 'Baseline, sharpens as you train', measuredAt: now() },
-    { key: 'body_age', label: 'Body Age', value: est.bodyAge, unit: 'yrs', polarity: 'lower_is_better', caption: `You're ${est.actualAge}. ${est.bodyAge < est.actualAge ? `Training ${est.actualAge - est.bodyAge} yrs younger.` : est.bodyAge > est.actualAge ? `${est.bodyAge - est.actualAge} yrs to catch up.` : 'Right on your age.'}`, measuredAt: now() },
-    { key: 'brain_age', label: 'Brain Age', value: est.brainAge, unit: 'yrs', polarity: 'lower_is_better', caption: fromHistory ? 'From your Brain Speed benchmark' : 'Baseline, take a Brain Speed test to refine', measuredAt: now() },
+    { key: 'body_trend', label: 'Body', value: est.bodyScore, unit: '', polarity: 'higher_is_better', caption: fromHistory ? `From ${est.workoutsAnalyzed} workouts` : 'Estimated from your questionnaire', measuredAt: now() },
+    { key: 'brain_trend', label: 'Brain', value: est.brainScore, unit: '', polarity: 'higher_is_better', caption: fromHistory ? 'From your reaction timing' : 'Baseline, sharpens as you train', measuredAt: now() },
     { key: 'weekly_load', label: 'This Week', value: weeklyLoadMinutes, unit: 'min', polarity: 'higher_is_better', caption: 'Minutes trained so far', measuredAt: now() },
     { key: 'hr_recovery', label: 'HR Recovery', value: Math.round(12 + est.fitnessScore * 0.15), unit: 'bpm', polarity: 'higher_is_better', caption: fromHistory ? 'Beats recovered in the minute after effort' : 'Estimated, sharpens with belt data', measuredAt: now() },
   ];
@@ -713,9 +711,8 @@ export function completeSession(
     m.measuredAt = now();
     metricChanges.push(m);
   };
-  bump('body_score', +1, 'Movement accuracy trending up');
+  bump('body_trend', +1, 'Body trending up');
   bump('hr_recovery', +1, 'Faster recovery after this session');
-  bump('body_age', -0.3, 'Trending younger');
   const load = e.metrics.find((x) => x.key === 'weekly_load');
   if (load) bump('weekly_load', view.resolved[0].sessions[0]?.session.durationMinutes ?? 30, 'Added this session');
 

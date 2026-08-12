@@ -21,14 +21,16 @@
 // ---------------------------------------------------------------------------
 
 export const METRIC_KEYS = [
-  /** Movement quality 0–100: share of exercises performed correctly (Sphery bodyScore). */
-  'body_score',
-  /** Cognitive sharpness 0–100: share of reactions timed right under load (Sphery brainScore). */
-  'brain_score',
-  /** Intuitive, motivational "you train like a 34-year-old". NOT clinical. */
-  'body_age',
-  /** Cognitive analogue from the monthly Brain Speed benchmark. */
-  'brain_age',
+  /**
+   * The Body line on Progress: the body qualities of the exercises actually
+   * performed, weighted by time. A TREND, not a score — the team dropped
+   * "Body Score 84/100" because a number out of 100 is not something a member
+   * can act on, and a line that climbs is. Matches metric_definitions in
+   * engine/db/schema.sql.
+   */
+  'body_trend',
+  /** The Brain line, same rule. */
+  'brain_trend',
   /** Training volume this week (minutes in target zones), Strava-style. */
   'weekly_load',
   /** Beats recovered in the first minute after hard effort — the defensible longevity KPI. */
@@ -52,8 +54,9 @@ export interface MetricSnapshot {
   unit: string;
   polarity: MetricPolarity;
   /**
-   * Signed change since the previous snapshot. A body_age delta of -2 means
-   * "2 years younger" — the UI uses `polarity` to know that's an improvement.
+   * Signed change since the previous snapshot. The UI uses `polarity` to know
+   * which direction counts as an improvement, since HR recovery going up and
+   * resting heart rate going down are both good.
    * Undefined for the first ever snapshot.
    */
   delta?: number;

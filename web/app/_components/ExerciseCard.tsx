@@ -3,6 +3,14 @@
 /**
  * A collectible exercise card, built to Stephan's design (Aug 2026).
  *
+ * ON THE DESIGN SYSTEM: the type sits on DESIGN.md's four steps below body
+ * (caption 14, micro 12, label 10) — a card is dense, but density is not a
+ * reason to invent half-steps. The COLOURS deliberately do not: brass, silver
+ * and gold frames on a dotted paper ground are a printed object, and pulling
+ * them onto the app's dark orbit palette would make it stop reading as a card.
+ * That departure is intentional and worth recording in DESIGN.md rather than
+ * leaving as drift.
+ *
  * The card is a view of the catalogue, not a second copy of it: every element
  * on it already exists as data on the exercise.
  *
@@ -84,9 +92,9 @@ export default function ExerciseCard({
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             {rungs.map((r, i) => (
               <span key={r} className="flex items-center gap-1.5">
-                {i > 0 && <span aria-hidden className="text-[11px] text-[#9AA2AE]">&rarr;</span>}
+                {i > 0 && <span aria-hidden className="text-[12px] text-[#9AA2AE]">&rarr;</span>}
                 <span
-                  className={`rounded-full px-2 py-[3px] text-[9.5px] font-bold uppercase tracking-[.14em] ${
+                  className={`rounded-full px-2 py-[3px] text-[10px] font-bold uppercase tracking-[.14em] ${
                     r === card.level
                       ? card.rarity === 'legendary'
                         ? 'bg-[#E8C766] text-[#4A3608]'
@@ -110,9 +118,9 @@ export default function ExerciseCard({
             </div>
             <div className="flex flex-none items-center gap-2">
               <div className="text-right">
-                <p className="text-[8.5px] font-semibold uppercase tracking-[.16em] text-[#8A93A0]">Rarity</p>
-                <p className={`text-[15px] font-bold uppercase leading-tight ${skin.rarity}`}>{skin.label}</p>
-                <p className="text-[13px] font-bold leading-tight text-[#D6249F]">{card.points} PTS</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[.16em] text-[#8A93A0]">Rarity</p>
+                <p className={`text-[14px] font-bold uppercase leading-tight ${skin.rarity}`}>{skin.label}</p>
+                <p className="text-[14px] font-bold leading-tight text-[#D6249F]">{card.points} PTS</p>
               </div>
               <span className={`h-8 w-8 flex-none rounded-full ring-1 ring-black/10 ${skin.gem}`} />
             </div>
@@ -121,15 +129,15 @@ export default function ExerciseCard({
           {/* ---- category + intensity ---- */}
           <dl className="mt-2.5 space-y-1.5">
             <div className="flex items-center gap-2">
-              <dt className="w-[68px] flex-none text-[9px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Category</dt>
+              <dt className="w-[68px] flex-none text-[10px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Category</dt>
               <dd className="flex flex-wrap gap-1.5">
                 {card.regions.map((r) => (
-                  <span key={r} className="rounded-full bg-[#EDF1F6] px-2.5 py-[3px] text-[11px] font-semibold text-[#26313D]">{r}</span>
+                  <span key={r} className="rounded-full bg-[#EDF1F6] px-2.5 py-[3px] text-[12px] font-semibold text-[#26313D]">{r}</span>
                 ))}
               </dd>
             </div>
             <div className="flex items-center gap-2">
-              <dt className="w-[68px] flex-none text-[9px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Intensity</dt>
+              <dt className="w-[68px] flex-none text-[10px] font-bold uppercase tracking-[.14em] text-[#8A93A0]">Intensity</dt>
               <dd className="flex gap-1.5" aria-label={`Intensity ${card.intensity} of 5`}>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <span key={i} className={`h-[9px] w-[9px] rounded-full ${i <= card.intensity ? 'bg-[#E625A6]' : 'border border-[#C3C9D2]'}`} />
@@ -143,12 +151,12 @@ export default function ExerciseCard({
             <div className="absolute inset-0 grid place-items-center">
               <Icon name="dumbbell" size={42} className="text-white/12" />
             </div>
-            <p className="absolute bottom-2.5 left-0 right-0 text-center text-[10.5px] font-semibold uppercase tracking-[.16em] text-white/45">
+            <p className="absolute bottom-2.5 left-0 right-0 text-center text-[10px] font-semibold uppercase tracking-[.16em] text-white/45">
               {card.equipment}
             </p>
             {/* family ribbon */}
             <div className="absolute -left-[54px] top-[30px] w-[200px] -rotate-45 overflow-hidden bg-[linear-gradient(90deg,#D9B84E,#F0DA9A)] py-[5px] text-center shadow">
-              <span className="block truncate px-6 text-[8.5px] font-bold uppercase tracking-[.1em] text-[#4A3608]">
+              <span className="block truncate px-6 text-[10px] font-bold uppercase tracking-[.1em] text-[#4A3608]">
                 {card.family.length > 15 ? card.family : `${card.family} Family`}
               </span>
             </div>
@@ -166,13 +174,13 @@ export default function ExerciseCard({
           {/* Stephan's cards carry a written line here. Until that copy exists
             * for all 105, state what is true from the sheet instead of
             * inventing a quote per card. */}
-          <p className="mt-2.5 text-center text-[11px] italic leading-snug text-[#6B7280]">
+          <p className="mt-2.5 text-center text-[12px] italic leading-snug text-[#6B7280]">
             {card.movement} &middot; {card.modality} &middot; {card.impact} impact
           </p>
 
           {/* ---- footer ---- */}
           <div className="mt-3 flex items-center justify-between border-t border-dashed border-[#D3D9E1] pt-2">
-            <p className="text-[9.5px] font-semibold uppercase tracking-[.13em] text-[#9AA2AE]">
+            <p className="text-[10px] font-semibold uppercase tracking-[.13em] text-[#9AA2AE]">
               Movement Series · No. {String(card.no).padStart(3, '0')}/{total}
             </p>
             <Icon
@@ -191,12 +199,12 @@ function TagBand({ kind, tags }: { kind: 'body' | 'brain'; tags: string[] }) {
   const body = kind === 'body';
   return (
     <div className={`relative mt-2.5 rounded-[11px] px-2.5 pb-2 pt-3.5 ${body ? 'bg-[#FDEEF0] ring-1 ring-[#F3C9CF]' : 'bg-[#F1EDFE] ring-1 ring-[#D8CDF7]'}`}>
-      <span className={`absolute -top-[9px] left-2.5 rounded-full px-2 py-[2px] text-[9px] font-bold uppercase tracking-[.14em] text-white ${body ? 'bg-[#E1273E]' : 'bg-[#7B3FE4]'}`}>
+      <span className={`absolute -top-[9px] left-2.5 rounded-full px-2 py-[2px] text-[10px] font-bold uppercase tracking-[.14em] text-white ${body ? 'bg-[#E1273E]' : 'bg-[#7B3FE4]'}`}>
         {kind}
       </span>
       <div className="flex flex-wrap gap-1.5">
         {tags.map((t) => (
-          <span key={t} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-[3px] text-[11px] font-semibold text-[#26313D] shadow-sm">
+          <span key={t} className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-[3px] text-[12px] font-semibold text-[#26313D] shadow-sm">
             <Icon name={TAG_ICON[t] ?? 'sparkle'} size={11} className={body ? 'text-[#E1273E]' : 'text-[#7B3FE4]'} />
             {t}
           </span>

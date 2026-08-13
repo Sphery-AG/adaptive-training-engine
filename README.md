@@ -143,8 +143,12 @@ Hobby plan caps deployments at 100/day **account-wide**, not per project.
 ## Documentation
 
 Full index with what is current and what is a historical record:
-[`docs/README.md`](docs/README.md). The four to read first:
+[`docs/README.md`](docs/README.md). The five to read first:
 
+- `docs/code-orientation.md` — **start here if you are picking up the code.**
+  How a plan actually gets made, what to read in what order, and the traps.
+- `docs/limitations.md` — everything that is not what it looks like, in one
+  place.
 - `docs/model-summary.md` — the model, its features, and its limitations.
   Acceptance criterion 6, and the honest account of where the numbers are
   thin.

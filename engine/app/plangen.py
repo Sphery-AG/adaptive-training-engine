@@ -2,8 +2,21 @@
 
 Ported from the web stub (web/lib/stub/engine.ts) on Aug 6 so that ALL
 generation logic lives in the engine, per the architecture. The web app now
-POSTs {sphery_user_id?, answers, gym} and renders what comes back; the stub
-remains only as the offline fallback for the Vercel demo.
+POSTs {sphery_user_id?, answers, gym} and renders what comes back.
+
+!! PARITY WARNING — read before editing !!
+The port is not finished, and this file has a hand-maintained twin in
+web/lib/stub/engine.ts. Nothing enforces that they agree: no shared fixtures,
+no parity test, no generated types. Change a rule here and the TypeScript copy
+keeps the old behaviour while every test in this repo still passes.
+
+The twin is not merely an offline fallback. Every member-facing screen resolves
+circuits with the TypeScript copy even when the plan itself came from this
+file, so circuit_for() below is exercised ONLY by tests. The tested
+implementation is not the one that runs.
+
+So: change one, change the other, and diff the output by hand. Closing this
+properly is gap 0 in docs/path-to-production.md. See docs/code-orientation.md.
 
 Rules carried over 1:1 (validated against the stub in the browser):
 - Estimate: real history via estimate.py when a sphery_user_id is given and

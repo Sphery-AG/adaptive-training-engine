@@ -13,6 +13,8 @@ The system as it stands. These are maintained and should stay true.
 
 | Document | What it is |
 |---|---|
+| [`code-orientation.md`](code-orientation.md) | **Start here if you are picking up the code.** How a plan actually gets made, which files to read in what order, and the three things that will bite you. |
+| [`limitations.md`](limitations.md) | Everything in the system that is not what it looks like: what is simulated, what the export cannot tell us, what is untested, what nobody qualified has reviewed. |
 | [`model-summary.md`](model-summary.md) | The model, its features, its limitations. Acceptance criterion 6, and the honest account of where the numbers are thin. |
 | [`path-to-production.md`](path-to-production.md) | What separates the demo from a product members can use, sequenced, plus the Aug 26 kiosk demo slice. |
 | [`plan-app-database-design.md`](plan-app-database-design.md) | The plan app's own database — PostgreSQL 16, 58 tables. Explains `engine/db/schema.sql`, which is the source of truth. |

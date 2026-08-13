@@ -1,9 +1,15 @@
 """FastAPI surface for the engine.
 
-Endpoints match the architecture in CLAUDE.md. /generate-plan emits a valid
-CreateTrainingRequest for a member (step 1); /estimate returns a real fitness
-estimate computed from the member's export history (step 3, Aug 6).
-/update-plan remains a placeholder.
+Endpoints match the architecture in CLAUDE.md.
+
+- GET  /estimate/{user_id}      real fitness estimate from export history.
+- POST /generate-plan           the primary endpoint: full 8-week plan.
+- POST /update-plan             folds a completed session back in (adapt.py).
+- GET  /generate-plan/{user_id} kiosk CreateTrainingRequest. Still the step-1
+                                path: it copies a reference Darmstadt circle
+                                and places the member in it rather than
+                                exporting their generated plan. Shape correct,
+                                content not theirs. See docs/limitations.md.
 
     uvicorn app.main:app --reload
     GET http://localhost:8000/estimate/535

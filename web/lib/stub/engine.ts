@@ -16,6 +16,21 @@
  *
  * Equipment-agnostic by construction: the plan is written in *stimulus*, then
  * resolved onto whatever stations the chosen gym actually has.
+ *
+ * !! PARITY WARNING — read before editing !!
+ * This file has a hand-maintained twin in engine/app/plangen.py, ported from
+ * here on Aug 6. Nothing enforces that they agree: no shared fixtures, no
+ * parity test, no generated types. Change a rule here and the Python copy
+ * keeps the old behaviour, and no test anywhere will fail.
+ *
+ * This is also not "just the fallback". `circuitFor` below runs on every
+ * member-facing screen even when the plan came back from Python, so this file
+ * is the implementation that actually ships — and `web/` has no test runner,
+ * so it is entirely unverified.
+ *
+ * So: change one, change the other, and diff the output by hand. Closing this
+ * properly is gap 0 in docs/path-to-production.md. See
+ * docs/code-orientation.md.
  */
 
 import type {

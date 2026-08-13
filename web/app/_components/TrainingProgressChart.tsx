@@ -12,8 +12,9 @@
  * shape to review, not a measurement. The badge says so on screen; see
  * lib/stub/progress-series.ts.
  *
- * Colors: Body keeps the cyan and Brain the violet they already wear on the
- * Progress tab, because color follows the entity. That pair separates at
+ * Colors: Body keeps cyan and Brain violet under the Fixed Orbit Rule
+ * (DESIGN.md) — cyan is physical, violet cognitive — because color follows
+ * the entity, not the surface it lands on. That pair separates at
  * ΔE 24 under deutan/protan/tritan simulation and clears 3:1 on this surface.
  * Misses use the amber caution token and carry a glyph as well as a color, so
  * the state never rests on hue alone.

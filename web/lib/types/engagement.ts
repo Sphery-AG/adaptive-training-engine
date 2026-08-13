@@ -22,8 +22,9 @@
 
 export const METRIC_KEYS = [
   /**
-   * The Body line on Progress: the body qualities of the exercises actually
-   * performed, weighted by time. A TREND, not a score — the team dropped
+   * The Body line on the Today trend chart: the body qualities of the
+   * exercises actually performed, weighted by time. A TREND, not a score —
+   * the team dropped
    * "Body Score 84/100" because a number out of 100 is not something a member
    * can act on, and a line that climbs is. Matches metric_definitions in
    * engine/db/schema.sql.

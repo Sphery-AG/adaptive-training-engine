@@ -248,7 +248,8 @@ function TodayTab({
   const next = current?.rs;
   // Today serves the session in front of you: is today even a training day,
   // what exactly are you about to do, and what did last time change. Weekly
-  // progress still lives on Plan, quests on Circle, metrics on Progress.
+  // progress still lives on Plan and quests on Circle; the body/brain trend
+  // moved up here when the Progress tab became Cards.
   const upNext = allDone ? undefined : flat[completedCount + 1];
   const circuit = next ? circuitFor(view, next) : [];
   // A rest day demotes the session but never hides it: the plan is a

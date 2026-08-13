@@ -1,5 +1,11 @@
 # Database design: the plan app's own DB + the Sphery bridge
 
+> **Superseded — kept for the reasoning, not the tables.** The schema that was
+> actually written is `engine/db/schema.sql` (PostgreSQL 16, 58 tables), and
+> `docs/plan-app-database-design.md` is the document to read and to argue with.
+> The principles below still hold and are why the built schema looks the way it
+> does; the 14-table table list does not. Do not build against this file.
+
 Draft, Aug 5. Written as the working proposal for the Michel meeting this week
 and as the blueprint for the engine's persistence layer (E3). Everything below
 is designed against the static July 2026 export first; nothing assumes live

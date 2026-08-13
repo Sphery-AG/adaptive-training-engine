@@ -3,13 +3,17 @@
 > **Superseded, July 21 2026. Do not send this to Michel.**
 >
 > The schema proposal in this document has been replaced. Current sources of
-> truth:
+> truth, as of Aug 13 2026:
 >
-> - **`engine/db/sphery_additions.sql`** — the DDL Michel runs (12 tables,
->   9 columns), dry-run against a copy of the live schema.
-> - **`engine/db/sphery_seed.sql`** — the gym floors.
-> - **`docs/michel-what-to-add.md`** — the reasoning behind each addition.
-> - **`docs/michel-meeting-prep.md`** — the meeting agenda.
+> - **`engine/db/schema.sql`** — the plan app's own database, PostgreSQL 16,
+>   58 tables. Verified by `engine/db/verify_schema.sql`.
+> - **`engine/db/seed_gyms.sql`** — the gym floors.
+> - **`docs/plan-app-database-design.md`** — the reasoning behind the schema.
+>
+> The intermediate replacements this banner originally named
+> (`sphery_additions.sql`, `sphery_seed.sql`, `docs/michel-what-to-add.md`)
+> were themselves superseded on Aug 11, when Michel chose a separate store over
+> adding tables to the Sphery database. The first two files no longer exist.
 >
 > What changed, and why:
 >

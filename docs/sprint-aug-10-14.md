@@ -2,6 +2,14 @@
 
 **Anthony McCrovitz · Aug 10, 2026 · for the sprint planning session with Stephan**
 
+> **Read this as a record of the plan, not a description of the app.** It was
+> written on Monday. For what the week actually produced, see the status table
+> in the root `README.md`. In short: Mon–Tue landed (the schema is written and
+> verified), Wed did not (sign-in is still user-select), and Thu landed only
+> halfway (the web app is hosted on Vercel against its stub; the engine is not
+> hosted). The card collection replaced the XP/progress page, which was not
+> planned on Monday at all.
+
 ## Working today, on real data
 
 The full member journey runs end to end, locally, against the July 2026 export.
@@ -18,14 +26,16 @@ The full member journey runs end to end, locally, against the July 2026 export.
 - **Kiosk-compatible output.** The engine emits the exact
   `CreateTrainingRequest` JSON the NEXUS kiosk accepts, verified against the
   live dev API.
-- **One command runs the whole system** on a fresh machine. 27 tests pass.
+- **One command runs the whole system** on a fresh machine. 35 tests pass.
 
 
 ## Designed, not built
 
 - **Production database.** 14 tables, written against the real export,
   covering members, plans, plan changes, session logs, feedback, points,
-  quests, and rewards. `docs/database-schema.md`.
+  quests, and rewards. `docs/database-schema.md`. *(Superseded during the week:
+  the built schema is 58 tables — `engine/db/schema.sql`,
+  `docs/plan-app-database-design.md`.)*
 - **Real sign-in.** One call to the kiosk API (`auth/sign_in`). Verified
   working against the live dev system on Aug 6. Not wired in because there is
   nowhere to persist an account yet.

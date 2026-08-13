@@ -215,9 +215,10 @@ Once the journey is finished, make it true on real data.
 
 ### E3, own the backend and database  (not started — gap 1 in path-to-production)
 - [ ] Stand up my own database for user-generated data (answers, plans, estimates, feedback,
-  quests), hosted on a managed service I control. Schema designed in
-  `docs/database-schema.md` (14 tables), not built. Everything is browser state today; a
-  refresh loses it.
+  quests), hosted on a managed service I control. Schema is written and verified —
+  `engine/db/schema.sql` (PostgreSQL 16, 58 tables), explained in
+  `docs/plan-app-database-design.md` — but nothing is provisioned and the engine does not
+  read or write it. Everything is browser state today; a refresh loses it.
 - [ ] Sphery source data stays read-only. Aug 6 finding: the public kiosk API may serve as
   the read bridge, so production may never need direct DB access.
 - [ ] Engine is the only thing that talks to both stores. App never touches a DB.

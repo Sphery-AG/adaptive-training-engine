@@ -17,7 +17,7 @@ A complete working demo of the product, end to end, on real data:
   explanation (HR vs target zone, perceived effort, or real score trend).
 - Output is kiosk-compatible: the exact CreateTrainingRequest JSON the NEXUS
   kiosk accepts, verified against the live dev API. Caveat below.
-- One command runs the whole system on a fresh machine; 27 tests pass, 3
+- One command runs the whole system on a fresh machine; 35 tests pass, 3
   DB-backed tests skip cleanly when MySQL is down.
 
 What it is not yet: a standalone product. The gaps below are known, scoped,
@@ -49,12 +49,18 @@ Effort: a day or two. Worth doing before persistence, since everything after
 this builds on which side owns the rules.
 
 ### 1. Nothing is persisted
-Plans, completed sessions, XP, and streaks live in the browser. A refresh
-loses them. The production schema (docs/database-schema.md, 14 tables) is
-designed but not built. This is the first real post-demo task because the
-next two gaps depend on it.
+Plans, completed sessions, points, and streaks live in the browser. A refresh
+loses them. This is the first real post-demo task because the next two gaps
+depend on it.
 
-Answer: build the app's own database from the designed schema.
+Update, Aug 12: the schema itself is no longer the blocker. `engine/db/schema.sql`
+is a runnable PostgreSQL 16 schema — 58 tables, verified by
+`engine/db/verify_schema.sql` — and `docs/plan-app-database-design.md` explains
+it. What remains is provisioning a Postgres instance and moving the engine's
+state off browser storage onto it.
+
+Answer: provision the database and write the engine's persistence layer against
+the existing schema.
 Effort: about a week.
 
 ### 2. Login is simulated
@@ -76,7 +82,7 @@ health data needs the GDPR and data-agreement question answered first.
 
 Answer: host the engine plus the app's own DB; for Sphery member data,
 prefer the public kiosk API as the read bridge so production may never need
-direct DB access at all (docs/database-schema.md, Aug 6 findings).
+direct DB access at all (docs/plan-app-database-design.md, Aug 6 findings).
 Effort: technical part is days; the data-agreement part is a business
 decision (Stephan, Michel, Helen).
 

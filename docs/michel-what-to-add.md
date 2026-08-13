@@ -1,9 +1,25 @@
 # What to add to the Sphery database to support the training plan app
 
+> **Superseded by Michel's decision, Aug 11 2026.** This document proposes that
+> everything live in one database — his — with twelve new tables added to the
+> Sphery schema. Michel chose the opposite: the plan app keeps its **own**
+> store, and identity is linked by SSO rather than a foreign key. The built
+> answer is `engine/db/schema.sql` and `docs/plan-app-database-design.md`.
+>
+> Kept because the analysis is still the reference for what already exists in
+> the Sphery schema and must not be duplicated — `Progresses`/`Achievements` as
+> Sphery's own EXP, `TrainingFeeds` as the unified activity feed,
+> `RaceConfigs.hrTarget` as HR-target precedent. The SQL it refers to
+> (`engine/db/sphery_additions.sql`) was retired and is no longer in the repo.
+>
+> The one ask that survives and is still open: **Circle Trainings V2 does not
+> send per-zone durations**, which is why circle sessions can only earn flat
+> completion points.
+
 **For Michel · Aug 10, 2026**
-The SQL is in `engine/db/sphery_additions.sql`. Every column type and table name
-below was checked against the July 2026 export, and the whole file was applied
-to a copy of the real schema to confirm it runs and the foreign keys resolve.
+Every column type and table name below was checked against the July 2026
+export, and the whole file was applied to a copy of the real schema to confirm
+it runs and the foreign keys resolve.
 
 ## The shape
 

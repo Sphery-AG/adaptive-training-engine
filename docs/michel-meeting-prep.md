@@ -1,8 +1,14 @@
 # Michel meeting: agenda
 
+> **Historical — this meeting happened on Aug 11 2026.** The agenda below asked
+> Michel to host the plan app's tables in the Sphery database. He decided
+> against it: separate store, identity linked by SSO. He also shared Data
+> Schema V2.6 and the circle-training endpoints (`docs/kiosk-api.md`), which
+> made V2 the integration target. For the outcome rather than the ask, read
+> `docs/plan-app-database-design.md`.
+
 **Prep for the database session, week of Aug 10.**
-Bring: `docs/michel-what-to-add.md` (the reasoning) and
-`engine/db/sphery_additions.sql` (the SQL he runs).
+Bring: `docs/michel-what-to-add.md` (the reasoning).
 
 Michel owns the Sphery database and is a contractor, so his time is the scarce
 thing. Arrive with the homework done, get four decisions, leave with a date.

@@ -54,13 +54,21 @@ type Stage = 'preview' | 'live' | 'summary' | 'effort' | 'adapting' | 'adapted';
 /** How long the recalculating beat holds, even if the engine answers sooner. */
 const ADAPTING_MS = 1200;
 
-/** 1 = too easy, 5 = too hard, matching the engine's scale exactly. */
-const EFFORT_CHOICES: { id: PerceivedEffort; label: string; hint: string }[] = [
-  { id: 1, label: 'Too easy', hint: 'I had plenty left' },
-  { id: 2, label: 'Comfortable', hint: 'I could have pushed harder' },
-  { id: 3, label: 'Right', hint: 'Hard, but I held it' },
-  { id: 4, label: 'Tough', hint: 'I was close to my limit' },
-  { id: 5, label: 'Too hard', hint: 'I was hanging on' },
+/**
+ * 1 = too easy, 5 = too hard, matching the engine's scale exactly.
+ *
+ * Colour-coded on Max's note (Aug 13), reusing the ZONE_BAR ramp above rather
+ * than inventing a second palette. The member has just spent the session
+ * watching those exact colours climb from green to pink, so the same ramp on
+ * the same 1-5 scale needs no learning: "Tough" is orange here because zone 4
+ * was orange a minute ago.
+ */
+const EFFORT_CHOICES: { id: PerceivedEffort; label: string; hint: string; tone: string }[] = [
+  { id: 1, label: 'Too easy', hint: 'I had plenty left', tone: '#64748b' },
+  { id: 2, label: 'Comfortable', hint: 'I could have pushed harder', tone: '#34d399' },
+  { id: 3, label: 'Right', hint: 'Hard, but I held it', tone: '#facc15' },
+  { id: 4, label: 'Tough', hint: 'I was close to my limit', tone: '#f97316' },
+  { id: 5, label: 'Too hard', hint: 'I was hanging on', tone: '#ec4899' },
 ];
 
 export default function LiveSession({
@@ -409,9 +417,13 @@ function EffortStep({ points, onChoose }: { points: number; onChoose: (e?: Perce
             key={c.id}
             type="button"
             onClick={() => onChoose(c.id)}
-            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-border bg-card px-5 py-4 text-left transition-colors hover:border-[var(--border-strong)]"
+            style={{ borderColor: `color-mix(in oklab, ${c.tone} 45%, transparent)` }}
+            className="flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border bg-card py-4 pl-0 pr-5 text-left transition-colors hover:border-[var(--border-strong)]"
           >
-            <span>
+            {/* The ramp itself, as a spine down the row. Reads as a scale at a
+              * glance without tinting the label text, which has to stay legible. */}
+            <span aria-hidden="true" className="h-11 w-1 shrink-0 rounded-r" style={{ background: c.tone }} />
+            <span className="min-w-0 flex-1 pl-4">
               <span className="block text-lg font-semibold">{c.label}</span>
               <span className="mt-0.5 block text-sm leading-snug text-dim">{c.hint}</span>
             </span>

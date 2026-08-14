@@ -28,6 +28,7 @@ import type { PlanSummary } from '@/lib/plan-summary';
 import { Icon, type IconName } from './icons';
 import PlanSwitcher from './PlanSwitcher';
 import TrainingProgressChart from './TrainingProgressChart';
+import KioskActivity from './KioskActivity';
 import CardsTab from './CardsTab';
 import { RingGauge } from './RingGauge';
 import { Sparkline } from './Sparkline';
@@ -256,6 +257,9 @@ function TodayTab({
   // recommendation, and a member who turns up on an off day can still train.
   const rest = restDay(availableDays);
   const last = completedCount > 0 ? flat[completedCount - 1] : undefined;
+  // The session brief (why this session, and the stations) starts closed: Today
+  // opens on what you are about to do, not on the reasoning behind it.
+  const [briefOpen, setBriefOpen] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -270,6 +274,11 @@ function TodayTab({
           brainScore={metric(e.metrics, 'brain_trend')?.value ?? 55}
         />
       )}
+
+      {/* Live kiosk reads. Sits directly under the sample-data chart on
+        * purpose: it is the one card on this screen backed by the real NEXUS
+        * API, and the contrast is the honest version of where the app stands. */}
+      <KioskActivity />
 
       {/* Rest day. The tab is called Today and used to ignore what day it
         * actually was, telling people to train on their own days off. */}
@@ -305,13 +314,27 @@ function TodayTab({
             </span>
           </div>
           <h2 className="mt-4 text-4xl leading-[0.95]">{STIMULUS_LABELS[next.session.stimulusType]}</h2>
-          <p className="mt-3 max-w-[16rem] text-sm leading-relaxed text-dim">{next.session.rationale}</p>
           <div className="mt-6 flex items-end justify-between">
             <div>
               <div className="text-2xl text-fuchsia">{next.session.durationMinutes} MIN</div>
-              <div className="eyebrow mt-1 text-faint">
-                {CIRCUIT_NAMES[view.plan.goal]} · {circuitFor(view, next).length} stations
-              </div>
+              {/* Max, Aug 13: "maybe the up next could be shorter, just Cardio
+                * Endurance 45 Min and play?" — and the circuit card that used to
+                * sit below this said the same thing twice. Both the why and the
+                * stations now live one tap down, so the default screen is the
+                * session and the button, and nothing was actually taken away. */}
+              <button
+                type="button"
+                onClick={() => setBriefOpen((v) => !v)}
+                aria-expanded={briefOpen}
+                className="eyebrow mt-1 flex items-center gap-1 text-faint transition-colors hover:text-dim"
+              >
+                {CIRCUIT_NAMES[view.plan.goal]} · {circuit.length} stations
+                <Icon
+                  name="chevron-left"
+                  size={12}
+                  className={`transition-transform ${briefOpen ? 'rotate-90' : '-rotate-90'}`}
+                />
+              </button>
             </div>
             <button
               type="button"
@@ -323,31 +346,28 @@ function TodayTab({
               <Icon name="play" size={26} />
             </button>
           </div>
-        </div>
-      )}
 
-      {/* The circuit itself. The hero counts the stations; this names them,
-        * so the brief you need before starting is not two taps away on Plan. */}
-      {next && circuit.length > 0 && (
-        <Card>
-          <div className="flex items-baseline justify-between">
-            <p className="eyebrow text-accent">{CIRCUIT_NAMES[view.plan.goal]}</p>
-            <span className="text-xs text-faint tabular">{next.session.durationMinutes} min total</span>
-          </div>
-          <ol className="mt-3 space-y-2">
-            {circuit.map((leg, i) => (
-              <li key={i} className="flex items-center gap-2.5">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xs font-semibold text-dim tabular">
-                  {i + 1}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-sm">{leg.station.name}</span>
-                <span className="shrink-0 text-xs text-faint tabular">
-                  zone {leg.targetZone} · {leg.minutes} min
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Card>
+          {briefOpen && (
+            <div className="mt-5 border-t border-[var(--accent-soft2)] pt-4">
+              <p className="text-sm leading-relaxed text-dim">{next.session.rationale}</p>
+              {circuit.length > 0 && (
+                <ol className="mt-4 space-y-2">
+                  {circuit.map((leg, i) => (
+                    <li key={i} className="flex items-center gap-2.5">
+                      <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white/[0.06] text-xs font-semibold text-dim tabular">
+                        {i + 1}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm">{leg.station.name}</span>
+                      <span className="shrink-0 text-xs text-faint tabular">
+                        zone {leg.targetZone} · {leg.minutes} min
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Streak + up next, one slim row */}
@@ -453,6 +473,8 @@ function PlanTab({
   // Sessions collapse to one line each; at most one is expanded at a time
   // (Max's review, Aug 6: the full list read as too busy).
   const [openSession, setOpenSession] = useState<string | null>(null);
+  // The two explainer boxes, now one (i) on the progress card they describe.
+  const [planInfoOpen, setPlanInfoOpen] = useState(false);
   const sel = weekMeta[selectedIdx];
   const selStatus: 'done' | 'current' | 'projected' =
     sel.end <= completedCount ? 'done' : selectedIdx === currentIdx ? 'current' : 'projected';
@@ -492,7 +514,23 @@ function PlanTab({
       <Card>
         <div className="flex items-center justify-between">
           <p className="eyebrow text-accent">Plan progress</p>
-          <span className="text-xs font-semibold text-accent tabular">{pct}% complete</span>
+          <span className="flex items-center gap-2">
+            <span className="text-xs font-semibold text-accent tabular">{pct}% complete</span>
+            {/* Max, Aug 13: "this page is super busy... maybe these 2 boxes
+              * could be hidden as Infos?" Both boxes explained this card, so
+              * they became this card's (i) rather than two more blocks under it. */}
+            <button
+              type="button"
+              onClick={() => setPlanInfoOpen((v) => !v)}
+              aria-expanded={planInfoOpen}
+              aria-label="How this plan works"
+              className={`grid h-7 w-7 place-items-center rounded-full transition-colors ${
+                planInfoOpen ? 'bg-[var(--accent-soft)] text-accent' : 'text-faint hover:text-dim'
+              }`}
+            >
+              <Icon name="info" size={14} />
+            </button>
+          </span>
         </div>
         <Bar className="mt-2.5" fraction={completedCount / Math.max(1, totalSessions)} color="var(--orbit-cyan)" />
         <div className="mt-3 flex gap-1.5">
@@ -516,32 +554,36 @@ function PlanTab({
             ? `Plan complete, all ${totalSessions} sessions logged. The retest sets up your next plan.`
             : `Week ${weekMeta[currentIdx].wk.weekNumber} of ${resolved.length} · ${completedCount} of ${totalSessions} sessions done`}
         </p>
-      </Card>
 
-      <div className="flex items-start gap-2 rounded-xl border border-[var(--border)] bg-[var(--accent-soft)] px-3.5 py-2.5">
-        <Icon name="refresh" size={14} className="mt-0.5 shrink-0 text-accent" />
-        <p className="text-sm leading-snug text-dim">
-          Your current week is set. The weeks ahead are projections and re-tune from how you actually perform.
-        </p>
-      </div>
-
-      <Card>
-        <div className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <Icon name="info" size={15} className="text-accent" />
-            <span className="eyebrow text-dim">What this plan is based on</span>
-          </span>
-          <LevelPill level={confidenceLevel(plan.fitnessEstimate.confidence)} />
-        </div>
-        {/* Same fact as the reveal screen, said the same way. "Cold start" and
-         * "analyzed workouts" were the model's vocabulary, not the member's. */}
-        <p className="mt-2 text-xs text-faint">
-          {plan.fitnessEstimate.source === 'questionnaire_only' || plan.fitnessEstimate.workoutsAnalyzed === 0
-            ? 'What you told us at setup. It sharpens after your first session.'
-            : `Your last ${plan.fitnessEstimate.workoutsAnalyzed} training ${
-                plan.fitnessEstimate.workoutsAnalyzed === 1 ? 'session' : 'sessions'
-              }: heart rate, scores, and how fast you recover.`}
-        </p>
+        {planInfoOpen && (
+          <div className="mt-4 space-y-3 border-t border-border pt-3.5">
+            <div className="flex items-start gap-2">
+              <Icon name="refresh" size={14} className="mt-0.5 shrink-0 text-accent" />
+              <p className="text-xs leading-relaxed text-dim">
+                Your current week is set. The weeks ahead are projections and re-tune from how you
+                actually perform.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <Icon name="info" size={14} className="mt-0.5 shrink-0 text-accent" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="eyebrow text-dim">What this plan is based on</span>
+                  <LevelPill level={confidenceLevel(plan.fitnessEstimate.confidence)} />
+                </div>
+                {/* Same fact as the reveal screen, said the same way. "Cold start" and
+                 * "analyzed workouts" were the model's vocabulary, not the member's. */}
+                <p className="mt-1.5 text-xs leading-relaxed text-faint">
+                  {plan.fitnessEstimate.source === 'questionnaire_only' || plan.fitnessEstimate.workoutsAnalyzed === 0
+                    ? 'What you told us at setup. It sharpens after your first session.'
+                    : `Your last ${plan.fitnessEstimate.workoutsAnalyzed} training ${
+                        plan.fitnessEstimate.workoutsAnalyzed === 1 ? 'session' : 'sessions'
+                      }: heart rate, scores, and how fast you recover.`}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Selected week detail, week picked via the dropdown on the title */}

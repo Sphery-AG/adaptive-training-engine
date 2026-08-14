@@ -50,6 +50,9 @@ function unlockedCodes(sessionCount: number): Set<string> {
 
 export default function CardsTab({ view, completedCount }: { view: PlanView; completedCount: number }) {
   const [open, setOpen] = useState<Card | null>(null);
+  // Which family folder is open. Null is the folder grid, which is the default:
+  // the tab opens on the collection, not on one set inside it.
+  const [openFamily, setOpenFamily] = useState<string | null>(null);
   const still = useReducedMotion();
 
   const sessions = view.engagement.streak.longestWeeks * 3 + completedCount * 4;
@@ -65,6 +68,11 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
       .map(([family, cards]) => ({ family, cards, have: cards.filter((c) => unlocked.has(c.code)).length }))
       .sort((a, b) => b.have / b.cards.length - a.have / a.cards.length || a.family.localeCompare(b.family));
   }, [unlocked]);
+
+  const openFamilyCards = useMemo(
+    () => (openFamily ? CARDS.filter((c) => c.family === openFamily) : []),
+    [openFamily],
+  );
 
   const have = CARDS.filter((c) => unlocked.has(c.code)).length;
   const points = CARDS.filter((c) => unlocked.has(c.code)).reduce((s, c) => s + c.points, 0);
@@ -105,34 +113,78 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
           <li><span className="text-accent">2.</span> Every family is a set. Work up Foundation, Progress, Mastery to finish it.</li>
           <li><span className="text-accent">3.</span> Rarer cards are worth more. Mastery cards are Legendary.</li>
         </ol>
-        <p className="mt-2.5 text-[12px] text-faint">Tap any card to open it.</p>
+        <p className="mt-2.5 text-[12px] text-faint">Tap a set to see its cards.</p>
       </section>
 
-      {/* ---- the sets ---- */}
-      <section className="space-y-5">
-        {families.map(({ family, cards, have: h }, fi) => (
-          <div key={family}>
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="truncate text-[14px] font-semibold">{family}</h3>
-              <span className={`flex-none font-mono text-[12px] tabular-nums ${h === cards.length ? 'text-mint' : 'text-faint'}`}>
-                {h === cards.length && <Icon name="check" size={11} className="mr-1 inline" />}
-                {h}/{cards.length}
-              </span>
-            </div>
-            <ul className="mt-2.5 grid grid-cols-3 gap-2.5">
-              {cards.map((c, i) => (
-                <MiniCard
-                  key={c.code}
-                  card={c}
-                  got={unlocked.has(c.code)}
-                  delay={still ? 0 : Math.min(fi * 0.015 + i * 0.03, 0.35)}
-                  onOpen={() => setOpen(c)}
-                />
-              ))}
-            </ul>
-          </div>
-        ))}
+      {/* ---- the sets, as folders ----
+        * Max, Aug 13: "eventually there will be a lot of cards and you would
+        * need to scroll forever. Maybe we could arrange family groups that can
+        * be clicked and open up like the apps on a phone." Every family used to
+        * render every card inline, so 105 cards meant 105 tiles on one screen.
+        * Now a family is one tile showing what is inside, and opens on tap. */}
+      <section>
+        <ul className="grid grid-cols-3 gap-3">
+          {families.map(({ family, cards, have: h }, fi) => (
+            <FolderTile
+              key={family}
+              family={family}
+              cards={cards}
+              have={h}
+              unlocked={unlocked}
+              delay={still ? 0 : Math.min(fi * 0.03, 0.3)}
+              onOpen={() => setOpenFamily(family)}
+            />
+          ))}
+        </ul>
       </section>
+
+      {/* ---- inside a folder ---- */}
+      <AnimatePresence>
+        {openFamily && (
+          <motion.div
+            className="fixed inset-0 z-40 overflow-y-auto bg-black/85 p-4 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${openFamily} cards`}
+            onClick={() => setOpenFamily(null)}
+          >
+            <div className="mx-auto w-full max-w-[340px] py-4" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-baseline justify-between gap-3">
+                <h3 className="truncate font-display text-2xl">{openFamily}</h3>
+                <span
+                  className={`flex-none font-mono text-[12px] tabular-nums ${
+                    openFamilyCards.every((c) => unlocked.has(c.code)) ? 'text-mint' : 'text-faint'
+                  }`}
+                >
+                  {openFamilyCards.filter((c) => unlocked.has(c.code)).length}/{openFamilyCards.length}
+                </span>
+              </div>
+              <ul className="mt-4 grid grid-cols-3 gap-2.5">
+                {openFamilyCards.map((c, i) => (
+                  <MiniCard
+                    key={c.code}
+                    card={c}
+                    got={unlocked.has(c.code)}
+                    delay={still ? 0 : i * 0.04}
+                    onOpen={() => setOpen(c)}
+                  />
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => setOpenFamily(null)}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card py-3.5 text-sm font-semibold"
+              >
+                <Icon name="close" size={15} />
+                Close
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ---- the card ---- */}
       <AnimatePresence>
@@ -169,6 +221,76 @@ export default function CardsTab({ view, completedCount }: { view: PlanView; com
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+/**
+ * A family, as a folder: the phone-homescreen pattern Max sketched.
+ *
+ * The four thumbnails are the first four cards in the set, in their real metal
+ * when owned and face-down when not, so the tile itself shows how far along the
+ * set is before the count is read. Families with fewer than four cards leave
+ * the remaining slots empty rather than padding, which keeps every tile the
+ * same size on the grid.
+ */
+function FolderTile({
+  family, cards, have, unlocked, delay, onOpen,
+}: {
+  family: string;
+  cards: Card[];
+  have: number;
+  unlocked: Set<string>;
+  delay: number;
+  onOpen: () => void;
+}) {
+  const still = useReducedMotion();
+  const complete = have === cards.length;
+
+  return (
+    <motion.li
+      initial={still ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={still ? { duration: 0 } : { delay, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <motion.button
+        type="button"
+        onClick={onOpen}
+        whileHover={still ? undefined : { y: -4 }}
+        whileTap={still ? undefined : { scale: 0.95 }}
+        aria-label={`${family} set, ${have} of ${cards.length} collected`}
+        className="block w-full text-left"
+      >
+        <span
+          className={`grid aspect-square grid-cols-2 grid-rows-2 gap-1 rounded-[16px] border p-1.5 ${
+            complete ? 'border-mint/40 bg-mint/[0.07]' : 'border-border bg-white/[0.04]'
+          }`}
+        >
+          {Array.from({ length: 4 }, (_, i) => {
+            const c = cards[i];
+            if (!c) return <span key={i} className="rounded-[5px] bg-white/[0.02]" />;
+            const got = unlocked.has(c.code);
+            return (
+              <span
+                key={c.code}
+                className="rounded-[5px]"
+                style={{
+                  background: got
+                    ? MINI[c.rarity].frame
+                    : 'repeating-linear-gradient(45deg,#141B24,#141B24 4px,#1B2530 4px,#1B2530 8px)',
+                }}
+              />
+            );
+          })}
+        </span>
+        <span className="mt-1.5 block truncate text-[12px] font-semibold leading-tight">{family}</span>
+        <span
+          className={`block font-mono text-[11px] tabular-nums ${complete ? 'text-mint' : 'text-faint'}`}
+        >
+          {complete && <Icon name="check" size={10} className="mr-0.5 inline" />}
+          {have}/{cards.length}
+        </span>
+      </motion.button>
+    </motion.li>
   );
 }
 

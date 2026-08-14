@@ -12,7 +12,6 @@ import type { PlanView, ResolvedSession, AdaptationResult } from '@/lib/stub/eng
 import { circuitFor, CIRCUIT_NAMES, MONTHLY_TARGET, monthlyPointsFor } from '@/lib/stub/engine';
 import type {
   AdaptiveUpdate,
-  LeagueTier,
   MetricKey,
   MetricSnapshot,
   PerceivedEffort,
@@ -798,53 +797,79 @@ const TIER_COLORS: Record<(typeof LEAGUE_TIERS)[number], { main: string; dark: s
   diamond: { main: '#b9e0ff', dark: '#5b8fc9' },
 };
 
+const CREST_RIM = 'M40 2.5 72.5 21.25 72.5 58.75 40 77.5 7.5 58.75 7.5 21.25Z';
+const CREST_FACE = 'M40 11 65 25.5 65 54.5 40 69 15 54.5 15 25.5Z';
+
 /**
- * The rank medal itself: twin ribbons and a gradient coin with a star,
- * colored per tier. Gradient ids are keyed by tier; the same tier rendered
- * twice shares an identical def, so collisions are harmless.
+ * The rank crest: a forged hexagonal plate in the tier metal, carrying one
+ * chevron per tier reached. It replaced a ribboned coin-and-star medal, which
+ * read as clip art and — worse — said nothing about which rank it was; the
+ * chevron count means you can read "3 of 5" off the badge alone, at 34px in
+ * the ladder or at 100px in the ring. Gradient ids are keyed by tier; the same
+ * tier rendered twice shares an identical def, so collisions are harmless.
  */
-function TierMedal({ tier, size = 56, dimmed = false }: { tier: (typeof LEAGUE_TIERS)[number]; size?: number; dimmed?: boolean }) {
+function TierCrest({ tier, size = 56, dimmed = false }: { tier: (typeof LEAGUE_TIERS)[number]; size?: number; dimmed?: boolean }) {
   const c = TIER_COLORS[tier];
+  const chevrons = LEAGUE_TIERS.indexOf(tier) + 1;
+  // Stack of `chevrons` nested Vs, centered vertically on the face.
+  const top = 40 - ((chevrons - 1) * 8.5) / 2 - 6;
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 80 80"
       aria-hidden="true"
-      style={dimmed ? { filter: 'grayscale(1)', opacity: 0.35 } : { filter: `drop-shadow(0 0 ${Math.round(size / 4)}px ${c.main}66)` }}
+      style={dimmed ? { filter: 'grayscale(1)', opacity: 0.32 } : { filter: `drop-shadow(0 0 ${Math.round(size / 5)}px ${c.main}55)` }}
     >
       <defs>
-        <linearGradient id={`medal-face-${tier}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.9" />
-          <stop offset="0.35" stopColor={c.main} />
-          <stop offset="1" stopColor={c.dark} />
-        </linearGradient>
-        <linearGradient id={`medal-ribbon-${tier}`} x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={`crest-rim-${tier}`} x1="0.2" y1="0" x2="0.8" y2="1">
           <stop offset="0" stopColor={c.main} />
           <stop offset="1" stopColor={c.dark} />
         </linearGradient>
+        <linearGradient id={`crest-face-${tier}`} x1="0.15" y1="0" x2="0.85" y2="1">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="0.42" stopColor={c.main} />
+          <stop offset="1" stopColor={c.dark} />
+        </linearGradient>
+        <clipPath id={`crest-clip-${tier}`}>
+          <path d={CREST_FACE} />
+        </clipPath>
       </defs>
-      {/* Ribbons, notched at the top */}
-      <path d="M25 0h14l5 28-14 8-10-30z" fill={`url(#medal-ribbon-${tier})`} />
-      <path d="M55 0H41l-5 28 14 8 10-30z" fill={`url(#medal-ribbon-${tier})`} opacity="0.72" />
-      <path d="M25 0h14l-3.5 7h-8z" fill={c.dark} opacity="0.55" />
-      <path d="M55 0H41l3.5 7h8z" fill={c.dark} opacity="0.55" />
-      {/* Coin */}
-      <circle cx="40" cy="52" r="26" fill={`url(#medal-face-${tier})`} stroke={c.dark} strokeWidth="2.5" />
-      <circle cx="40" cy="52" r="19.5" fill="none" stroke={c.dark} strokeWidth="1.6" opacity="0.6" />
-      <circle cx="40" cy="52" r="22.5" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.35" />
-      {/* Star */}
-      <path
-        d="M40 39l3.9 7.9 8.7 1.3-6.3 6.1 1.5 8.7-7.8-4.1-7.8 4.1 1.5-8.7-6.3-6.1 8.7-1.3z"
-        fill={c.dark}
-        stroke="#ffffff"
-        strokeWidth="0.8"
-        strokeOpacity="0.5"
-      />
-      {/* Shine */}
-      <ellipse cx="31" cy="43" rx="9" ry="5" fill="#ffffff" opacity="0.3" transform="rotate(-28 31 43)" />
+      <path d={CREST_RIM} fill={`url(#crest-rim-${tier})`} />
+      <path d={CREST_FACE} fill={`url(#crest-face-${tier})`} />
+      {/* Specular sweep, clipped to the face so the plate reads as metal */}
+      <g clipPath={`url(#crest-clip-${tier})`}>
+        <path d="M-10 34 L90 -6 L90 6 L-10 46Z" fill="#ffffff" opacity="0.28" />
+      </g>
+      <path d={CREST_FACE} fill="none" stroke="#ffffff" strokeOpacity="0.3" strokeWidth="1" />
+      {Array.from({ length: chevrons }, (_, i) => {
+        const y = top + i * 8.5;
+        return (
+          <path
+            key={i}
+            d={`M28 ${y + 12} 40 ${y} 52 ${y + 12}`}
+            fill="none"
+            stroke={c.dark}
+            strokeWidth="4.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        );
+      })}
     </svg>
   );
+}
+
+/**
+ * Days left in the current calendar month. The monthly target is a real
+ * deadline (see RankDetail: miss the month and you drop a rank), and a
+ * deadline the member cannot see is not one. Safe to read the clock during
+ * render for the same reason `todayWeekdayId` is: this screen is only ever
+ * reached by clicking through, so it never runs during SSR.
+ */
+function daysLeftInMonth(): number {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate();
 }
 
 function CircleTab({ view, completedCount }: { view: PlanView; completedCount: number }) {
@@ -852,60 +877,103 @@ function CircleTab({ view, completedCount }: { view: PlanView; completedCount: n
   const l = e.league;
   const [showRank, setShowRank] = useState(false);
   const monthly = monthlyPointsFor(e);
+  const metal = TIER_COLORS[l.tier].main;
+  const nextTier = LEAGUE_TIERS[LEAGUE_TIERS.indexOf(l.tier) + 1];
+  const secured = monthly >= MONTHLY_TARGET;
+  const week = e.streak.weekProgress;
+
+  // Nearest-to-done first, finished last. Effort accelerates as the gap to a
+  // goal shrinks, so the quest a member can still close this week is the one
+  // worth putting at the top; a finished quest is a receipt, not a task.
+  const quests = [...e.quests].sort((a, b) => {
+    if (a.completed !== b.completed) return a.completed ? 1 : -1;
+    return b.progress.current / Math.max(1, b.progress.target) - a.progress.current / Math.max(1, a.progress.target);
+  });
+  const questsDone = e.quests.filter((q) => q.completed).length;
+  // Only the next rung of the reward ladder pulls; the ones behind it are
+  // already won and the ones beyond it are too far to feel real.
+  const nextReward = e.wallet.catalog.find((r) => r.status === 'locked');
 
   return (
-    <div className="space-y-5">
-      {/* Monthly rank ring — tap for the full ladder */}
-      <button
-        type="button"
-        onClick={() => setShowRank(true)}
-        aria-label="Open rank details"
-        className="grid w-full place-items-center rounded-[26px] border border-border bg-card py-7 transition-colors hover:border-fuchsia/40"
-      >
-        <p className="eyebrow text-fuchsia">Monthly Rank</p>
-        <div className="mt-3">
+    <div className="space-y-4">
+      {/* The rank, at the size of the thing it is. Everything else on this tab
+        * exists to move this one number. */}
+      <div className="overflow-hidden rounded-[26px] border border-border bg-card">
+        <button
+          type="button"
+          onClick={() => setShowRank(true)}
+          aria-label="Rank details"
+          className="grid w-full place-items-center px-4 pt-5 pb-4 transition-colors hover:bg-white/[0.03]"
+          style={{ background: `radial-gradient(88% 58% at 50% 0%, ${metal}14, transparent 72%)` }}
+        >
           {/* The ring is the member's own metal: filling it is what moves the
             * rank, so it should not be lit in an accent that means nothing. */}
           <RingGauge
+            size={190}
+            stroke={9}
             fraction={monthly / MONTHLY_TARGET}
-            color={TIER_COLORS[l.tier].main}
+            color={metal}
             label="Monthly rank progress"
             valueText={`${l.tier} rank, ${monthly} of ${MONTHLY_TARGET} points this month`}
           >
             <div className="grid place-items-center">
-              <TierMedal tier={l.tier} size={92} />
-              <div className="mt-1.5 text-2xl uppercase leading-none tracking-wide" style={{ color: TIER_COLORS[l.tier].main }}>
+              <TierCrest tier={l.tier} size={100} />
+              <div className="font-display mt-2 text-3xl uppercase leading-none" style={{ color: metal }}>
                 {l.tier}
-              </div>
-              <div className="eyebrow mt-1.5" style={{ color: TIER_COLORS[l.tier].main }}>
-                {monthly >= MONTHLY_TARGET ? 'rank secured' : `${monthly} / ${MONTHLY_TARGET} pts`}
               </div>
             </div>
           </RingGauge>
-        </div>
-        <span
-          className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold"
-          style={{ color: TIER_COLORS[l.tier].main, borderColor: `${TIER_COLORS[l.tier].main}4d` }}
-        >
-          <Icon name="trophy" size={14} />
-          {e.streak.weekProgress.completed} / {e.streak.weekProgress.target} sessions this week
-        </span>
-        <span className="mt-2 inline-flex items-center gap-1 text-xs text-faint">
-          Rank details <Icon name="chevron-left" size={11} className="rotate-180" />
-        </span>
-      </button>
 
-      {/* Active quests */}
+          {/* Distance to the boundary, never the fraction — the ring already
+            * draws the fraction, and "280 to go" is what actually moves people. */}
+          <p className="font-display mt-3.5 text-[2.25rem] uppercase leading-none">
+            {secured ? 'Rank secured' : <><span className="tabular">{(MONTHLY_TARGET - monthly).toLocaleString()}</span> pts to go</>}
+          </p>
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-faint">
+            {!secured && nextTier && (
+              <>
+                <TierCrest tier={nextTier} size={15} dimmed />
+                <span className="capitalize">{nextTier}</span>
+                <span aria-hidden="true">·</span>
+              </>
+            )}
+            <span>
+              <span className="tabular">{daysLeftInMonth()}</span> days left this month
+            </span>
+          </p>
+          <span className="mt-2.5 inline-flex items-center gap-1 text-xs font-medium text-dim">
+            Rank details <Icon name="chevron-left" size={11} className="rotate-180" />
+          </span>
+        </button>
+
+        {/* The week, as slots rather than a sentence: a gap you can see is a
+          * gap you close. Weeks, not days — nobody trains a gym daily. */}
+        <div className="flex items-center gap-4 border-t border-border px-4 py-3.5">
+          <span className="flex shrink-0 items-center gap-2">
+            <Icon name="flame" size={17} className="text-fuchsia" />
+            <span className="text-lg font-semibold leading-none tabular">{e.streak.currentWeeks}</span>
+            <span className="eyebrow text-faint">wk streak</span>
+          </span>
+          <SlotMeter
+            className="flex-1"
+            filled={week.completed}
+            total={week.target}
+            label={`${week.completed} of ${week.target} sessions this week`}
+          />
+        </div>
+      </div>
+
+      {/* Quests. The closest one gets the panel; the rest stay one line each. */}
       <Card>
         <div className="flex items-center justify-between">
-          <p className="eyebrow" style={{ color: TIER_COLORS[l.tier].main }}>
-            Active Quests
-          </p>
-          <span className="eyebrow text-faint">Near-term wins</span>
+          <p className="eyebrow text-fuchsia">Quests</p>
+          <span className="eyebrow text-faint tabular">
+            {questsDone} / {e.quests.length} done
+          </span>
         </div>
-        <ul className="mt-4 space-y-4">
-          {e.quests.map((q) => (
-            <QuestRow key={q.id} q={q} tier={l.tier} />
+        <ul className="mt-3 space-y-3">
+          {quests.map((q, i) => (
+            <QuestRow key={q.id} q={q} lead={i === 0 && !q.completed} />
           ))}
         </ul>
       </Card>
@@ -914,11 +982,11 @@ function CircleTab({ view, completedCount }: { view: PlanView; completedCount: n
       <Card>
         <div className="flex items-center justify-between">
           <p className="eyebrow text-mint">Gym Rewards</p>
-          <span className="eyebrow text-faint">Set by your gym</span>
+          <span className="eyebrow text-faint tabular">{e.wallet.pointsBalance} pts</span>
         </div>
         <ul className="mt-3 space-y-2.5">
           {e.wallet.catalog.map((r) => (
-            <RewardRow key={r.id} r={r} balance={e.wallet.pointsBalance} />
+            <RewardRow key={r.id} r={r} balance={e.wallet.pointsBalance} next={r.id === nextReward?.id} />
           ))}
         </ul>
       </Card>
@@ -994,8 +1062,8 @@ function RankDetail({ view, completedCount, onClose }: { view: PlanView; complet
             valueText={`${l.tier} rank, ${monthly} of ${MONTHLY_TARGET} points this month`}
           >
             <div className="grid place-items-center">
-              <TierMedal tier={l.tier} size={104} />
-              <div className="mt-1.5 text-2xl uppercase leading-none tracking-wide" style={{ color: TIER_COLORS[l.tier].main }}>
+              <TierCrest tier={l.tier} size={100} />
+              <div className="font-display mt-2 text-2xl uppercase leading-none" style={{ color: TIER_COLORS[l.tier].main }}>
                 {l.tier}
               </div>
               <div className="eyebrow mt-1.5 tabular" style={{ color: TIER_COLORS[l.tier].main }}>
@@ -1029,7 +1097,7 @@ function RankDetail({ view, completedCount, onClose }: { view: PlanView; complet
                       : undefined
                   }
                 >
-                  <TierMedal tier={t} size={34} dimmed={state === 'ahead'} />
+                  <TierCrest tier={t} size={34} dimmed={state === 'ahead'} />
                   <span className={`flex-1 text-sm font-semibold capitalize ${state === 'ahead' ? 'text-faint' : ''}`}>{t}</span>
                   {state === 'passed' && (
                     <span className="grid h-5 w-5 place-items-center rounded-full bg-mint/20 text-mint">
@@ -1069,17 +1137,10 @@ function RankDetail({ view, completedCount, onClose }: { view: PlanView; complet
 
         {/* Quests, tiered */}
         <Card className="mt-4">
-          <p className="eyebrow" style={{ color: TIER_COLORS[l.tier].main }}>
-            Your Quests
-          </p>
+          <p className="eyebrow text-fuchsia">Your Quests</p>
           <ul className="mt-4 space-y-4">
             {e.quests.map((q, i) => (
-              <QuestRow
-                key={q.id}
-                q={q}
-                tier={l.tier}
-                tierLabel={QUEST_TIER_LABELS[i % QUEST_TIER_LABELS.length]}
-              />
+              <QuestRow key={q.id} q={q} tierLabel={QUEST_TIER_LABELS[i % QUEST_TIER_LABELS.length]} />
             ))}
           </ul>
         </Card>
@@ -1177,42 +1238,97 @@ function EmblemTile({ em }: { em: { id: string; label: string; icon: IconName; e
 }
 
 /**
- * A quest carries the member's own rank color rather than a fixed accent, so
- * the whole habit loop reads as one thing: the ring you are filling, the rank
- * you hold, and the quests that move it are all the same metal.
+ * Progress as discrete slots rather than a continuous bar. Everything on this
+ * tab is counted in whole sessions, so "one more to go" should be countable at
+ * a glance instead of estimated off a bar's length. No glow: the rank ring is
+ * the one light source on this screen, and three lit meters under it turned the
+ * accent into decoration.
  */
-function QuestRow({ q, tier, tierLabel }: { q: Quest; tier: LeagueTier; tierLabel?: string }) {
-  const c = TIER_COLORS[tier].main;
+function SlotMeter({
+  filled,
+  total,
+  color = 'var(--orbit-fuchsia)',
+  label,
+  className = '',
+}: {
+  filled: number;
+  total: number;
+  color?: string;
+  /** Spoken progress. Without it the meter stays decorative. */
+  label?: string;
+  className?: string;
+}) {
+  const slots = Math.max(1, Math.min(total, 12));
   return (
-    <li className={q.completed ? 'opacity-55' : ''}>
-      {tierLabel && <p className="eyebrow mb-1.5 text-faint">{tierLabel}</p>}
-      <div className="flex items-center gap-3">
+    <div
+      className={`flex gap-1 ${className}`}
+      {...(label ? { role: 'img' as const, 'aria-label': label } : { 'aria-hidden': true })}
+    >
+      {Array.from({ length: slots }, (_, i) => (
         <span
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border"
-          style={{ color: c, borderColor: `${c}66` }}
-        >
-          <Icon name={q.completed ? 'check' : 'target'} size={16} />
+          key={i}
+          className="h-1.5 flex-1 rounded-full transition-colors duration-500"
+          style={{ background: i < filled ? color : 'var(--hair)' }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Quests are the habit loop, so they carry fuchsia (DESIGN.md's Fixed Orbit
+ * Rule) rather than the rank metal. They used to be tinted in the member's own
+ * metal, which read well in isolation and turned the whole tab one color once
+ * the rank ring, the quests and the bars all agreed. Metal now means rank and
+ * nothing else. `lead` is the one quest closest to done: it gets the panel, the
+ * other two stay a line apiece.
+ */
+function QuestRow({ q, lead = false, tierLabel }: { q: Quest; lead?: boolean; tierLabel?: string }) {
+  const tone = q.completed ? 'var(--orbit-mint)' : 'var(--orbit-fuchsia)';
+  return (
+    <li className={lead ? 'rounded-2xl border border-fuchsia/25 bg-fuchsia/[0.07] p-3.5' : 'px-3.5'}>
+      {tierLabel && <p className="eyebrow mb-1.5 text-faint">{tierLabel}</p>}
+      <div className="flex items-center gap-2.5">
+        {q.completed && <Icon name="check" size={14} className="shrink-0 text-mint" />}
+        <span className={`min-w-0 flex-1 truncate font-medium ${lead ? 'text-base' : 'text-sm'} ${q.completed ? 'text-faint' : ''}`}>
+          {q.title}
         </span>
-        <span className="flex-1 text-sm font-medium">{q.title}</span>
-        <span className="text-xs text-faint tabular">{q.progress.current}/{q.progress.target}</span>
+        <span className="shrink-0 text-xs text-faint tabular">
+          {q.progress.current}/{q.progress.target}
+        </span>
+        <span className={`shrink-0 text-xs font-semibold tabular ${q.completed ? 'text-mint' : 'text-fuchsia'}`}>
+          +{q.rewardPoints}
+        </span>
       </div>
-      <Bar className="mt-2.5" fraction={q.progress.current / Math.max(1, q.progress.target)} color={c} />
+      <SlotMeter
+        className="mt-2.5"
+        filled={q.progress.current}
+        total={q.progress.target}
+        color={tone}
+        label={`${q.title}: ${q.progress.current} of ${q.progress.target}`}
+      />
     </li>
   );
 }
 
-function RewardRow({ r, balance }: { r: Reward; balance: number }) {
+/**
+ * A reward row states the distance left, not just a lock: the number is the
+ * motivation. Only `next` — the cheapest one still locked — carries a bar,
+ * because it is the only rung close enough to pull.
+ */
+function RewardRow({ r, balance, next = false }: { r: Reward; balance: number; next?: boolean }) {
   const unlocked = r.status !== 'locked';
   const away = Math.max(0, r.pointsCost - balance);
   return (
-    <li className="flex items-center gap-3">
-      <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full border ${unlocked ? 'border-mint/40 bg-mint/10 text-mint' : 'border-border text-faint'}`}>
-        <Icon name={unlocked ? 'gift' : 'lock'} size={18} />
-      </span>
-      <span className={`flex-1 text-sm font-medium ${unlocked ? '' : 'text-dim'}`}>{r.label}</span>
-      <span className={`eyebrow ${unlocked ? 'text-mint' : 'text-faint'}`}>
-        {unlocked ? 'Unlocked' : away > 0 ? `${away} away` : `${r.pointsCost} pts`}
-      </span>
+    <li>
+      <div className="flex items-center gap-2.5">
+        <Icon name={unlocked ? 'gift' : 'lock'} size={15} className={`shrink-0 ${unlocked ? 'text-mint' : 'text-faint'}`} />
+        <span className={`min-w-0 flex-1 truncate text-sm ${unlocked ? '' : 'text-dim'}`}>{r.label}</span>
+        <span className={`shrink-0 text-xs tabular ${unlocked ? 'text-mint' : next ? 'text-white' : 'text-faint'}`}>
+          {unlocked ? 'Unlocked' : `${away} to go`}
+        </span>
+      </div>
+      {next && away > 0 && <Bar className="mt-2" fraction={balance / r.pointsCost} color="var(--orbit-mint)" />}
     </li>
   );
 }

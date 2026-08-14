@@ -72,12 +72,13 @@ def estimate(user_id: int) -> dict:
 
 
 @app.get("/progress-series/{user_id}")
-def progress_series(user_id: int, range: str = "year") -> dict:
-    """Training history bucketed over time, for the progress chart.
+def progress_series(user_id: int, range: str = "month") -> dict:
+    """Training history over time, for the progress chart.
 
-    range=week (7 days), month (30 days) or year (12 months). Periods with no
-    training come back with sessions=0 and null metrics, so the chart can draw
-    the gap instead of a line through it.
+    range=session (last 24 workouts), day (30 days), week (12 weeks) or month
+    (12 months) — the zoom levels of a stock chart. Periods with no training
+    come back with sessions=0 and null metrics, so the chart can draw the gap
+    instead of a line through it.
     """
     try:
         return series_for_member(user_id, range)  # type: ignore[arg-type]

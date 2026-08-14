@@ -4,8 +4,9 @@
 opposite: the same export, grouped into periods, so a chart can show how the
 numbers moved rather than where they landed.
 
-Three ranges, matching the drill-down Stephan asked for (Aug 14): a week as
-seven days, a month as thirty days, a year as twelve months.
+Four ranges, the zoom levels a stock chart offers (Stephan, Aug 14): every
+session, thirty days, twelve weeks, twelve months. The same metrics are returned
+at every level, so switching zoom never changes what the member can look at.
 
 Every metric the export can support is returned on every call, so the UI can
 offer all of them and let the member pick. Coverage across the 14,667 completed
@@ -59,15 +60,18 @@ from urllib.parse import urlparse
 
 import pymysql
 
-Range = Literal["week", "month", "year"]
+Range = Literal["session", "day", "week", "month"]
 
 DEFAULT_DB_URL = "mysql://root:devpassword@localhost:3306/spherych_devapp"
 
-# How many buckets each range shows, and how wide one bucket is.
+# How many points each range shows, and what one point covers. The progression
+# is the one a stock chart offers: zoom from every individual session out to a
+# year of months, with the same metrics on every zoom level.
 SHAPE: dict[str, tuple[int, str]] = {
-    "week": (7, "day"),
-    "month": (30, "day"),
-    "year": (12, "month"),
+    "session": (24, "session"),  # one point per workout, most recent 24
+    "day": (30, "day"),
+    "week": (12, "week"),
+    "month": (12, "month"),
 }
 
 
@@ -123,6 +127,14 @@ def _buckets(anchor: date, rng: Range) -> list[tuple[str, str]]:
         for i in range(count):
             d = start + timedelta(days=i)
             out.append((d.isoformat(), d.strftime("%-d %b")))
+    elif width == "week":
+        # Weeks run Monday-first, keyed by the Monday so MySQL's %x-%v and
+        # Python agree on which week a date belongs to.
+        monday = anchor - timedelta(days=anchor.weekday())
+        start = monday - timedelta(weeks=count - 1)
+        for i in range(count):
+            d = start + timedelta(weeks=i)
+            out.append((d.isoformat(), d.strftime("%-d %b")))
     else:
         start = _add_months(_month_floor(anchor), -(count - 1))
         for i in range(count):
@@ -135,15 +147,104 @@ def _f(v) -> Optional[float]:
     return float(v) if v is not None else None
 
 
-def series_for_member(user_id: int, rng: Range = "year") -> dict:
+def _session_series(user_id: int, count: int) -> dict:
+    """One point per workout, most recent `count`, oldest first.
+
+    No averaging happens here: this is the zoomed-in view where each point is a
+    session the member actually did, so a bad day stays visible instead of being
+    smoothed into its week. Recovery is joined per workout rather than per
+    period, which is the only level where that join is exact.
+    """
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT
+                w.id, w.createdAt,
+                w.measuredDuration / 60          AS minutes,
+                NULLIF(w.bodyScore, 0) * 100     AS body,
+                NULLIF(w.brainScore, 0) * 100    AS brain,
+                NULLIF(w.burnedCalories, 0)      AS calories,
+                NULLIF(w.hrAverage, 0)           AS avg_hr,
+                NULLIF(w.hrMax, 0)               AS max_hr,
+                NULLIF(w.score, 0)               AS score,
+                NULLIF(w.distanceMeters, 0)      AS distance_m
+            FROM Workouts w
+            WHERE w.userId = %s AND w.completedWorkout = 1
+            ORDER BY w.createdAt DESC
+            LIMIT %s
+            """,
+            (user_id, count),
+        )
+        rows = list(reversed(cur.fetchall()))
+        if not rows:
+            return {"user_id": user_id, "range": "session", "anchor": None, "points": []}
+
+        # Recovery has no workout id in HrStats, so it is matched on the day the
+        # session happened. Close enough at this zoom, and null when absent.
+        cur.execute(
+            """
+            SELECT DATE(createdAt) AS d, AVG(pauseStartHR - pauseEndHR) AS recovery
+            FROM HrStats
+            WHERE userId = %s
+              AND pauseStartHR > 0 AND pauseEndHR > 0
+              AND pauseStartHR >= pauseEndHR
+            GROUP BY d
+            """,
+            (user_id,),
+        )
+        recovery = {r["d"]: _f(r["recovery"]) for r in cur.fetchall()}
+
+    points = []
+    for r in rows:
+        when = r["createdAt"]
+        rec = recovery.get(when.date())
+        minutes = _f(r["minutes"])
+        points.append(
+            SeriesPoint(
+                label=when.strftime("%-d %b"),
+                key=f"w{r['id']}",
+                sessions=1,
+                minutes=round(minutes, 1) if minutes else None,
+                body=round(_f(r["body"]), 1) if r["body"] is not None else None,
+                brain=round(_f(r["brain"]), 1) if r["brain"] is not None else None,
+                calories=int(r["calories"]) if r["calories"] is not None else None,
+                avg_hr=round(_f(r["avg_hr"]), 1) if r["avg_hr"] is not None else None,
+                max_hr=round(_f(r["max_hr"]), 1) if r["max_hr"] is not None else None,
+                hr_recovery=round(rec, 1) if rec is not None else None,
+                score=round(_f(r["score"])) if r["score"] is not None else None,
+                distance_m=round(_f(r["distance_m"])) if r["distance_m"] is not None else None,
+                hr_sessions=1 if r["avg_hr"] is not None else 0,
+            )
+        )
+
+    return {
+        "user_id": user_id,
+        "range": "session",
+        "anchor": rows[-1]["createdAt"].date().isoformat(),
+        "points": [asdict(p) for p in points],
+    }
+
+
+def series_for_member(user_id: int, rng: Range = "month") -> dict:
     """Bucketed history for one member. Empty buckets included."""
     if rng not in SHAPE:
         raise ValueError(f"unknown range {rng!r}")
 
-    _, width = SHAPE[rng]
+    count, width = SHAPE[rng]
+    if width == "session":
+        return _session_series(user_id, count)
+
     # Doubled on purpose: pymysql treats % as its own parameter marker, so a
     # bare %Y inside DATE_FORMAT is read as a placeholder and blows up.
-    fmt = "%%Y-%%m-%%d" if width == "day" else "%%Y-%%m"
+    if width == "month":
+        bucket_expr = "DATE_FORMAT(createdAt, '%%Y-%%m')"
+    elif width == "week":
+        # Key a week by its Monday, matching _buckets().
+        bucket_expr = (
+            "DATE_FORMAT(DATE_SUB(createdAt, INTERVAL WEEKDAY(createdAt) DAY), '%%Y-%%m-%%d')"
+        )
+    else:
+        bucket_expr = "DATE_FORMAT(createdAt, '%%Y-%%m-%%d')"
 
     with _connect() as conn, conn.cursor() as cur:
         cur.execute(
@@ -166,7 +267,7 @@ def series_for_member(user_id: int, rng: Range = "year") -> dict:
         cur.execute(
             f"""
             SELECT
-                DATE_FORMAT(createdAt, '{fmt}')   AS k,
+                {bucket_expr}   AS k,
                 COUNT(*)                          AS sessions,
                 SUM(measuredDuration) / 60        AS minutes,
                 AVG(NULLIF(bodyScore, 0)) * 100   AS body,
@@ -180,7 +281,7 @@ def series_for_member(user_id: int, rng: Range = "year") -> dict:
             FROM Workouts
             WHERE userId = %s
               AND completedWorkout = 1
-              AND DATE_FORMAT(createdAt, '{fmt}') >= %s
+              AND {bucket_expr} >= %s
             GROUP BY k
             """,
             (user_id, first_key),
@@ -193,13 +294,13 @@ def series_for_member(user_id: int, rng: Range = "year") -> dict:
         cur.execute(
             f"""
             SELECT
-                DATE_FORMAT(createdAt, '{fmt}')      AS k,
+                {bucket_expr}      AS k,
                 AVG(pauseStartHR - pauseEndHR)       AS recovery
             FROM HrStats
             WHERE userId = %s
               AND pauseStartHR > 0 AND pauseEndHR > 0
               AND pauseStartHR >= pauseEndHR
-              AND DATE_FORMAT(createdAt, '{fmt}') >= %s
+              AND {bucket_expr} >= %s
             GROUP BY k
             """,
             (user_id, first_key),

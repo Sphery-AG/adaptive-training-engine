@@ -135,6 +135,65 @@ export async function fetchEngineUpdate(
   }
 }
 
+/** The zoom levels the progress chart offers, matching engine/app/series.py. */
+export type SeriesRange = 'session' | 'day' | 'week' | 'month';
+
+/**
+ * One point on the progress chart.
+ *
+ * Every metric is nullable and null means "not measured", which is not zero and
+ * must not be drawn as zero — a month where nobody wore a strap is a gap in the
+ * line, not a month at 0 bpm.
+ */
+export interface SeriesPoint {
+  label: string;
+  key: string;
+  sessions: number;
+  minutes: number | null;
+  body: number | null;
+  brain: number | null;
+  calories: number | null;
+  avg_hr: number | null;
+  max_hr: number | null;
+  hr_recovery: number | null;
+  score: number | null;
+  distance_m: number | null;
+  hr_sessions: number;
+}
+
+export interface ProgressSeries {
+  user_id: number;
+  range: SeriesRange;
+  /** The last day the member trained; the window ends here, not today. */
+  anchor: string | null;
+  points: SeriesPoint[];
+}
+
+/**
+ * A member's real training history, bucketed. Null whenever the engine isn't
+ * configured or reachable, so the chart can fall back to its sample series
+ * exactly like every other engine call in this file.
+ */
+export async function fetchProgressSeries(
+  spheryUserId: number,
+  range: SeriesRange,
+): Promise<ProgressSeries | null> {
+  const base = engineUrl();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/progress-series/${spheryUserId}?range=${range}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as ProgressSeries;
+    // A member with no history returns an empty series. That is a real answer,
+    // but there is nothing to plot, so the caller should keep its fallback.
+    return data.points.length ? data : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Return the member with their baseline replaced by real engine numbers.
  * Falls back to the member unchanged whenever live data isn't available.

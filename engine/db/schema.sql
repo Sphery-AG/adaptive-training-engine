@@ -835,7 +835,7 @@ CREATE INDEX ix_plan_changes ON plan_changes (plan_id, created_at DESC);
 CREATE TABLE group_trainings (
   id           bigserial   PRIMARY KEY,
   gym_id       bigint      REFERENCES gyms(id) ON DELETE SET NULL,
-  kiosk_id     text,                          -- "Darmstadt Circle 01"
+  kiosk_id     text,                          -- "THESPHEREDARMSTADT", ALLCAPS
   event_ref    text,                          -- V2's eventId, verbatim: "Super Circle March 2026"
   event_id     bigint      REFERENCES events(id) ON DELETE SET NULL,
   name         text        NOT NULL,

@@ -32,9 +32,15 @@ Base path: `/api/v1`.
 
 - `GET /api/v1/circle-trainings` — list. Optional query params: `kioskId`,
   `eventId`, `hyrox`, `name`, `mode`, `style`, `status`, `from=<ISO>`,
-  `to=<ISO>`, `size` (default and hard cap 100), `page`. URL-encoded values
-  (e.g. `kioskId=Darmstadt%20Circle%2001`). Ordered by createdAt DESC.
-  Response: `{entries: [...], totalPages, currentPage}`.
+  `to=<ISO>`, `size` (default and hard cap 100), `page`. Ordered by createdAt
+  DESC. Response: `{entries: [...], totalPages, currentPage}`.
+
+  **kioskId is ALLCAPS with no spaces** (Julian, Aug 14): `THESPHEREDARMSTADT`,
+  `THESPHEREZUERICH`, `SPHERY-TESTENV1`. A kiosk's login QR code resolves to its
+  id string, which is how to find one you do not know. An earlier version of
+  this file gave `Darmstadt Circle 01` as the example; that is a circle *name*,
+  not a kiosk id, and querying it returns nothing — which is what made Darmstadt
+  look like it had no data. It has 8 pages.
 - `GET /api/v1/circle-trainings/:circleTrainingId` — full object with
   `exercises[]` and `participants[]` incl. each participant's `exerciseLogs[]`.
 - `GET /api/v1/circle-trainings/leaderboards` — public ranking by `totalTime`

@@ -344,7 +344,7 @@ DO $$ BEGIN PERFORM must_equal(
 
 INSERT INTO group_trainings (id, gym_id, kiosk_id, event_ref, event_id, name, mode, type, style,
                              rounds, is_hyrox, status, started_at, provider, external_id)
-  VALUES (1, 1, 'Darmstadt Circle 01', 'Super Circle March 2026', 1, 'HYROX Zirkel',
+  VALUES (1, 1, 'THESPHEREDARMSTADT', 'Super Circle March 2026', 1, 'HYROX Zirkel',
           'single', 'mutual', 'duration', 3, true,
           'completed', now() - interval '20 days', 'nexus_kiosk', 'ct-8891');
 

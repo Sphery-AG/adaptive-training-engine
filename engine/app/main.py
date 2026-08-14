@@ -31,6 +31,7 @@ from .contract import CreateTrainingRequest
 from .estimate import estimate_for_member
 from .generate import generate_for_member
 from .plangen import GeneratePlanRequest, generate_plan as generate_plan_full
+from .series import series_for_member
 
 app = FastAPI(title="Adaptive Training Engine", version="0.2.0")
 
@@ -68,6 +69,20 @@ def generate_plan_post(req: GeneratePlanRequest) -> dict:
 def estimate(user_id: int) -> dict:
     """Fitness estimate from real export history, with rationale."""
     return estimate_for_member(user_id).to_dict()
+
+
+@app.get("/progress-series/{user_id}")
+def progress_series(user_id: int, range: str = "year") -> dict:
+    """Training history bucketed over time, for the progress chart.
+
+    range=week (7 days), month (30 days) or year (12 months). Periods with no
+    training come back with sessions=0 and null metrics, so the chart can draw
+    the gap instead of a line through it.
+    """
+    try:
+        return series_for_member(user_id, range)  # type: ignore[arg-type]
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @app.post("/update-plan")

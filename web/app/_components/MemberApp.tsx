@@ -28,7 +28,6 @@ import type { PlanSummary } from '@/lib/plan-summary';
 import { Icon, type IconName } from './icons';
 import PlanSwitcher from './PlanSwitcher';
 import TrainingProgressChart from './TrainingProgressChart';
-import KioskActivity from './KioskActivity';
 import CardsTab from './CardsTab';
 import { RingGauge } from './RingGauge';
 import { Sparkline } from './Sparkline';
@@ -274,11 +273,6 @@ function TodayTab({
           brainScore={metric(e.metrics, 'brain_trend')?.value ?? 55}
         />
       )}
-
-      {/* Live kiosk reads. Sits directly under the sample-data chart on
-        * purpose: it is the one card on this screen backed by the real NEXUS
-        * API, and the contrast is the honest version of where the app stands. */}
-      <KioskActivity />
 
       {/* Rest day. The tab is called Today and used to ignore what day it
         * actually was, telling people to train on their own days off. */}

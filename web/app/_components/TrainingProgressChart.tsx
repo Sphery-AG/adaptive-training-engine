@@ -24,6 +24,13 @@
  * that ramp everywhere. Minutes and calories have no meaning in the orbit list,
  * so by the same rule they stay neutral and separate by line style instead —
  * which is also what keeps seven series from becoming seven competing accents.
+ *
+ * **A gap gets explained, not just drawn.** Most members will open this on a
+ * chart that is mostly empty, and the two reasons are different: heart rate is
+ * on a tenth of workouts because a strap has to be paired, while the calendar
+ * zooms are thin because people train twice a month, not thirty times. So the
+ * card says which of the two it is looking at and what would change it — see
+ * `guidance()`. Never by inventing a number: a missing reading stays missing.
  */
 import { useEffect, useId, useState } from 'react';
 import type { DemoMember } from '@/lib/stub/data';
@@ -34,7 +41,7 @@ import {
   type SeriesPoint,
   type SeriesRange,
 } from '@/lib/engine/client';
-import { Icon } from './icons';
+import { Icon, type IconName } from './icons';
 
 type MetricKey = 'body' | 'brain' | 'avg_hr' | 'max_hr' | 'hr_recovery' | 'minutes' | 'calories';
 
@@ -56,12 +63,15 @@ const METRICS: {
   { key: 'calories', label: 'Calories', color: 'rgba(255,255,255,0.85)', dashed: true, unit: ' kcal', digits: 0 },
 ];
 
-const RANGES: { id: SeriesRange; label: string }[] = [
-  { id: 'session', label: 'Sessions' },
-  { id: 'day', label: 'Daily' },
-  { id: 'week', label: 'Weekly' },
-  { id: 'month', label: 'Monthly' },
+const RANGES: { id: SeriesRange; label: string; many: string; trend: string }[] = [
+  { id: 'session', label: 'Sessions', many: 'sessions', trend: 'trend' },
+  { id: 'day', label: 'Daily', many: 'days', trend: 'daily trend' },
+  { id: 'week', label: 'Weekly', many: 'weeks', trend: 'weekly trend' },
+  { id: 'month', label: 'Monthly', many: 'months', trend: 'monthly trend' },
 ];
+
+/** The three metrics that need hardware rather than just showing up. */
+const HR_KEYS: MetricKey[] = ['avg_hr', 'max_hr', 'hr_recovery'];
 
 const W = 320;
 const H = 132;
@@ -79,35 +89,49 @@ export default function TrainingProgressChart({
   const [range, setRange] = useState<SeriesRange>('session');
   const [on, setOn] = useState<Set<MetricKey>>(new Set(['body', 'brain']));
   const [active, setActive] = useState<number | null>(null);
-  const [live, setLive] = useState<ProgressSeries | null>(null);
-  const [loading, setLoading] = useState(false);
+  // The last settled fetch, carrying who and which zoom it was for. Both travel
+  // with it so a stale answer can be recognised rather than trusted, and so the
+  // effect never has to set state synchronously to say "asking now".
+  const [fetched, setFetched] = useState<{
+    userId: number;
+    range: SeriesRange;
+    series: ProgressSeries | null;
+  } | null>(null);
+  // How many points the Sessions zoom holds, remembered from whichever fetch
+  // returned it. The chart opens on Sessions, so this is known before a member
+  // can reach a thinner zoom — and it is what lets the sparse-calendar hint
+  // promise a real number of sessions instead of guessing one.
+  const [sessions, setSessions] = useState<{ userId: number; n: number } | null>(null);
   const gid = useId();
 
   useEffect(() => {
     const id = member.spheryUserId;
-    if (!id) {
-      setLive(null);
-      return;
-    }
+    if (!id) return;
     let cancelled = false;
-    setLoading(true);
     fetchProgressSeries(id, range)
       .then((s) => {
-        if (!cancelled) {
-          setLive(s);
-          setLoading(false);
-        }
+        if (cancelled) return;
+        setFetched({ userId: id, range, series: s });
+        if (s?.range === 'session') setSessions({ userId: id, n: s.points.length });
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        // Engine unreachable. Settle anyway so the card stops saying "loading"
+        // and falls back to the sample series, badge and all.
+        if (!cancelled) setFetched({ userId: id, range, series: null });
       });
     return () => {
       cancelled = true;
     };
   }, [member.spheryUserId, range]);
 
-  const points: SeriesPoint[] = live?.points ?? sampleAs(member, bodyScore, brainScore);
-  const isSample = !live;
+  const mine = fetched?.userId === member.spheryUserId ? fetched : null;
+  const loading = !!member.spheryUserId && mine?.range !== range;
+  // While a new zoom is in flight the previous one stays on screen: blanking
+  // the chart for a round trip is worse than showing a moment of old truth.
+  const liveForMember = mine?.series ?? null;
+  const sessionCount = sessions && sessions.userId === member.spheryUserId ? sessions.n : null;
+  const points: SeriesPoint[] = liveForMember?.points ?? sampleAs(member, bodyScore, brainScore);
+  const isSample = !liveForMember;
 
   // Nothing selected would leave an empty plot with no way back, so the last
   // metric standing cannot be switched off.
@@ -122,6 +146,11 @@ export default function TrainingProgressChart({
     });
 
   const shownMetrics = METRICS.filter((m) => on.has(m.key));
+
+  /** Readings actually present for a metric in this window. 0 draws nothing,
+    * 1 draws a dot but no line, and both need saying out loud. */
+  const filled = (key: MetricKey) => points.reduce((n, p) => n + (p[key] === null ? 0 : 1), 0);
+
   const x = (i: number) =>
     PAD.left + (points.length <= 1 ? 0 : (i / (points.length - 1)) * (W - PAD.left - PAD.right));
 
@@ -173,7 +202,18 @@ export default function TrainingProgressChart({
       );
 
   const shown = active !== null ? points[active] : null;
-  const empties = shownMetrics.filter((m) => scaleOf(m.key) === null);
+  // Describe the points on screen, not the tab. During a zoom change those are
+  // briefly different, and "2 of these 12 days" over a weekly series is a lie.
+  const plotted = liveForMember?.range ?? range;
+  const hints = guidance({ range: plotted, points, shownMetrics, filled });
+  // Sessions plots the member's last workouts whatever the dates, so it always
+  // holds at least as many points as a calendar window. Offering it is only
+  // worth a tap when we know it is denser than what they are looking at.
+  const denserZoom =
+    !isSample &&
+    plotted !== 'session' &&
+    sessionCount !== null &&
+    sessionCount > points.filter((p) => p.sessions > 0).length;
 
   return (
     <div className="rounded-[26px] border border-border bg-card p-4">
@@ -183,8 +223,8 @@ export default function TrainingProgressChart({
           <p className="mt-1 text-xs text-faint">
             {loading
               ? 'Loading your history…'
-              : live?.anchor
-                ? `Up to your last session, ${fmtAnchor(live.anchor)}`
+              : liveForMember?.anchor
+                ? `Up to your last session, ${fmtAnchor(liveForMember.anchor)}`
                 : `${points.filter((p) => p.sessions).length} of ${points.length} periods trained`}
           </p>
         </div>
@@ -195,16 +235,21 @@ export default function TrainingProgressChart({
         )}
       </div>
 
-      {/* Metric chips. Tappable so any combination can be read on a phone. */}
+      {/* Metric chips. Tappable so any combination can be read on a phone.
+        * A metric with nothing behind it in this window carries a hollow dot,
+        * so a member can see which chips will do nothing before spending a tap
+        * on them — the rest of the story is in the hints under the card. */}
       <div className="mt-3 flex flex-wrap gap-1.5">
         {METRICS.map((m) => {
           const isOn = on.has(m.key);
+          const isEmpty = filled(m.key) === 0;
           return (
             <button
               key={m.key}
               type="button"
               onClick={() => toggle(m.key)}
               aria-pressed={isOn}
+              aria-label={isEmpty ? `${m.label}, nothing recorded in this period` : m.label}
               className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-opacity ${
                 isOn ? 'border-[var(--border-strong)]' : 'border-border text-faint opacity-55'
               }`}
@@ -212,7 +257,11 @@ export default function TrainingProgressChart({
               <span
                 aria-hidden="true"
                 className="h-2 w-2 rounded-full"
-                style={{ background: isOn ? m.color : 'currentColor' }}
+                style={
+                  isEmpty
+                    ? { border: `1.5px solid ${isOn ? m.color : 'currentColor'}` }
+                    : { background: isOn ? m.color : 'currentColor' }
+                }
               />
               {m.label}
             </button>
@@ -339,20 +388,128 @@ export default function TrainingProgressChart({
         ))}
       </div>
 
-      {/* Say which selected metrics have nothing behind them, rather than
-        * letting a chip look broken. HR is recorded on about a tenth of
-        * sessions, so this is the common case, not an edge one. */}
-      {empties.length > 0 && (
-        <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-faint">
-          <Icon name="info" size={13} className="mt-0.5 shrink-0" />
-          <span>
-            No {empties.map((m) => m.label.toLowerCase()).join(' or ')} recorded in this period. Heart rate
-            is only saved when a chest strap was worn.
-          </span>
-        </p>
+      {/* Why the chart looks the way it does, and what would fill it in. Empty
+        * and thin are the ordinary cases here, not edge cases, so they get a
+        * sentence rather than being left to look broken. */}
+      {hints.length > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {hints.map((h) => (
+            <p key={h.id} className="flex items-start gap-2 text-xs leading-relaxed text-faint">
+              <Icon name={h.icon} size={13} className="mt-0.5 shrink-0" />
+              <span>{h.text}</span>
+            </p>
+          ))}
+          {denserZoom && (
+            <button
+              type="button"
+              onClick={() => {
+                setRange('session');
+                setActive(null);
+              }}
+              className="ml-[21px] rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-accent"
+            >
+              Plot my last {sessionCount} sessions instead
+            </button>
+          )}
+        </div>
       )}
     </div>
   );
+}
+
+/**
+ * What the card says when a line is missing or too short to mean anything.
+ *
+ * Two causes, and they need different answers. A heart-rate metric is empty
+ * because no strap was paired — hardware the member controls, so the hint names
+ * it. Body, brain, minutes and calories are on ~99% of workouts, so when they
+ * are empty or single the cause is the window, not the metric: the member
+ * trained twice this month and a thirty-day view has 28 blanks in it. Saying
+ * "no data" to both would be true and useless.
+ *
+ * Capped at two lines. A card that answers with a paragraph has replaced one
+ * bad state with another.
+ */
+function guidance({
+  range,
+  points,
+  shownMetrics,
+  filled,
+}: {
+  range: SeriesRange;
+  points: SeriesPoint[];
+  shownMetrics: typeof METRICS;
+  filled: (key: MetricKey) => number;
+}): { id: string; icon: IconName; text: string }[] {
+  const out: { id: string; icon: IconName; text: string }[] = [];
+  const noun = RANGES.find((r) => r.id === range)!;
+  const trained = points.filter((p) => p.sessions > 0).length;
+  // Two points make a line, three make a direction. Below that there is a
+  // reading but not a trend, and the card should not imply otherwise.
+  const thin = range === 'session' ? points.length < 4 : trained < 3;
+
+  const missingHr = shownMetrics.filter((m) => HR_KEYS.includes(m.key) && filled(m.key) === 0);
+  if (missingHr.length) {
+    out.push({
+      id: 'hr',
+      icon: 'pulse',
+      // Recovery is the rarest line in the export at 5.3%, because it needs the
+      // strap *and* a session with pauses to read the drop against. Saying so
+      // is kinder than letting a member chase a number they can't get today.
+      text:
+        missingHr.length === 1 && missingHr[0].key === 'hr_recovery'
+          ? 'HR recovery needs a chest strap and the pauses between rounds, which about one session in twenty records.'
+          : `${names(missingHr)} ${missingHr.length > 1 ? 'need' : 'needs'} a chest strap paired before the session` +
+            (missingHr.some((m) => m.key === 'hr_recovery')
+              ? ' — recovery also reads the pauses between rounds.'
+              : '.'),
+    });
+  }
+
+  if (thin) {
+    out.push(
+      range === 'session'
+        ? {
+            id: 'window',
+            icon: 'sparkle',
+            text: `${points.length} ${points.length === 1 ? 'session' : 'sessions'} so far. Every one you finish adds a point here, and the shape starts to read at around four.`,
+          }
+        : {
+            id: 'window',
+            icon: 'info',
+            text: `Only ${trained} of these ${points.length} ${noun.many} ${trained === 1 ? 'has' : 'have'} training in ${trained === 1 ? 'it' : 'them'}, so there is no ${noun.trend} to read yet.`,
+          },
+    );
+  } else {
+    // The window is dense enough, so anything still missing is about the
+    // measurement rather than about how often they turn up.
+    const missing = shownMetrics.filter((m) => !HR_KEYS.includes(m.key) && filled(m.key) === 0);
+    const single = shownMetrics.filter((m) => filled(m.key) === 1);
+    const span = `these ${points.length} ${noun.many}`;
+    if (missing.length) {
+      out.push({
+        id: 'missing',
+        icon: 'info',
+        text: `${names(missing)} ${missing.length > 1 ? 'were' : 'was'} not recorded in ${span}.`,
+      });
+    } else if (single.length) {
+      out.push({
+        id: 'single',
+        icon: 'info',
+        text: `${names(single)} ${single.length > 1 ? 'have' : 'has'} one reading in ${span}. It takes two to draw a line.`,
+      });
+    }
+  }
+
+  return out.slice(0, 2);
+}
+
+/** "HR avg and HR max", "Body, Brain and Minutes". */
+function names(metrics: typeof METRICS): string {
+  const labels = metrics.map((m) => m.label);
+  return labels.length < 2
+    ? labels.join('')
+    : `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
 }
 
 /** The sample series, reshaped as SeriesPoints so the chart has one shape. */

@@ -17,9 +17,9 @@ import {
   WEEKDAYS,
 } from '../../../lib/intake/model';
 import type { ScreenId } from '../../../lib/intake/model';
-import type { WeekdayId } from '../../../lib/types/plan';
+import type { InjuryDetail, WeekdayId } from '../../../lib/types/plan';
 import type { IntakeAction, IntakeState } from '../../../lib/intake/state';
-import { derivedSessionsPerWeek } from '../../../lib/intake/state';
+import { derivedSessionsPerWeek, reportedInjuries } from '../../../lib/intake/state';
 import { CheckRow, FieldLabel, InfoNote, MinutesSlider, RadioRow, Scale5, Segmented } from './controls';
 
 type ScreenProps = { state: IntakeState; dispatch: Dispatch<IntakeAction> };
@@ -528,11 +528,104 @@ const ActivitiesScreen: FC<ScreenProps> = ({ state, dispatch }) => {
 /** Common injury sites, so members pick instead of type. "Other" reveals text. */
 const BODY_PARTS = ['Knee', 'Shoulder', 'Lower back', 'Hip', 'Ankle', 'Elbow', 'Wrist', 'Neck', 'Hamstring'];
 
-const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => {
-  const bodyPart = state.injury.bodyPart;
-  const [customBodyPart, setCustomBodyPart] = useState(
-    bodyPart != null && bodyPart !== '' && !BODY_PARTS.includes(bodyPart),
+/**
+ * One injury's fields, edited in place. Every injury on the screen is a real
+ * entry in state from the moment it appears — there is no draft to remember to
+ * commit, so nothing a member typed can be lost by tapping Continue.
+ *
+ * "Other" needs no local flag: a body part that isn't one of the suggestions is
+ * a custom one, and tapping Other clears the field to '', which is custom too.
+ */
+const InjuryFields: FC<{
+  injury: InjuryDetail;
+  index: number;
+  /** Numbered + removable only once a second injury exists. */
+  ordinal: boolean;
+  dispatch: Dispatch<IntakeAction>;
+}> = ({ injury, index, ordinal, dispatch }) => {
+  const bodyPart = injury.bodyPart;
+  const custom = bodyPart !== undefined && !BODY_PARTS.includes(bodyPart);
+  const set = (patch: Partial<InjuryDetail>) => dispatch({ type: 'setInjury', index, patch });
+  return (
+    <div className={`grid gap-5 ${index > 0 ? 'border-t border-border pt-5' : ''}`}>
+      {ordinal && (
+        <div className="flex items-center justify-between">
+          <span className="eyebrow">Injury {index + 1}</span>
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'removeInjury', index })}
+            aria-label={`Remove injury ${index + 1}`}
+            className="grid h-9 w-9 place-items-center rounded-full text-faint transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+      )}
+      <div>
+        <FieldLabel>Affected body part</FieldLabel>
+        <div className="flex flex-wrap gap-2">
+          {BODY_PARTS.map((part) => (
+            <button
+              key={part}
+              type="button"
+              onClick={() => set({ bodyPart: part })}
+              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+                bodyPart === part
+                  ? 'border-accent bg-[var(--accent-soft)] text-accent'
+                  : 'border-border text-dim hover:border-[var(--border-strong)]'
+              }`}
+            >
+              {part}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => set({ bodyPart: '' })}
+            className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+              custom
+                ? 'border-accent bg-[var(--accent-soft)] text-accent'
+                : 'border-border text-dim hover:border-[var(--border-strong)]'
+            }`}
+          >
+            Other
+          </button>
+        </div>
+        {custom && (
+          <input
+            type="text"
+            value={bodyPart ?? ''}
+            onChange={(e) => set({ bodyPart: e.target.value })}
+            placeholder="Which body part?"
+            aria-label="Custom body part"
+            className="mt-2.5 w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
+          />
+        )}
+      </div>
+      <div>
+        <FieldLabel>Current recovery stage</FieldLabel>
+        <div role="radiogroup" aria-label="Current recovery stage" className="grid gap-2.5">
+          {RECOVERY_STAGES.map((s) => (
+            <RadioRow
+              key={s.id}
+              name={`recovery-${index}`}
+              value={s.id}
+              checked={injury.recoveryStage === s.id}
+              onChange={() => set({ recoveryStage: s.id })}
+              title={s.title}
+              desc={s.desc}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
+};
+
+const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => {
+  const { injuries } = state;
+  // A blank entry is the one being filled in; a second blank would just be
+  // clutter, so the next injury waits until this one says something.
+  const canAddInjury = injuries.length > 0 && Boolean(injuries[injuries.length - 1].bodyPart);
   return (
   <div className="grid gap-5">
     <div role="radiogroup" aria-label="Any injuries or medical conditions" className="grid grid-cols-2 gap-3">
@@ -556,71 +649,28 @@ const HealthScreen: FC<ScreenProps> = ({ state, dispatch }) => {
     </div>
 
     {/* Injury detail reveals inline the moment "Yes" is picked, so adding an
-        injury is obvious instead of hidden on a separate screen. */}
+        injury is obvious instead of hidden on a separate screen. A bad knee and
+        a bad shoulder are two injuries, so the list grows rather than
+        overwriting the one entry. */}
     {state.hasInjury === true && (
       <div className="grid gap-5 animate-screen-in">
-        <div>
-          <FieldLabel>Affected body part</FieldLabel>
-          <div className="flex flex-wrap gap-2">
-            {BODY_PARTS.map((part) => (
-              <button
-                key={part}
-                type="button"
-                onClick={() => {
-                  setCustomBodyPart(false);
-                  dispatch({ type: 'setInjury', patch: { bodyPart: part } });
-                }}
-                className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                  !customBodyPart && bodyPart === part
-                    ? 'border-accent bg-[var(--accent-soft)] text-accent'
-                    : 'border-border text-dim hover:border-[var(--border-strong)]'
-                }`}
-              >
-                {part}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => {
-                setCustomBodyPart(true);
-                dispatch({ type: 'setInjury', patch: { bodyPart: '' } });
-              }}
-              className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
-                customBodyPart
-                  ? 'border-accent bg-[var(--accent-soft)] text-accent'
-                  : 'border-border text-dim hover:border-[var(--border-strong)]'
-              }`}
-            >
-              Other
-            </button>
-          </div>
-          {customBodyPart && (
-            <input
-              type="text"
-              value={bodyPart ?? ''}
-              onChange={(e) => dispatch({ type: 'setInjury', patch: { bodyPart: e.target.value } })}
-              placeholder="Which body part?"
-              aria-label="Custom body part"
-              className="mt-2.5 w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-base outline-none placeholder:text-faint focus:border-[var(--border-strong)]"
-            />
-          )}
-        </div>
-        <div>
-          <FieldLabel>Current recovery stage</FieldLabel>
-          <div role="radiogroup" aria-label="Current recovery stage" className="grid gap-2.5">
-            {RECOVERY_STAGES.map((s) => (
-              <RadioRow
-                key={s.id}
-                name="recovery"
-                value={s.id}
-                checked={state.injury.recoveryStage === s.id}
-                onChange={() => dispatch({ type: 'setInjury', patch: { recoveryStage: s.id } })}
-                title={s.title}
-                desc={s.desc}
-              />
-            ))}
-          </div>
-        </div>
+        {injuries.map((injury, i) => (
+          <InjuryFields
+            key={i}
+            injury={injury}
+            index={i}
+            ordinal={injuries.length > 1}
+            dispatch={dispatch}
+          />
+        ))}
+        <button
+          type="button"
+          onClick={() => dispatch({ type: 'addInjury' })}
+          disabled={!canAddInjury}
+          className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[var(--border-strong)] py-4 text-base font-medium text-dim transition-colors hover:border-accent hover:text-white disabled:opacity-40 disabled:hover:border-[var(--border-strong)] disabled:hover:text-dim"
+        >
+          <Icon name="plus" size={18} /> Add another injury
+        </button>
       </div>
     )}
 
@@ -678,6 +728,7 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
     0,
   );
   const trainingMinutes = state.trainingMinutesPerWeek || activityMinutes;
+  const injuries = reportedInjuries(state);
   const INTENSITY_LABEL = ['', 'very light', 'light', 'moderate', 'hard', 'maximal'];
   const goTo = (screen: ScreenId) => dispatch({ type: 'goto', screen });
 
@@ -717,16 +768,22 @@ const ReviewScreen: FC<ScreenProps> = ({ state, dispatch }) => {
       </ReviewGroup>
 
       <ReviewGroup icon="heart" title="Health" onEdit={() => goTo('health')}>
-        <ReviewRow
-          label="Injuries / conditions"
-          value={
-            state.hasInjury === null
-              ? '—'
-              : state.hasInjury
-                ? state.injury.bodyPart || 'Flagged'
-                : "None, you're good"
-          }
-        />
+        {injuries.length > 0 ? (
+          injuries.map((inj, i) => (
+            <ReviewRow
+              key={i}
+              label={inj.bodyPart || `Injury ${i + 1}`}
+              value={RECOVERY_STAGES.find((s) => s.id === inj.recoveryStage)?.title ?? 'Stage not set'}
+            />
+          ))
+        ) : (
+          <ReviewRow
+            label="Injuries / conditions"
+            value={
+              state.hasInjury === null ? '—' : state.hasInjury ? 'Flagged' : "None, you're good"
+            }
+          />
+        )}
       </ReviewGroup>
     </div>
   );

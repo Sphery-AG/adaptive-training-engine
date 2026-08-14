@@ -252,7 +252,7 @@ export interface OtherActivity {
   days: WeekdayId[];
 }
 
-/** Optional branched detail when the member flags an injury. */
+/** One reported injury: where it is and how far along recovery is. */
 export interface InjuryDetail {
   bodyPart?: string;
   recoveryStage?: RecoveryStage;
@@ -292,8 +292,12 @@ export interface QuestionnaireAnswers {
   otherActivities?: OtherActivity[];
   /** Flagged injuries / medical conditions (concept Ebene 3). */
   healthConditions?: string[];
-  /** Branched injury detail when an injury is flagged. */
-  injury?: InjuryDetail;
+  /**
+   * Every injury the member reported, one entry each. A bad knee and a bad
+   * shoulder are two restrictions, which is also how `member_restrictions`
+   * stores them (engine/db/schema.sql) — one row per reported label.
+   */
+  injuries?: InjuryDetail[];
   /**
    * True when the member reported a medical condition or a recent injury.
    * Carried so plan generation can take it into account; nothing gates or

@@ -60,7 +60,8 @@ export interface IntakeState {
   // Ebene 3 — Health
   hasInjury: boolean | null;
   healthConditions: string[];
-  injury: InjuryDetail;
+  /** One entry per reported injury; empty until the member answers "Yes". */
+  injuries: InjuryDetail[];
 }
 
 export interface IntakeSeed {
@@ -76,7 +77,7 @@ export interface IntakeSeed {
 
 export function initialState(seed: IntakeSeed = {}): IntakeState {
   const s = seed.saved ?? null;
-  const flagged = s ? Boolean(s.injury?.bodyPart) || (s.healthConditions?.length ?? 0) > 0 : null;
+  const flagged = s ? (s.injuries?.length ?? 0) > 0 || (s.healthConditions?.length ?? 0) > 0 : null;
   return {
     screen: 'goal',
     history: [],
@@ -94,7 +95,7 @@ export function initialState(seed: IntakeSeed = {}): IntakeState {
     otherActivities: s?.otherActivities ?? [],
     hasInjury: flagged,
     healthConditions: s?.healthConditions ?? [],
-    injury: s?.injury ?? {},
+    injuries: s?.injuries ?? [],
   };
 }
 
@@ -126,7 +127,9 @@ export type IntakeAction =
   | { type: 'removeActivity'; index: number }
   | { type: 'setHasInjury'; value: boolean }
   | { type: 'toggleCondition'; label: string }
-  | { type: 'setInjury'; patch: Partial<InjuryDetail> };
+  | { type: 'addInjury' }
+  | { type: 'removeInjury'; index: number }
+  | { type: 'setInjury'; index: number; patch: Partial<InjuryDetail> };
 
 export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
   switch (action.type) {
@@ -223,7 +226,13 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
         otherActivities: state.otherActivities.filter((_, i) => i !== action.index),
       };
     case 'setHasInjury':
-      return { ...state, hasInjury: action.value };
+      // Answering "Yes" opens one empty injury straight away, so the detail is
+      // there to fill in rather than behind another tap.
+      return {
+        ...state,
+        hasInjury: action.value,
+        injuries: action.value && state.injuries.length === 0 ? [{}] : state.injuries,
+      };
     case 'toggleCondition': {
       const has = state.healthConditions.includes(action.label);
       return {
@@ -233,8 +242,15 @@ export function reducer(state: IntakeState, action: IntakeAction): IntakeState {
           : [...state.healthConditions, action.label],
       };
     }
+    case 'addInjury':
+      return { ...state, injuries: [...state.injuries, {}] };
+    case 'removeInjury':
+      return { ...state, injuries: state.injuries.filter((_, i) => i !== action.index) };
     case 'setInjury':
-      return { ...state, injury: { ...state.injury, ...action.patch } };
+      return {
+        ...state,
+        injuries: state.injuries.map((inj, i) => (i === action.index ? { ...inj, ...action.patch } : inj)),
+      };
     default:
       return state;
   }
@@ -282,10 +298,19 @@ export const isLastScreen = (state: IntakeState): boolean => state.screen === 'r
 export const derivedSessionsPerWeek = (state: IntakeState): number =>
   state.availableDays.length > 0 ? Math.min(5, Math.max(2, state.availableDays.length)) : 3;
 
+/**
+ * The injuries the member actually described. The health screen keeps an empty
+ * entry open for the one being filled in, so blanks are a UI state rather than
+ * an answer and never reach the review screen or the payload.
+ */
+export const reportedInjuries = (state: IntakeState): InjuryDetail[] =>
+  state.hasInjury === true ? state.injuries.filter((i) => i.bodyPart || i.recoveryStage) : [];
+
 /** Single adapter from UI state to the engine's questionnaire contract. */
 export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers {
   const fitnessLevel = state.fitnessLevel ?? 'medium';
   const flaggedInjury = state.hasInjury === true;
+  const injuries = reportedInjuries(state);
   // Total weekly volume + typical intensity come from the Setup slider (the
   // primary signal). If the member skipped the slider but listed specific
   // sports, fall back to summing those. Nothing given → left undefined.
@@ -316,7 +341,7 @@ export function toQuestionnaireAnswers(state: IntakeState): QuestionnaireAnswers
     availableDays: state.availableDays.length ? state.availableDays : undefined,
     otherActivities: state.otherActivities.length ? state.otherActivities : undefined,
     healthConditions: state.healthConditions.length ? state.healthConditions : undefined,
-    injury: flaggedInjury && (state.injury.bodyPart || state.injury.recoveryStage) ? state.injury : undefined,
+    injuries: injuries.length ? injuries : undefined,
     hasMedicalFlags: flaggedInjury || state.healthConditions.length > 0,
   };
 }

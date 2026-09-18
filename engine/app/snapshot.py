@@ -2,8 +2,9 @@
 
 A hosted demo must not carry the Sphery export. This module lets the engine run
 the same estimate, plan and adaptation code against a few precomputed values per
-member, read from the file named by ENGINE_SNAPSHOT. When that variable is unset
-nothing here is used and the engine reads MySQL as always.
+member: ENGINE_SNAPSHOT_JSON carries the snapshot itself (how it reaches a host
+where the file cannot be committed), and ENGINE_SNAPSHOT names a file instead.
+With neither set nothing here is used and the engine reads MySQL as always.
 
 The snapshot holds only what the four data-access points return, minus anything
 no caller reads: no dob, gender, weight or height, no member ids in the
@@ -11,7 +12,8 @@ population curve, and a score trend as two averages rather than a score list.
 It is still personal data about real members. It lives under _local/ and is
 never committed.
 
-Build it against the local export:
+Build it against the local export. The output is compact because it is pasted
+into an environment variable, where every byte counts against the host's limit:
 
     python -m app.snapshot 535 19 > ../_local/engine-snapshot.json
 """
@@ -26,6 +28,7 @@ from functools import lru_cache
 from typing import Optional
 
 ENV = "ENGINE_SNAPSHOT"
+ENV_JSON = "ENGINE_SNAPSHOT_JSON"
 
 # Feature fields nothing downstream of get_member_features() reads. Dropped
 # from the snapshot so it carries as little about a member as possible.
@@ -40,6 +43,9 @@ RANGES = ("session", "day", "week", "month")
 @lru_cache(maxsize=1)
 def load() -> Optional[dict]:
     """The snapshot, or None when the engine should read MySQL."""
+    raw = os.environ.get(ENV_JSON)
+    if raw:
+        return json.loads(raw)
     path = os.environ.get(ENV)
     if not path:
         return None
@@ -54,8 +60,8 @@ def member(user_id: int) -> Optional[dict]:
 
 def build(user_ids: list[int]) -> dict:
     """Read everything the demo needs for these members from MySQL."""
-    if os.environ.get(ENV):
-        raise SystemExit(f"unset {ENV} first: a snapshot is built from MySQL, not from a snapshot")
+    if os.environ.get(ENV) or os.environ.get(ENV_JSON):
+        raise SystemExit(f"unset {ENV}/{ENV_JSON} first: a snapshot is built from MySQL, not from a snapshot")
 
     from .adapt import score_trend
     from .estimate import population_scores
@@ -76,4 +82,6 @@ def build(user_ids: list[int]) -> dict:
 
 
 if __name__ == "__main__":
-    json.dump(build([int(a) for a in sys.argv[1:]]), sys.stdout, indent=1)
+    out = json.dumps(build([int(a) for a in sys.argv[1:]]), separators=(",", ":"))
+    sys.stdout.write(out)
+    print(f"{len(out.encode())} bytes", file=sys.stderr)

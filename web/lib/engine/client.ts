@@ -39,11 +39,22 @@ export function engineUrl(): string | null {
   return process.env.NEXT_PUBLIC_ENGINE_URL || null;
 }
 
+/**
+ * How long to wait for the engine before falling back to the stub. A hosted
+ * engine cold-starts, so this is generous; without it a hung request leaves
+ * plan generation spinning with no way out.
+ */
+const TIMEOUT_MS = 8000;
+
+function timeout(): AbortSignal {
+  return AbortSignal.timeout(TIMEOUT_MS);
+}
+
 export async function fetchEngineEstimate(spheryUserId: number): Promise<EngineEstimate | null> {
   const base = engineUrl();
   if (!base) return null;
   try {
-    const res = await fetch(`${base}/estimate/${spheryUserId}`, { cache: 'no-store' });
+    const res = await fetch(`${base}/estimate/${spheryUserId}`, { cache: 'no-store', signal: timeout() });
     if (!res.ok) return null;
     return (await res.json()) as EngineEstimate;
   } catch {
@@ -87,6 +98,7 @@ export async function fetchEnginePlan(
         gym: { id: gym.id, name: gym.name, stations: gym.stations },
       }),
       cache: 'no-store',
+      signal: timeout(),
     });
     if (!res.ok) return null;
     return (await res.json()) as { plan: unknown; resolved: unknown[] };
@@ -127,6 +139,7 @@ export async function fetchEngineUpdate(
         result: effort ? { perceivedEffort: effort } : undefined,
       }),
       cache: 'no-store',
+      signal: timeout(),
     });
     if (!res.ok) return null;
     return (await res.json()) as { plan: unknown; resolved: unknown[]; planChanges: string[]; summary: string };
@@ -183,6 +196,7 @@ export async function fetchProgressSeries(
   try {
     const res = await fetch(`${base}/progress-series/${spheryUserId}?range=${range}`, {
       cache: 'no-store',
+      signal: timeout(),
     });
     if (!res.ok) return null;
     const data = (await res.json()) as ProgressSeries;

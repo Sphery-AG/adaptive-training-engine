@@ -110,6 +110,7 @@ export default function MemberApp({
   completedCount,
   lastUpdate,
   availableDays,
+  engine,
   plans,
   activeId,
   onSwitchPlan,
@@ -123,6 +124,8 @@ export default function MemberApp({
   lastUpdate: AdaptiveUpdate | null;
   /** Training days from the intake. Undefined means the member never said. */
   availableDays?: WeekdayId[];
+  /** Set when the Python engine generated this plan; null when the stub did. */
+  engine?: { workouts: number | null } | null;
   plans: PlanSummary[];
   activeId: string;
   onSwitchPlan: (id: string) => void;
@@ -145,6 +148,15 @@ export default function MemberApp({
         <div>
           <p className="eyebrow text-fuchsia">{head.eyebrow}</p>
           <h1 className="mt-1 text-3xl leading-none">{head.title(member, view.plan.weeks.length)}</h1>
+          {/* Which engine produced what you are looking at. Absent means the
+            * stub, so the badge never claims something that is not true. */}
+          {engine && (
+            <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-mint/40 px-2.5 py-1 text-[10px] font-medium uppercase tracking-wide text-mint">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-mint" />
+              Live engine
+              {engine.workouts ? ` · ${engine.workouts} sessions` : ''}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button

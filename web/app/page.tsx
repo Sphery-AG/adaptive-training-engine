@@ -52,6 +52,11 @@ export default function Home() {
   // Plan generation is a real round trip to the engine. Without this the CTA
   // stays live while it runs, and a double-tap fires two generations.
   const [generating, setGenerating] = useState(false);
+  // Whether the plan on screen came from the Python engine, and how much real
+  // history backed it. Null means the stub generated it. Every engine call
+  // falls back to the stub silently, which is right for the demo but means
+  // nothing on screen would otherwise say which one you are looking at.
+  const [engine, setEngine] = useState<{ workouts: number | null } | null>(null);
   // Slot ids are ours rather than plan.id: a plan regenerated for a new gym is
   // still the same plan to the member, and must keep its progress.
   const nextSlotId = useRef(1);
@@ -98,8 +103,9 @@ export default function Home() {
       // Local dev with the Python engine running: the engine generates the plan
       // (real estimate + rules in Python). The stub only assembles engagement
       // and remains the full fallback on Vercel or when the engine is down.
-      const { member: liveMember } = await withLiveBaseline(m);
+      const { member: liveMember, live } = await withLiveBaseline(m);
       const enginePlan = await fetchEnginePlan(liveMember, g, a);
+      setEngine(enginePlan ? { workouts: live?.ready ? live.workouts_analyzed : null } : null);
       const generated = enginePlan
         ? planViewFromEngine(enginePlan as { plan: Plan; resolved: ResolvedWeek[] }, liveMember, g, a)
         : generatePlan(liveMember, g, a);
@@ -251,6 +257,7 @@ export default function Home() {
         completedCount={active.completedCount}
         lastUpdate={active.lastUpdate}
         availableDays={active.answers.availableDays}
+        engine={engine}
         plans={planSummaries}
         activeId={active.id}
         onSwitchPlan={setActiveId}

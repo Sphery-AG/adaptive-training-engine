@@ -1,0 +1,23 @@
+# How Vercel builds the engine: it installs `dependencies` and serves the
+# FastAPI app named under [tool.vercel]. requirements.txt stays the local dev
+# list - it also carries pytest, which the host has no use for. Keep both in
+# step when a dependency changes.
+#
+# cryptography is deliberately absent here. pymysql only needs it to speak
+# MySQL 8's caching_sha2_password, and the hosted engine never opens a MySQL
+# connection: it runs from ENGINE_SNAPSHOT_JSON. Leaving it out drops the
+# slowest wheel in the build.
+
+[project]
+name = "adaptive-training-engine"
+version = "0.2.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi==0.115.2",
+  "pydantic==2.9.2",
+  "pymysql==1.1.1",
+  "uvicorn==0.31.1",
+]
+
+[tool.vercel]
+entrypoint = "app.main:app"

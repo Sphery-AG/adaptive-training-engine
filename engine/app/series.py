@@ -60,6 +60,8 @@ from urllib.parse import urlparse
 
 import pymysql
 
+from . import snapshot
+
 Range = Literal["session", "day", "week", "month"]
 
 DEFAULT_DB_URL = "mysql://root:devpassword@localhost:3306/spherych_devapp"
@@ -229,6 +231,12 @@ def series_for_member(user_id: int, rng: Range = "month") -> dict:
     """Bucketed history for one member. Empty buckets included."""
     if rng not in SHAPE:
         raise ValueError(f"unknown range {rng!r}")
+
+    if snapshot.load() is not None:
+        snap = snapshot.member(user_id)
+        if snap:
+            return snap["series"][rng]
+        return {"user_id": user_id, "range": rng, "anchor": None, "points": []}
 
     count, width = SHAPE[rng]
     if width == "session":

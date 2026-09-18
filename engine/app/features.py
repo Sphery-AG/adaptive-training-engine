@@ -30,6 +30,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Optional
 
+from . import snapshot
 from .db import _age_from_dob, _connect
 
 
@@ -123,6 +124,14 @@ class MemberFeatures:
 
 def get_member_features(user_id: int) -> MemberFeatures:
     """Reduce a member's whole ExerCube history to one feature row."""
+    if snapshot.load() is not None:
+        snap = snapshot.member(user_id)
+        if snap:
+            return MemberFeatures(**snap["features"])
+        # Not in the snapshot: the same row MySQL gives a member with no history.
+        empty = {name: None for name in MemberFeatures.__dataclass_fields__}
+        return MemberFeatures(**{**empty, "user_id": user_id, "workouts_completed": 0, "hr_workouts": 0})
+
     with _connect() as conn, conn.cursor() as cur:
         # Who they are. dob drives age; the age column is intentionally unused.
         cur.execute(

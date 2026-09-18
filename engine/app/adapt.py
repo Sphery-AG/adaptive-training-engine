@@ -24,6 +24,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from . import snapshot
 from .db import _connect
 
 # Evidence thresholds. HR: how far outside the prescribed band (bpm) counts
@@ -76,6 +77,10 @@ def _find_session(plan: dict, session_id: str) -> Optional[tuple[int, dict]]:
 
 def score_trend(user_id: int) -> Optional[tuple[float, float]]:
     """(recent_avg, overall_avg) of completed scores; None without history."""
+    if snapshot.load() is not None:
+        snap = snapshot.member(user_id)
+        trend = snap["score_trend"] if snap else None
+        return tuple(trend) if trend else None
     with _connect() as conn, conn.cursor() as cur:
         cur.execute(
             """

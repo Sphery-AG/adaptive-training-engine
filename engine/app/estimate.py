@@ -20,6 +20,7 @@ from dataclasses import asdict, dataclass, field
 from functools import lru_cache
 from typing import Optional
 
+from . import snapshot
 from .db import _connect
 from .features import MemberFeatures, get_member_features
 
@@ -38,6 +39,9 @@ LEVELS = [
 @lru_cache(maxsize=1)
 def population_scores(min_workouts: int = POPULATION_MIN_WORKOUTS) -> tuple[float, ...]:
     """Average score per member, for everyone with enough completed workouts."""
+    snap = snapshot.load()
+    if snap is not None:
+        return tuple(snap["population_scores"])
     with _connect() as conn, conn.cursor() as cur:
         cur.execute(
             """

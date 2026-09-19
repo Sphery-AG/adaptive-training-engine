@@ -59,7 +59,12 @@ heart-rate zone he should be in.
 > Whatever equipment the gym has, the plan lands on it."
 
 **7. Run a session.** Tap through the stations to the end. At the finish, rate
-it **1 — too easy**.
+it **Too easy**.
+
+The heart rate moving on this screen is simulated, not measured — there is no
+strap in the room. If anyone asks, say so plainly: "the heart rate here is
+stand-in data for the demo; in the gym it comes off the belt like it does on
+the kiosk."
 
 **8. This is the important screen.** The plan changes and tells him why.
 

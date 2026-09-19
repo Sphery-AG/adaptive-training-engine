@@ -5,6 +5,12 @@ For Stephan. Everything you need to run the demo in front of a client.
 **Link:** https://sphere-adaptive-training.vercel.app
 **Use Marco.** His plan visibly changes when you rate a session, which is the moment worth showing.
 
+**What this is for.** It is built for you to walk a client through, not for
+someone to go away and test on their own yet. There is no real login and nothing
+saves between visits, so a tester would lose their plan the moment they
+refreshed. Making it something people can use on their own is the next piece of
+work: saving plans, and real sign-in.
+
 ## Before you start
 
 - **Open the app once before you need it.** Measured: the first request after a
@@ -87,10 +93,14 @@ saved between visits. Both are the next pieces of work, not open questions.
 
 **"Can I have it on my phone?"** — Yes, open the link. It is built for a phone.
 
-**"Is my data safe?"** — What is on the server is two members' training numbers -
-scores, heart-rate estimates - with no names, no birthdays, nothing that
-identifies anyone. The full member database never leaves Sphery. Anything beyond
-this demo waits on the data agreement.
+**"Is my data safe?"** — What is on the server is two members' training numbers,
+scores and heart-rate estimates, with no names, no birthdays, nothing that
+identifies anyone. Those two were approved for this demo, and the full member
+database never leaves Sphery. Anything beyond this demo waits on the data
+agreement.
+
+(That approval is yours, 18 September: "that is fine with the data of the two
+members." Nothing else about a member is anywhere near this.)
 
 **"When can members use it?"** — Weeks, not months, and the honest answer is that
 it depends on where the database lives and on the data agreement. Point that at

@@ -16,7 +16,9 @@ Endpoints match the architecture in CLAUDE.md.
     GET http://localhost:8000/generate-plan/82
 
 CORS is locked to the web app's origin: set WEB_ORIGIN to override the
-localhost default. The engine and DB stay local; this is not a public API.
+localhost default. The engine is hosted now (Vercel, fra1) and reachable by
+anyone with the URL, so it reads a snapshot of two members rather than the
+export, carries no docs endpoints, and still never writes anything.
 """
 
 from __future__ import annotations
@@ -33,7 +35,17 @@ from .generate import generate_for_member
 from .plangen import GeneratePlanRequest, generate_plan as generate_plan_full
 from .series import series_for_member
 
-app = FastAPI(title="Adaptive Training Engine", version="0.2.0")
+# Interactive docs off: the engine is hosted now, and /docs advertised the whole
+# API surface - including /estimate/{user_id} - to anyone who found the URL.
+# The web app calls known endpoints; nothing needs the schema at runtime. Run it
+# locally (uvicorn app.main:app) with these lines dropped when you want them.
+app = FastAPI(
+    title="Adaptive Training Engine",
+    version="0.2.0",
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+)
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,0 +1,102 @@
+exercise_id,exercise,family,card_level,primary_equipment,station_id,station_name,assigned_by,needs_review,note
+EX001,Treadmill Walk,Run / Locomotion,Foundation,Treadmill,runner,Runner,equipment,yes,the floor calls its treadmill the Runner
+EX002,Treadmill Run,Run / Locomotion,Progress,Treadmill,runner,Runner,equipment,yes,the floor calls its treadmill the Runner
+EX003,Treadmill Interval Run,Run / Locomotion,Mastery,Treadmill,runner,Runner,equipment,yes,the floor calls its treadmill the Runner
+EX004,SkiErg Technique Pull,SkiErg,Foundation,SkiErg,ski-erg,Ski Erg,equipment,no,
+EX005,RowErg Technique Row,RowErg,Foundation,RowErg,row-erg,Row Erg,equipment,no,
+EX006,SkiErg Intervals,SkiErg,Progress,SkiErg,ski-erg,Ski Erg,equipment,no,
+EX007,RowErg Intervals,RowErg,Progress,RowErg,row-erg,Row Erg,equipment,no,
+EX008,Light Sled Push,Sled Push,Foundation,Sled,sled-push,Sled Push,family,no,
+EX009,Heavy Sled Push,Sled Push,Progress,Sled,sled-push,Sled Push,family,no,
+EX010,Race-Load Sled Push after Run,Sled Push,Mastery,Sled,sled-push,Sled Push,family,no,
+EX011,Light Sled Pull,Sled Pull,Foundation,Sled,sled-pull,Sled Pull,family,no,
+EX012,Heavy Sled Pull,Sled Pull,Progress,Sled,sled-pull,Sled Pull,family,no,
+EX013,Bodyweight Walking Lunge,Lunge,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX014,Sandbag Walking Lunge,Lunge,Progress,Sandbag,sandbag-lunges,Sandbag Lunges,equipment,no,
+EX015,Race-Pace Sandbag Lunge,Lunge,Mastery,Sandbag,sandbag-lunges,Sandbag Lunges,equipment,no,
+EX016,Farmer Carry Light,Farmer Carry,Foundation,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
+EX017,Farmer Carry Heavy,Farmer Carry,Progress,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
+EX018,Race-Pace Farmer Carry,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
+EX019,Walking Farmer Carry with Direction Cues,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
+EX020,Sumo Squat,Squat,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX021,Squat,Squat,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX022,Wall Ball,Squat,Mastery,Wall Ball,wall-balls,Wall Balls,exercise,no,"Wall Ball is the Squat family's Mastery rung, but it is thrown at the wall-ball target"
+EX023,Burpee Step-Back,Burpee,Foundation,Bodyweight,burpees,Burpee Broad Jump,family,no,"bodyweight, but the floor has a burpee station"
+EX024,Burpee,Burpee,Progress,Bodyweight,burpees,Burpee Broad Jump,family,no,"bodyweight, but the floor has a burpee station"
+EX025,Burpee Broad Jump,Burpee,Mastery,Bodyweight,burpees,Burpee Broad Jump,exercise,no,Burpee Broad Jump is the station's namesake
+EX026,Kettlebell Deadlift,Deadlift / Hinge,Foundation,Kettlebell,free-weights,Free Weights & Racks,equipment,no,
+EX027,Barbell Deadlift,Deadlift / Hinge,Progress,Barbell,free-weights,Free Weights & Racks,equipment,no,
+EX028,Kettlebell Swing,Kettlebell Swing,Foundation,Kettlebell,free-weights,Free Weights & Racks,equipment,no,
+EX030,Beyond Power Cable Row,Horizontal Pull,Progress,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX031,Step-Up,Step-Up,Foundation,Plyo Box,plyo-agility,Plyo & Agility,family,yes,Plyo Box
+EX032,Weighted Step-Up,Step-Up,Progress,Plyo Box,plyo-agility,Plyo & Agility,family,yes,Plyo Box
+EX033,Box Jump,Jump,Foundation,Plyo Box,plyo-agility,Plyo & Agility,family,yes,Plyo Box
+EX034,Balance Board Stand,Balance,Foundation,Balance Board,mobility-balance,Mobility & Balance,family,yes,Balance Board / Balance Pad
+EX035,Single-Leg Balance Pad,Balance,Progress,Balance Pad,mobility-balance,Mobility & Balance,family,yes,Balance Board / Balance Pad
+EX036,Single-Leg Reach on Balance Board,Balance,Mastery,Balance Board,mobility-balance,Mobility & Balance,family,yes,Balance Board / Balance Pad
+EX037,Assault Bike Easy Ride,Assault Bike,Foundation,Assault Bike,bike,Performance Bike,equipment,yes,one bike station covers three bike types in the catalogue
+EX038,Assault Bike Threshold,Assault Bike,Progress,Assault Bike,bike,Performance Bike,equipment,yes,one bike station covers three bike types in the catalogue
+EX039,Assault Bike Sprint Intervals,Assault Bike,Mastery,Assault Bike,bike,Performance Bike,equipment,yes,one bike station covers three bike types in the catalogue
+EX040,Leg Press,Leg Press,Foundation,Technogym Medical Leg Press,leg-press,Medical Leg Press,equipment,no,
+EX041,Jump Rope Basic,Jump Rope,Foundation,Jump Rope,plyo-agility,Plyo & Agility,family,yes,
+EX042,Swiss Ball Hamstring Curl,Hamstring Curl,Foundation,Swiss Ball,mobility-balance,Mobility & Balance,family,yes,Swiss Ball
+EX043,Jump Rope Alternating Foot,Jump Rope,Progress,Jump Rope,plyo-agility,Plyo & Agility,family,yes,
+EX044,Miniband Lateral Walk,Hip Stability,Foundation,Miniband,mobility-balance,Mobility & Balance,family,yes,Miniband
+EX045,Goblet Squat,Loaded Squat,Foundation,Kettlebell,free-weights,Free Weights & Racks,equipment,no,
+EX046,Dumbbell Front Squat,Loaded Squat,Progress,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX047,Barbell Back Squat,Barbell Squat,Foundation,Barbell,free-weights,Free Weights & Racks,equipment,no,
+EX048,Dumbbell Romanian Deadlift,Romanian Deadlift,Foundation,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX049,Barbell Romanian Deadlift,Romanian Deadlift,Progress,Barbell,free-weights,Free Weights & Racks,equipment,no,
+EX050,Dumbbell Bench Press,Horizontal Press,Foundation,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX051,Barbell Bench Press,Horizontal Press,Progress,Barbell,free-weights,Free Weights & Racks,equipment,no,
+EX052,Dumbbell Shoulder Press,Vertical Press,Foundation,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX053,Single-Arm Cable Press,Vertical Press,Progress,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX054,Dumbbell Bent-Over Row,Horizontal Pull,Foundation,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX055,Single-Arm Dumbbell Row,Horizontal Pull,Progress,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX059,Push-Up,Push-Up,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX060,Push-Up to Shoulder Tap,Push-Up,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX061,Forearm Plank,Plank,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX062,Plank Shoulder Tap,Plank,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX063,Plank with Reaction Tap,Plank,Mastery,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX064,Dead Bug,Core Control,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX065,Dead Bug with Alternating Cue,Core Control,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX066,Glute Bridge,Hip Extension,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX067,Single-Leg Glute Bridge,Hip Extension,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX068,Swiss Ball Plank,Unstable Plank,Foundation,Swiss Ball,mobility-balance,Mobility & Balance,family,yes,Swiss Ball
+EX069,Swiss Ball Stir-the-Pot,Unstable Plank,Progress,Swiss Ball,mobility-balance,Mobility & Balance,family,yes,Swiss Ball
+EX070,Miniband Glute Bridge,Hip Stability,Foundation,Miniband,mobility-balance,Mobility & Balance,family,yes,Miniband
+EX071,Resistance Band Pallof Press,Anti-Rotation,Foundation,Resistance Band,mobility-balance,Mobility & Balance,equipment,yes,no band station; bands live with the mats
+EX072,Cable Pallof Press with Step,Anti-Rotation,Progress,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX073,Medicine Ball Chest Pass,Medicine Ball Throw,Foundation,Medicine Ball,wall-balls,Wall Balls,family,yes,no medicine-ball station; the wall-ball target is the closest throwing surface
+EX074,Medicine Ball Slam,Medicine Ball Slam,Foundation,Medicine Ball,wall-balls,Wall Balls,family,yes,no medicine-ball station; slams need floor space near the target
+EX075,Medicine Ball Rotational Throw,Medicine Ball Throw,Progress,Medicine Ball,wall-balls,Wall Balls,family,yes,no medicine-ball station; the wall-ball target is the closest throwing surface
+EX076,Lateral Shuffle,Lateral Locomotion,Foundation,Bodyweight,plyo-agility,Plyo & Agility,family,yes,bodyweight shuffles need a lane of open floor
+EX077,Reactive Lateral Shuffle,Lateral Locomotion,Progress,Bodyweight,plyo-agility,Plyo & Agility,family,yes,bodyweight shuffles need a lane of open floor
+EX078,Forward-Backward Line Hops,Plyometric Footwork,Foundation,Bodyweight,plyo-agility,Plyo & Agility,family,yes,"bodyweight footwork drills need open floor, not a machine"
+EX079,Reactive Line Hops,Plyometric Footwork,Progress,Bodyweight,plyo-agility,Plyo & Agility,family,yes,"bodyweight footwork drills need open floor, not a machine"
+EX080,Single-Leg Romanian Deadlift,Single-Leg Hinge,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX081,Dumbbell Single-Leg Romanian Deadlift,Single-Leg Hinge,Progress,Dumbbell,free-weights,Free Weights & Racks,equipment,no,
+EX082,Calf Raise,Calf Raise,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
+EX083,Bike Easy Ride,Bike,Foundation,Bike,bike,Performance Bike,equipment,no,
+EX084,Bike Threshold Intervals,Bike,Progress,Bike,bike,Performance Bike,equipment,no,
+EX085,Spinning Bike Cadence Ride,Spinning Bike,Foundation,Spinning Bike,bike,Performance Bike,equipment,yes,one bike station covers three bike types in the catalogue
+EX086,Spinning Bike Cadence Changes,Spinning Bike,Progress,Spinning Bike,bike,Performance Bike,equipment,yes,one bike station covers three bike types in the catalogue
+EX087,Colorunner,ICAROS Guardian,Foundation,ICAROS Guardian,icaros,ICAROS Guardian,equipment,no,
+EX088,Biathlon,ICAROS Guardian,Progress,ICAROS Guardian,icaros,ICAROS Guardian,equipment,no,
+EX089,Arrow Flow Flip,ICAROS Guardian,Progress,ICAROS Guardian,icaros,ICAROS Guardian,equipment,no,
+EX090,Brain Boxing,ICAROS Guardian,Mastery,ICAROS Guardian,icaros,ICAROS Guardian,equipment,no,
+EX091,Predator & Prey,ICAROS Guardian,Mastery,ICAROS Guardian,icaros,ICAROS Guardian,equipment,no,
+EX092,100 Punches,XR Fighter,Foundation,XR Fighter,xr-fighter,XR Fighter,equipment,no,
+EX093,100 Punches incl. Kicks,XR Fighter,Progress,XR Fighter,xr-fighter,XR Fighter,equipment,no,
+EX094,3 Min Punches incl. Kicks,XR Fighter,Mastery,XR Fighter,xr-fighter,XR Fighter,equipment,no,
+EX095,45s Round,ExerCube SpeedCage,Foundation,ExerCube,exercube,ExerCube,equipment,no,
+EX096,Pyramid,ExerCube SpeedCage,Progress,ExerCube,exercube,ExerCube,equipment,no,
+EX097,Competition Mode,ExerCube SpeedCage,Mastery,ExerCube,exercube,ExerCube,equipment,no,
+EX098,FIBO Racer,ExerCube Racer,Foundation,ExerCube,exercube,ExerCube,equipment,no,
+EX099,Upper Body Racer,ExerCube Racer,Progress,ExerCube,exercube,ExerCube,equipment,no,
+EX100,Dual Flow Racer,ExerCube Racer,Mastery,ExerCube,exercube,ExerCube,equipment,no,
+EX101,Beyond Power Cable Squat,Cable Squat,Foundation,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX102,Beyond Power Cable Rotation,Cable Rotation,Foundation,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX103,Beyond Power Reactive Cable Rotation,Cable Rotation,Progress,Beyond Power Electric Cable,cable-pulls,Cable Pulls,equipment,no,
+EX104,Bodyweight Mobility Flow,Mobility Flow,Foundation,Bodyweight,mobility-balance,Mobility & Balance,family,yes,
+EX105,Reaction-Based Squat Game,Reactive Squat,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"

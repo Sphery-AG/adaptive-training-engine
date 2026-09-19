@@ -7,9 +7,10 @@ For Stephan. Everything you need to run the demo in front of a client.
 
 ## Before you start
 
-- **Open the app a minute before you need it.** The first visit after a quiet
-  spell takes a few seconds to wake up. After that it is instant. Open it, let
-  the sign-in screen load, then leave it sitting there.
+- **Open the app once before you need it.** Measured: the first request after a
+  quiet spell takes about 1.6 seconds, and everything after that is a quarter of
+  a second. So it is a beat, not a wait — but open it in the lift rather than in
+  front of the client.
 - **Don't refresh once you're going.** Nothing is saved yet, so a refresh sends
   you back to the start. If it happens, you are about ninety seconds from being
   back where you were.
@@ -96,7 +97,7 @@ Anthony.
 
 ## If something goes wrong
 
-- **Screen looks stuck on the first visit** — give it five seconds, it is waking up.
+- **Screen looks stuck on the first visit** - give it two seconds, it is waking up.
 - **Badge missing, or the chart says "Sample"** — the app is running on sample
   data. Say so, carry on with the demo, tell Anthony afterwards.
 - **You end up back at the sign-in screen** — something refreshed. Sign in as

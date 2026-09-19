@@ -59,14 +59,16 @@ session rather than at today — we would rather show the gap than invent one."
 Some of his heart-rate lines are empty for the same reason: he trained without a
 strap, and we show nothing rather than a zero.
 
-**6. Open today's session.** It shows the stations, how long at each, and the
-heart-rate zone he should be in.
+**6. Open today's session.** Tap the play button on the Up Next card. You get a
+preview first: the stations in order, how long at each, and the heart-rate zone
+he should be in.
 
 > "The plan doesn't say 'ExerCube'. It says what kind of work and how hard.
 > Whatever equipment the gym has, the plan lands on it."
 
-**7. Run a session.** Tap through the stations to the end. At the finish, rate
-it **Too easy**.
+**7. Run it.** Tap *Start session* on that preview, then *Complete station*
+through all seven, then *Finish session* and *Log session · update my plan*.
+Rate it **Too easy**.
 
 The heart rate moving on this screen is simulated, not measured — there is no
 strap in the room. If anyone asks, say so plainly: "the heart rate here is

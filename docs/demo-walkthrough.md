@@ -87,9 +87,10 @@ saved between visits. Both are the next pieces of work, not open questions.
 
 **"Can I have it on my phone?"** — Yes, open the link. It is built for a phone.
 
-**"Is my data safe?"** — Only two members' training numbers are in the demo, both
-with permission, no names attached. Nothing about a real member's data leaves
-Sphery until the agreement is signed.
+**"Is my data safe?"** — What is on the server is two members' training numbers -
+scores, heart-rate estimates - with no names, no birthdays, nothing that
+identifies anyone. The full member database never leaves Sphery. Anything beyond
+this demo waits on the data agreement.
 
 **"When can members use it?"** — Weeks, not months, and the honest answer is that
 it depends on where the database lives and on the data agreement. Point that at

@@ -119,12 +119,6 @@ Each one builds from its own folder on every push to `main`:
 | `sphere-adaptive-training` | `web/` | https://sphere-adaptive-training.vercel.app |
 | `sphere-adaptive-engine` | `engine/` | https://sphere-adaptive-engine.vercel.app |
 
-> **Status at time of writing:** the engine project is linked to the repo but
-> has no root directory set, so every push since Sep 19 has failed to build.
-> The live engine is a manual deploy from Sep 19, and its code is the same as
-> `main`. Setting the root directory to `engine` fixes this. This note goes
-> once it is done.
-
 - **Only the project whose folder changed rebuilds.** Each folder's
   `vercel.json` has an `ignoreCommand` that diffs the folder against the commit
   of the project's last successful deploy (`$VERCEL_GIT_PREVIOUS_SHA`), so a

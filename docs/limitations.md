@@ -14,7 +14,7 @@ where the *build* is thin. Written Aug 13, 2026, against commit `894d98f`.
 | Persistence | Nothing is stored. Plans, completed sessions, points and streaks live in browser state and a refresh loses them. `engine/db/schema.sql` exists and verifies, but no process connects to it. |
 | Heart rate during a session | Simulated. `LiveSession.tsx` generates plausible bpm from the member's estimated max HR. Nothing is measured. |
 | The progress chart | Mock series (`web/lib/stub/progress-series.ts`). The engine has no time-series endpoint. The card labels itself as sample data on screen. |
-| The hosted demo | `sphere-adaptive-training.vercel.app` runs entirely on the TypeScript stub. No engine, no database, invented members. |
+| The hosted demo | `sphere-adaptive-training.vercel.app` talks to the engine hosted at `sphere-adaptive-engine.vercel.app` (since Sep 18). That engine has no database: it reads a snapshot of two real members (Lena = 535, Marco = 19) passed in as `ENGINE_SNAPSHOT_JSON`. Anyone else is a cold start, and adaptation reads the snapshot's frozen score trend. |
 | Kiosk export | `GET /generate-plan/{user_id}` returns valid `CreateTrainingRequest` JSON, but it places the member in a copied reference Darmstadt circle rather than exporting their generated plan. The shape is right; the content is not theirs. |
 | Adaptation timeliness | Plans adapt against the frozen July 2026 export, not against what the member did this week. |
 
@@ -42,8 +42,9 @@ Profiled July 2026. These are properties of Sphery's data, not bugs.
 ## What is untested
 
 - **`web/` has no test runner.** Not a gap in coverage — there is no
-  infrastructure. The 827-line stub engine, which is what the demo actually
-  executes, has zero automated verification.
+  infrastructure. The 827-line stub engine, which still resolves every circuit
+  on screen and takes over whenever the engine is unreachable, has zero
+  automated verification.
 - **The two implementations of the plan rules are not pinned to each other.**
   `engine/app/plangen.py` and `web/lib/stub/engine.ts` are kept in agreement by
   hand. No parity test exists. See `docs/code-orientation.md`.

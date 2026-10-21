@@ -49,8 +49,10 @@ NEXT_PUBLIC_ENGINE_URL set    → web/lib/engine/client.ts talks to Python
 NEXT_PUBLIC_ENGINE_URL unset  → everything runs in web/lib/stub/engine.ts
 ```
 
-The hosted Vercel demo has it unset, so **the public URL is the UI on the stub
-with invented data**. No engine, no database.
+The hosted Vercel demo has it set to the hosted engine
+(`sphere-adaptive-engine.vercel.app`), which has no database and reads a
+snapshot of Lena and Marco instead (`engine/app/snapshot.py`). Even so, circuits
+on screen still come from the TypeScript copy, as described above.
 
 The trap: when the variable *is* set but the engine is down or erroring,
 `client.ts` catches and returns `null`, and the app falls back to the stub

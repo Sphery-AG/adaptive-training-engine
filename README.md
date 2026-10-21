@@ -8,8 +8,11 @@ plain-language explanation of what changed and why.
 
 Built by Anthony McCrovitz, summer internship 2026. Last build day Aug 14, 2026.
 
-Hosted demo: https://sphere-adaptive-training.vercel.app — the UI running on a
-TypeScript stub with fake data, no backend. The real system runs locally.
+Hosted demo: https://sphere-adaptive-training.vercel.app — the UI on Vercel,
+talking to the engine hosted at https://sphere-adaptive-engine.vercel.app. The
+hosted engine has no database: it reads a snapshot of two real members (Lena
+and Marco), and every other member is a cold start. The full system, against
+the whole export, runs locally.
 
 ## Status
 
@@ -35,7 +38,7 @@ in `engine/`. It is gap 0 in `path-to-production.md` and the first thing to fix.
 What is **not** done, and was never in v1 scope: real authentication
 (user-select stands in for login), a provisioned database (the schema is
 written and verified, but nothing persists — a refresh loses state), a hosted
-engine, and equipment beyond the ExerCube. `docs/path-to-production.md`
+engine with access to live member data, and equipment beyond the ExerCube. `docs/path-to-production.md`
 sequences all of it.
 
 ## The app
@@ -59,8 +62,8 @@ Design system and the reasoning behind it: `DESIGN.md`. Product argument:
 ## Architecture
 
 - `web/` — Next.js member app. UI only; talks to the engine over HTTP. Ships
-  with a TypeScript stub of the engine so the hosted demo runs without a
-  backend.
+  with a TypeScript stub of the engine, which takes over whenever the engine
+  is unset or unreachable.
 - `engine/` — Python + FastAPI. All analytics, estimation, plan generation,
   and adaptation. Reads the Sphery MySQL export directly, read-only.
   - `GET /estimate/{user_id}` — fitness estimate from real history, with
@@ -109,8 +112,8 @@ cd web && npm install
 NEXT_PUBLIC_ENGINE_URL=http://localhost:8000 npm run dev   # app on :3000
 ```
 
-Without `NEXT_PUBLIC_ENGINE_URL` the web app falls back to its stub — the
-same behavior as the hosted demo.
+Without `NEXT_PUBLIC_ENGINE_URL` the web app falls back to its stub, with
+invented members and no engine.
 
 ### Tests
 
@@ -135,10 +138,12 @@ assertions.
 
 ### Deployment
 
-The Vercel project `sphere-adaptive-training` is linked to this repo
-(`main`, root directory `web/`), so pushes to `main` build the web app. Only
-the web app deploys — the engine is not hosted anywhere. Note that Vercel's
-Hobby plan caps deployments at 100/day **account-wide**, not per project.
+Two Vercel projects are linked to this repo and build on pushes to `main`:
+`sphere-adaptive-training` (root directory `web/`) and `sphere-adaptive-engine`
+(root directory `engine/`, region fra1). Each skips its build when its own
+folder did not change. The hosted engine reads `ENGINE_SNAPSHOT_JSON` instead
+of MySQL. Note that Vercel's Hobby plan caps deployments at 100/day
+**account-wide**, not per project. Details: `docs/HANDOVER.md`.
 
 ## Documentation
 

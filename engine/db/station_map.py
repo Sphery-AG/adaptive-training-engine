@@ -66,7 +66,7 @@ BY_EXERCISE = {
 
 # (station, why, needs_review) by family. Checked before equipment.
 BY_FAMILY = {
-    "Farmer Carry": ("farmers-carry", "the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights", False),
+    "Farmer Carry": ("farmers-carry", "the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights", False),
     "Burpee": ("burpees", "bodyweight, but the floor has a burpee station", False),
     "Sled Push": ("sled-push", "", False),
     "Sled Pull": ("sled-pull", "", False),
@@ -195,8 +195,7 @@ def render(csv_path: str, out: str) -> None:
         f"**{len(flagged)} rows are marked _guess_ and need your eye.** The rest follow "
         "straight from the equipment (an ExerCube exercise runs on the ExerCube).",
         "",
-        "Correct the station column directly, or tell Anthony and he will. Source: "
-        "`engine/data/exercise_stations.csv`.",
+        "Reply with any station you would change and Anthony will update the mapping.",
         "",
         "## Open questions",
         "",
@@ -207,8 +206,9 @@ def render(csv_path: str, out: str) -> None:
         "Balance - for the bodyweight work and the equipment with no station today (Plyo "
         "Box, Swiss Ball, Medicine Ball, jump ropes, bands, balance boards). Are these real "
         "places on the floor, and are those the right groupings?",
-        "3. **EX092 '100 Punches'** is tagged Upper Body, which is not one of the eight "
-        "regions. Arms, Shoulders or Full Body?",
+        "3. **EX092 '100 Punches'** is tagged Upper Body, which is no longer a body "
+        "region. Which of the eight does it belong to: Full Body, Legs, Glutes, Core, "
+        "Back, Chest, Shoulders or Arms?",
         "",
         "## The guesses, station by station",
         "",

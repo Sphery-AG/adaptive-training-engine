@@ -4,13 +4,13 @@ Every one of the 101 exercises in the Darmstadt catalogue (v6), and which statio
 
 **45 rows are marked _guess_ and need your eye.** The rest follow straight from the equipment (an ExerCube exercise runs on the ExerCube).
 
-Correct the station column directly, or tell Anthony and he will. Source: `engine/data/exercise_stations.csv`.
+Reply with any station you would change and Anthony will update the mapping.
 
 ## Open questions
 
 1. **Tidal Tanks has no exercises.** The station is on the floor but nothing in the catalogue names it. Which exercises does it deliver, or should it sit out of plans for now?
 2. **Three new areas are proposed** - Functional Floor, Plyo & Agility, Mobility & Balance - for the bodyweight work and the equipment with no station today (Plyo Box, Swiss Ball, Medicine Ball, jump ropes, bands, balance boards). Are these real places on the floor, and are those the right groupings?
-3. **EX092 '100 Punches'** is tagged Upper Body, which is not one of the eight regions. Arms, Shoulders or Full Body?
+3. **EX092 '100 Punches'** is tagged Upper Body, which is no longer a body region. Which of the eight does it belong to: Full Body, Legs, Glutes, Core, Back, Chest, Shoulders or Arms?
 
 ## The guesses, station by station
 
@@ -104,10 +104,10 @@ Correct the station column directly, or tell Anthony and he will. Source: `engin
 | EX012 | Heavy Sled Pull | Sled Pull | Progress | Sled | Sled Pull |  |
 | EX014 | Sandbag Walking Lunge | Lunge | Progress | Sandbag | Sandbag Lunges |  |
 | EX015 | Race-Pace Sandbag Lunge | Lunge | Mastery | Sandbag | Sandbag Lunges |  |
-| EX016 | Farmer Carry Light | Farmer Carry | Foundation | Kettlebell / Dumbbell | Farmers Carry | the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights |
-| EX017 | Farmer Carry Heavy | Farmer Carry | Progress | Kettlebell / Dumbbell | Farmers Carry | the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights |
-| EX018 | Race-Pace Farmer Carry | Farmer Carry | Mastery | Kettlebell / Dumbbell | Farmers Carry | the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights |
-| EX019 | Walking Farmer Carry with Direction Cues | Farmer Carry | Mastery | Kettlebell / Dumbbell | Farmers Carry | the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights |
+| EX016 | Farmer Carry Light | Farmer Carry | Foundation | Kettlebell / Dumbbell | Farmers Carry | the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights |
+| EX017 | Farmer Carry Heavy | Farmer Carry | Progress | Kettlebell / Dumbbell | Farmers Carry | the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights |
+| EX018 | Race-Pace Farmer Carry | Farmer Carry | Mastery | Kettlebell / Dumbbell | Farmers Carry | the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights |
+| EX019 | Walking Farmer Carry with Direction Cues | Farmer Carry | Mastery | Kettlebell / Dumbbell | Farmers Carry | the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights |
 | EX022 | Wall Ball | Squat | Mastery | Wall Ball | Wall Balls | Wall Ball is the Squat family's Mastery rung, but it is thrown at the wall-ball target |
 | EX023 | Burpee Step-Back | Burpee | Foundation | Bodyweight | Burpee Broad Jump | bodyweight, but the floor has a burpee station |
 | EX024 | Burpee | Burpee | Progress | Bodyweight | Burpee Broad Jump | bodyweight, but the floor has a burpee station |

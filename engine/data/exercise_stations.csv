@@ -14,10 +14,10 @@ EX012,Heavy Sled Pull,Sled Pull,Progress,Sled,sled-pull,Sled Pull,family,no,
 EX013,Bodyweight Walking Lunge,Lunge,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
 EX014,Sandbag Walking Lunge,Lunge,Progress,Sandbag,sandbag-lunges,Sandbag Lunges,equipment,no,
 EX015,Race-Pace Sandbag Lunge,Lunge,Mastery,Sandbag,sandbag-lunges,Sandbag Lunges,equipment,no,
-EX016,Farmer Carry Light,Farmer Carry,Foundation,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
-EX017,Farmer Carry Heavy,Farmer Carry,Progress,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
-EX018,Race-Pace Farmer Carry,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
-EX019,Walking Farmer Carry with Direction Cues,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the station exists for this family; its Kettlebell / Dumbbell tag was routing it to Free Weights
+EX016,Farmer Carry Light,Farmer Carry,Foundation,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights
+EX017,Farmer Carry Heavy,Farmer Carry,Progress,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights
+EX018,Race-Pace Farmer Carry,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights
+EX019,Walking Farmer Carry with Direction Cues,Farmer Carry,Mastery,Kettlebell / Dumbbell,farmers-carry,Farmers Carry,family,no,the floor has a Farmers Carry station; going by the kettlebell alone would have put it under Free Weights
 EX020,Sumo Squat,Squat,Foundation,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
 EX021,Squat,Squat,Progress,Bodyweight,functional-floor,Functional Floor,equipment,yes,"bodyweight work needs open floor, not a machine"
 EX022,Wall Ball,Squat,Mastery,Wall Ball,wall-balls,Wall Balls,exercise,no,"Wall Ball is the Squat family's Mastery rung, but it is thrown at the wall-ball target"
